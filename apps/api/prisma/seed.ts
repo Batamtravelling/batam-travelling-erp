@@ -29,6 +29,39 @@ async function main() {
     update: {}, create: { tenantId: tenant.id, email: 'owner@batamtravelling.local', name: 'Tenant Owner' },
   });
   await prisma.userRole.upsert({ where: { userId_roleId: { userId: user.id, roleId: role.id } }, update: {}, create: { userId: user.id, roleId: role.id } });
+
+  const customer = await prisma.customer.upsert({
+    where: { tenantId_customerCode: { tenantId: tenant.id, customerCode: 'CUS-000001' } },
+    update: {},
+    create: {
+      tenantId: tenant.id,
+      customerCode: 'CUS-000001',
+      fullName: 'Rina Suryani',
+      phone: '081234567890',
+      email: 'rina@example.com',
+      city: 'Batam',
+      notes: 'Seeded customer',
+    },
+  });
+
+  await prisma.lead.upsert({
+    where: { tenantId_leadCode: { tenantId: tenant.id, leadCode: 'LEAD-000001' } },
+    update: {},
+    create: {
+      tenantId: tenant.id,
+      leadCode: 'LEAD-000001',
+      customerId: customer.id,
+      source: 'Website',
+      requirement: 'Family trip to Bintan',
+      destination: 'Bintan',
+      pax: 4,
+      estimatedValue: 1200000,
+      priority: 'HIGH',
+      status: 'QUOTATION',
+      notes: 'Seeded lead',
+    },
+  });
+
   console.log(JSON.stringify({ tenantId: tenant.id, userId: user.id }, null, 2));
 }
 main().finally(() => prisma.$disconnect());

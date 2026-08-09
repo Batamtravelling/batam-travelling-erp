@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { CurrentIdentity, IdentityGuard, PermissionGuard, Permissions, RequestIdentity } from '../core/request-context.js';
 import { CreateLeadDto, TransitionLeadDto, UpdateLeadDto } from './dto.js';
@@ -11,6 +11,7 @@ export class LeadsController {
   @Get() @Permissions('lead.read') list(@CurrentIdentity() identity: RequestIdentity) { return this.service.list(identity); }
   @Get(':id') @Permissions('lead.read') find(@CurrentIdentity() identity: RequestIdentity, @Param('id') id: string) { return this.service.find(identity, id); }
   @Patch(':id') @Permissions('lead.update') update(@CurrentIdentity() identity: RequestIdentity, @Param('id') id: string, @Body() dto: UpdateLeadDto) { return this.service.update(identity, id, dto); }
+  @Delete(':id') @Permissions('lead.update') remove(@CurrentIdentity() identity: RequestIdentity, @Param('id') id: string) { return this.service.remove(identity, id); }
   @Post(':id/transition') @Permissions('lead.update') transition(@CurrentIdentity() identity: RequestIdentity, @Param('id') id: string, @Body() dto: TransitionLeadDto) { return this.service.transition(identity, id, dto); }
 }
 

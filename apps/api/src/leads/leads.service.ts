@@ -14,6 +14,16 @@ export function canTransitionLead(from: LeadStatus, to: LeadStatus): boolean {
   return transitions[from].includes(to);
 }
 
+export function validateLeadTransition(from: LeadStatus, to: LeadStatus, reason?: string): void {
+  if (!canTransitionLead(from, to)) {
+    throw new BadRequestException(`Transition ${from} -> ${to} is not allowed`);
+  }
+
+  if (to === 'LOST' && !reason?.trim()) {
+    throw new BadRequestException('A reason is required when marking a lead as lost');
+  }
+}
+
 @Injectable()
 export class LeadsService {
   constructor(private readonly prisma: PrismaService, private readonly audit: AuditService) {}
@@ -32,9 +42,10 @@ export class LeadsService {
   list(identity: RequestIdentity) { return this.prisma.lead.findMany({ where: { tenantId: identity.tenantId }, include: { customer: true }, orderBy: { createdAt: 'desc' } }); }
   async find(identity: RequestIdentity, id: string) { const lead = await this.prisma.lead.findFirst({ where: { id, tenantId: identity.tenantId }, include: { customer: true } }); if (!lead) throw new NotFoundException('Lead not found'); return lead; }
   async update(identity: RequestIdentity, id: string, dto: UpdateLeadDto) { await this.find(identity, id); if (dto.customerId) await this.prisma.customer.findFirstOrThrow({ where: { id: dto.customerId, tenantId: identity.tenantId, archivedAt: null } }); const lead = await this.prisma.lead.update({ where: { id }, data: { ...dto, travelDate: dto.travelDate ? new Date(dto.travelDate) : undefined, returnDate: dto.returnDate ? new Date(dto.returnDate) : undefined } }); await this.audit.record(identity, 'lead.updated', 'lead', id); return lead; }
+  async remove(identity: RequestIdentity, id: string) { const lead = await this.find(identity, id); await this.prisma.lead.update({ where: { id }, data: { status: 'LOST', notes: lead.notes ? `${lead.notes}\nDeleted via CRM` : 'Deleted via CRM' } }); await this.audit.record(identity, 'lead.deleted', 'lead', id); return { id: lead.id, deleted: true }; }
   async transition(identity: RequestIdentity, id: string, dto: TransitionLeadDto) {
     const lead = await this.find(identity, id);
-    if (!canTransitionLead(lead.status, dto.status)) throw new BadRequestException(`Transition ${lead.status} -> ${dto.status} is not allowed`);
+    validateLeadTransition(lead.status, dto.status, dto.reason);
     if (dto.status === 'QUALIFIED' && (!lead.requirement || !lead.travelDate || !lead.pax)) throw new BadRequestException('Requirement, travel date, and pax are required before qualifying a lead');
     const data: { status: LeadStatus; firstContactAt?: Date } = { status: dto.status };
     if (dto.status === 'CONTACTED') data.firstContactAt = lead.firstContactAt ?? new Date();
