@@ -1,0 +1,14 @@
+openapi: 3.1.0
+info:
+  title: Batam Travelling ERP API
+  version: 1.0.0
+paths:
+  /api/v1/customers:
+    get: { summary: List tenant customers, responses: { '200': { description: OK } } }
+    post: { summary: Create customer, responses: { '201': { description: Created }, '409': { description: Possible duplicate } } }
+  /api/v1/leads:
+    get: { summary: List tenant leads, responses: { '200': { description: OK } } }
+    post: { summary: Create lead and outbox event, responses: { '201': { description: Created } } }
+  /api/v1/leads/{id}/transition:
+    post: { summary: Apply a permitted lead-state transition, responses: { '201': { description: Updated }, '400': { description: Invalid transition } } }
+
