@@ -1,0 +1,19 @@
+{
+  "name": "batam-travelling-erp",
+  "private": true,
+  "packageManager": "pnpm@11.16.0",
+  "engines": {
+    "node": "24.x"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @batam/api dev",
+    "dev:web": "pnpm --filter @batam/web dev",
+    "build": "pnpm --filter @batam/api build && pnpm --filter @batam/web build",
+    "test": "pnpm --filter @batam/api test",
+    "lint": "pnpm --filter @batam/api lint && pnpm --filter @batam/web lint",
+    "check": "pnpm lint && pnpm test && pnpm build",
+    "db:generate": "pnpm --filter @batam/api prisma:generate",
+    "db:migrate": "pnpm --filter @batam/api prisma:migrate",
+    "db:seed": "pnpm --filter @batam/api prisma:seed"
+  }
+}

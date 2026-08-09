@@ -1,0 +1,249 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum CustomerType {
+  INDIVIDUAL
+  FAMILY
+  GROUP
+  CORPORATE
+  AGENT
+  RESELLER
+  OTHER
+}
+
+enum CustomerStatus {
+  ACTIVE
+  INACTIVE
+  BLOCKED
+  ARCHIVED
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  QUOTATION
+  NEGOTIATION
+  WON
+  LOST
+}
+
+enum LeadPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum PackageStatus {
+  DRAFT
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+}
+
+enum PriceType {
+  STANDARD
+  MANUAL
+  AUTOMATIC
+  CUSTOM
+  SEASONAL
+  TIER
+  PAX_BASED
+  SPECIAL_AGREEMENT
+}
+
+model Tenant {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  users     User[]
+  customers Customer[]
+  leads     Lead[]
+  audits    AuditLog[]
+  outbox    OutboxEvent[]
+  packages  TravelPackage[]
+  @@map("tenants")
+}
+
+model TravelPackage {
+  id                String        @id @default(uuid()) @db.Uuid
+  tenantId          String        @map("tenant_id") @db.Uuid
+  packageCode       String        @map("package_code")
+  name              String
+  category          String?
+  destination       String?
+  durationDays      Int?          @map("duration_days")
+  description       String?
+  publicDescription String?       @map("public_description")
+  internalNotes     String?       @map("internal_notes")
+  status            PackageStatus @default(DRAFT)
+  createdAt         DateTime      @default(now()) @map("created_at")
+  updatedAt         DateTime      @updatedAt @map("updated_at")
+  archivedAt        DateTime?     @map("archived_at")
+  tenant            Tenant        @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  prices            PackagePrice[]
+  @@unique([tenantId, packageCode])
+  @@index([tenantId, status])
+  @@map("packages")
+}
+
+model PackagePrice {
+  id             String      @id @default(uuid()) @db.Uuid
+  tenantId       String      @map("tenant_id") @db.Uuid
+  packageId      String      @map("package_id") @db.Uuid
+  type           PriceType
+  cost           Decimal?    @db.Decimal(18, 2)
+  sellingPrice   Decimal     @map("selling_price") @db.Decimal(18, 2)
+  paxFrom        Int?        @map("pax_from")
+  paxTo          Int?        @map("pax_to")
+  startsAt       DateTime?   @map("starts_at") @db.Date
+  endsAt         DateTime?   @map("ends_at") @db.Date
+  priority       Int         @default(0)
+  active         Boolean     @default(true)
+  createdAt      DateTime    @default(now()) @map("created_at")
+  package        TravelPackage @relation(fields: [packageId], references: [id], onDelete: Restrict)
+  @@index([tenantId, packageId, active, priority])
+  @@map("package_prices")
+}
+
+model User {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  cognitoId String?  @unique @map("cognito_id")
+  email     String
+  name      String
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  roles     UserRole[]
+  @@unique([tenantId, email])
+  @@index([tenantId])
+  @@map("users")
+}
+
+model Role {
+  id          String           @id @default(uuid()) @db.Uuid
+  tenantId    String?          @map("tenant_id") @db.Uuid
+  name        String
+  permissions RolePermission[]
+  users       UserRole[]
+  @@unique([tenantId, name])
+  @@map("roles")
+}
+
+model Permission {
+  id    String           @id @default(uuid()) @db.Uuid
+  code  String           @unique
+  roles RolePermission[]
+  @@map("permissions")
+}
+
+model UserRole {
+  userId String @map("user_id") @db.Uuid
+  roleId String @map("role_id") @db.Uuid
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role   Role   @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  @@id([userId, roleId])
+  @@map("user_roles")
+}
+
+model RolePermission {
+  roleId       String     @map("role_id") @db.Uuid
+  permissionId String     @map("permission_id") @db.Uuid
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  @@id([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+model Customer {
+  id             String         @id @default(uuid()) @db.Uuid
+  tenantId       String         @map("tenant_id") @db.Uuid
+  customerCode   String         @map("customer_code")
+  type           CustomerType   @default(INDIVIDUAL)
+  status         CustomerStatus @default(ACTIVE)
+  fullName       String         @map("full_name")
+  phone          String?
+  email          String?
+  address        String?
+  city           String?
+  country        String?        @default("ID")
+  notes          String?
+  leadSource     String?        @map("lead_source")
+  assignedUserId String?        @map("assigned_user_id") @db.Uuid
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+  archivedAt     DateTime?      @map("archived_at")
+  tenant         Tenant         @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  leads          Lead[]
+  @@unique([tenantId, customerCode])
+  @@index([tenantId, email])
+  @@index([tenantId, phone])
+  @@index([tenantId, fullName])
+  @@map("customers")
+}
+
+model Lead {
+  id             String       @id @default(uuid()) @db.Uuid
+  tenantId       String       @map("tenant_id") @db.Uuid
+  leadCode       String       @map("lead_code")
+  customerId     String       @map("customer_id") @db.Uuid
+  source         String
+  requirement    String?
+  destination    String?
+  travelDate     DateTime?    @map("travel_date") @db.Date
+  returnDate     DateTime?    @map("return_date") @db.Date
+  pax            Int?
+  estimatedValue Decimal?     @map("estimated_value") @db.Decimal(18, 2)
+  assignedUserId String?      @map("assigned_user_id") @db.Uuid
+  priority       LeadPriority @default(NORMAL)
+  status         LeadStatus   @default(NEW)
+  firstContactAt DateTime?    @map("first_contact_at")
+  notes          String?
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+  tenant         Tenant       @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  customer       Customer     @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  @@unique([tenantId, leadCode])
+  @@index([tenantId, status, assignedUserId])
+  @@map("leads")
+}
+
+model AuditLog {
+  id           String   @id @default(uuid()) @db.Uuid
+  tenantId     String   @map("tenant_id") @db.Uuid
+  actorId      String?  @map("actor_id") @db.Uuid
+  action       String
+  resourceType String   @map("resource_type")
+  resourceId   String   @map("resource_id")
+  requestId    String?  @map("request_id")
+  metadata     Json?
+  createdAt    DateTime @default(now()) @map("created_at")
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  @@index([tenantId, resourceType, resourceId])
+  @@map("audit_logs")
+}
+
+model OutboxEvent {
+  id            String   @id @default(uuid()) @db.Uuid
+  tenantId      String   @map("tenant_id") @db.Uuid
+  eventType     String   @map("event_type")
+  aggregateType String   @map("aggregate_type")
+  aggregateId   String   @map("aggregate_id")
+  payload       Json
+  occurredAt    DateTime @default(now()) @map("occurred_at")
+  publishedAt   DateTime? @map("published_at")
+  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  @@index([publishedAt, occurredAt])
+  @@map("outbox_events")
+}
