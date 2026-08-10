@@ -1,63 +1,88 @@
-import Link from 'next/link';
+﻿'use client';
 
-const payments = [
-  { id: 'PY-001', customer: 'Rina Suryani', amount: 'Rp 6.000.000', method: 'Transfer', status: 'Verified', note: 'Pembayaran masuk hari ini' },
-  { id: 'PY-002', customer: 'Budi Santoso', amount: 'Rp 3.500.000', method: 'Cash', status: 'Pending', note: 'Menunggu verifikasi kasir' },
-  { id: 'PY-003', customer: 'Dewi Lestari', amount: 'Rp 4.250.000', method: 'E-Wallet', status: 'Verified', note: 'Pembayaran disetujui otomatis' },
-];
+import { FormEvent, useEffect, useState } from 'react';
+import { apiGet, apiPatch, apiPost } from '../../../lib/api';
 
-export default function PaymentsPage() {
-  return (
-    <main style={{ minHeight: '100vh', padding: '32px', background: '#f8fafc' }}>
-      <div style={{ maxWidth: '1100px', margin: '0 auto', background: 'white', borderRadius: '24px', padding: '24px', boxShadow: '0 16px 36px rgba(15, 23, 42, 0.08)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', flexWrap: 'wrap', marginBottom: '18px' }}>
-          <div>
-            <p style={{ margin: 0, textTransform: 'uppercase', letterSpacing: '0.2em', fontSize: '12px', color: '#64748b' }}>Finance</p>
-            <h1 style={{ margin: '6px 0', fontSize: '28px' }}>Payments</h1>
-            <p style={{ margin: 0, color: '#64748b' }}>Pantau penerimaan pembayaran dan status verifikasi.</p>
-          </div>
-          <Link href="/dashboard" style={{ textDecoration: 'none', color: '#0f766e', fontWeight: 700 }}>← Kembali</Link>
-        </div>
+type InvoiceRow = { id: string; invoiceNumber: string; issuedAt: string; status: string; totalAmount: number; paidAmount: number; customer: { fullName: string }; booking: { bookingCode: string; packageName: string } };
+type P = { id: string; paymentNumber: string; receiptNumber?: string; amount: number; method: string; status: string; reference?: string; receivedAt: string; verifiedAt?: string; customer: { fullName: string }; invoice: { invoiceNumber: string }; verifiedBy?: { name: string } };
+type Brand = { documentLogoUrl?: string; contactEmail?: string; whatsappNumber?: string; contactAddress?: string };
+type Meta = { page: number; pageSize: number; total: number; totalPages: number };
+type PageResult<T> = { items: T[]; meta: Meta };
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', marginBottom: '16px' }}>
-          <div style={{ border: '1px solid #e2e8f0', borderRadius: '14px', padding: '14px' }}>
-            <div style={{ color: '#64748b', fontSize: '13px' }}>Verified</div>
-            <div style={{ fontSize: '22px', fontWeight: 800, marginTop: '4px' }}>2</div>
-          </div>
-          <div style={{ border: '1px solid #e2e8f0', borderRadius: '14px', padding: '14px' }}>
-            <div style={{ color: '#64748b', fontSize: '13px' }}>Pending</div>
-            <div style={{ fontSize: '22px', fontWeight: 800, marginTop: '4px' }}>1</div>
-          </div>
-        </div>
+const money = (n: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(n);
+const pageSizes = [12, 24, 48];
 
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ textAlign: 'left', borderBottom: '1px solid #e2e8f0' }}>
-              <th style={{ padding: '12px 10px' }}>Payment</th>
-              <th style={{ padding: '12px 10px' }}>Customer</th>
-              <th style={{ padding: '12px 10px' }}>Amount</th>
-              <th style={{ padding: '12px 10px' }}>Method</th>
-              <th style={{ padding: '12px 10px' }}>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {payments.map((payment) => (
-              <tr key={payment.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                <td style={{ padding: '12px 10px', fontWeight: 700 }}>{payment.id}</td>
-                <td style={{ padding: '12px 10px' }}>{payment.customer}</td>
-                <td style={{ padding: '12px 10px' }}>{payment.amount}</td>
-                <td style={{ padding: '12px 10px' }}>{payment.method}</td>
-                <td style={{ padding: '12px 10px' }}>
-                  <div style={{ display: 'grid', gap: '4px' }}>
-                    <span style={{ padding: '6px 10px', borderRadius: '999px', background: payment.status === 'Verified' ? '#dcfce7' : '#fef3c7', color: payment.status === 'Verified' ? '#166534' : '#92400e', fontWeight: 700, width: 'fit-content' }}>{payment.status}</span>
-                    <div style={{ color: '#64748b', fontSize: '13px' }}>{payment.note}</div>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </main>
-  );
+export default function Page() {
+  const [items, setItems] = useState<P[]>([]);
+  const [invoices, setInvoices] = useState<InvoiceRow[]>([]);
+  const [brand, setBrand] = useState<Brand>({});
+  const [receipt, setReceipt] = useState<P>();
+  const [m, setM] = useState('');
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(12);
+  const [search, setSearch] = useState('');
+  const [status, setStatus] = useState('');
+  const [meta, setMeta] = useState<Meta>({ page: 1, pageSize: 12, total: 0, totalPages: 1 });
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [invoiceSearch, setInvoiceSearch] = useState('');
+  const [invoiceFrom, setInvoiceFrom] = useState('');
+  const [invoiceTo, setInvoiceTo] = useState('');
+  const [invoiceSort, setInvoiceSort] = useState<'LATEST' | 'OLDEST' | 'VALUE_DESC'>('LATEST');
+  const [invoicePage, setInvoicePage] = useState(1);
+  const [invoicePageSize, setInvoicePageSize] = useState(12);
+  const [invoiceMeta, setInvoiceMeta] = useState<Meta>({ page: 1, pageSize: 12, total: 0, totalPages: 1 });
+  const [debouncedInvoiceSearch, setDebouncedInvoiceSearch] = useState('');
+  const [debouncedPaymentsSearch, setDebouncedPaymentsSearch] = useState('');
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search.trim()), 350);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedInvoiceSearch(invoiceSearch.trim()), 350);
+    return () => clearTimeout(t);
+  }, [invoiceSearch]);
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedPaymentsSearch(search.trim()), 350);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  const load = async () => {
+    try {
+      const [a, b, c] = await Promise.all([
+        apiGet<PageResult<P>>(`/payments?page=${page}&pageSize=${pageSize}&search=${encodeURIComponent(debouncedPaymentsSearch)}&status=${encodeURIComponent(status)}`),
+        apiGet<PageResult<InvoiceRow>>(`/invoices?page=${invoicePage}&pageSize=${invoicePageSize}&search=${encodeURIComponent(debouncedInvoiceSearch)}&sort=${invoiceSort}${invoiceFrom ? `&from=${encodeURIComponent(invoiceFrom)}` : ''}${invoiceTo ? `&to=${encodeURIComponent(invoiceTo)}` : ''}`),
+        apiGet<Brand>('/public/company-profile'),
+      ]);
+      setItems(a.items);
+      setMeta(a.meta);
+      setInvoices(b.items);
+      setInvoiceMeta(b.meta);
+      setBrand(c || {});
+      if (page > a.meta.totalPages) setPage(a.meta.totalPages);
+      if (invoicePage > b.meta.totalPages) setInvoicePage(b.meta.totalPages);
+    } catch (e) {
+      setM((e as Error).message);
+    }
+  };
+
+  useEffect(() => { load(); }, [page, pageSize, debouncedPaymentsSearch, status, invoicePage, invoicePageSize, debouncedInvoiceSearch, invoiceFrom, invoiceTo, invoiceSort]);
+
+  async function submit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const f = new FormData(e.currentTarget);
+    try {
+      await apiPost('/payments', { invoiceId: f.get('invoiceId'), amount: Number(f.get('amount')), method: f.get('method'), reference: f.get('reference') || undefined });
+      e.currentTarget.reset();
+      await load();
+    } catch (x) {
+      setM((x as Error).message);
+    }
+  }
+
+  const print = (x: P) => { setReceipt(x); setTimeout(() => window.print(), 50); };
+
+  return <main className="modulePage"><div className="moduleHeading"><div><p>FINANCE</p><h1>Payment & Verification</h1><span>Bukti pembayaran otomatis tersedia setelah transaksi diverifikasi.</span></div></div><form className="moduleForm" onSubmit={submit}><select name="invoiceId" required><option value="">Pilih invoice</option>{invoices.filter(x => Number(x.paidAmount) < Number(x.totalAmount)).map(x => <option key={x.id} value={x.id}>{x.invoiceNumber} · {x.customer.fullName} · {money(Number(x.totalAmount) - Number(x.paidAmount))}</option>)}</select><input name="amount" type="number" min="1" placeholder="Jumlah" required /><select name="method"><option>BANK_TRANSFER</option><option>CASH</option><option>QRIS</option></select><input name="reference" placeholder="Referensi" /><button className="primary">Catat payment</button></form>{m && <p className="errorText">{m}</p>}<div className="crmToolbar"><input value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); setInvoicePage(1); }} placeholder="Cari payment / invoice / customer..." /><select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }}><option value="">Semua status</option><option value="PENDING">PENDING</option><option value="APPROVED">APPROVED</option><option value="PAID">PAID</option><option value="FAILED">FAILED</option><option value="CANCELLED">CANCELLED</option></select><select value={pageSize} onChange={(e) => setPageSize(Number(e.target.value))}>{pageSizes.map((n) => <option key={n} value={n}>{n} / halaman</option>)}</select><b>{meta.total} payment</b></div><div className="dataTable"><div className="tableRow tableHead"><span>Payment</span><span>Invoice / Customer</span><span>Nilai</span><span>Status / Dokumen</span></div>{items.map(x => <div className="tableRow" key={x.id}><span><b>{x.paymentNumber}</b><small>{x.receiptNumber || new Date(x.receivedAt).toLocaleString('id-ID')}</small></span><span>{x.invoice.invoiceNumber}<small>{x.customer.fullName} · {x.method}</small></span><span>{money(Number(x.amount))}</span><span>{x.status === 'PENDING' ? <span style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}><button type="button" onClick={async () => { await apiPatch(`/payments/${x.id}/verify`, { status: 'VERIFIED' }); await load(); }}>Verifikasi</button><button type="button" onClick={async () => { await apiPatch(`/payments/${x.id}/verify`, { status: 'REJECTED' }); await load(); }}>Tolak</button></span> : <><b>{x.status}</b>{x.status === 'VERIFIED' && <button type="button" className="receiptButton" onClick={() => print(x)}>Print Bukti</button>}</>}</span></div>)}</div><div className="paginationBar"><button type="button" onClick={() => setPage((v) => Math.max(1, v - 1))} disabled={meta.page === 1}>Prev</button><span>Page {meta.page} of {meta.totalPages}</span><button type="button" onClick={() => setPage((v) => Math.min(meta.totalPages, v + 1))} disabled={meta.page === meta.totalPages}>Next</button></div><section className="reportPage" style={{ marginTop: '24px' }}><div className="reportHero noPrint"><div><span>INVOICE FILTER</span><h1>Filter Invoice Berdasarkan Tanggal</h1><p>Gunakan rentang tanggal untuk menemukan invoice lebih cepat dan lebih presisi.</p></div></div><div className="reportFilters noPrint"><label>Cari Invoice<input value={invoiceSearch} onChange={(e) => { setInvoiceSearch(e.target.value); setInvoicePage(1); }} placeholder="Nomor invoice, booking, customer..." /></label><label>Dari tanggal<input type="date" value={invoiceFrom} onChange={(e) => { setInvoiceFrom(e.target.value); setInvoicePage(1); }} /></label><label>Sampai tanggal<input type="date" value={invoiceTo} onChange={(e) => { setInvoiceTo(e.target.value); setInvoicePage(1); }} /></label><label>Urutkan<select value={invoiceSort} onChange={(e) => { setInvoiceSort(e.target.value as typeof invoiceSort); setInvoicePage(1); }}><option value="LATEST">Terbaru</option><option value="OLDEST">Terlama</option><option value="VALUE_DESC">Nilai terbesar</option></select></label><label>Invoice/halaman<select value={invoicePageSize} onChange={(e) => { setInvoicePageSize(Number(e.target.value)); setInvoicePage(1); }}>{pageSizes.map((n) => <option key={n} value={n}>{n}</option>)}</select></label></div><section className="ownerMetrics"><article><span>Total invoice</span><strong>{invoiceMeta.total}</strong></article><article><span>Nilai tagihan</span><strong>{money(invoices.reduce((s, x) => s + Number(x.totalAmount), 0))}</strong></article><article><span>Terbayar</span><strong>{money(invoices.reduce((s, x) => s + Number(x.paidAmount), 0))}</strong></article><article><span>Outstanding</span><strong>{money(invoices.reduce((s, x) => s + Number(x.totalAmount) - Number(x.paidAmount), 0))}</strong></article></section><div className="dataTable"><div className="tableRow tableHead"><span>Invoice</span><span>Customer / Booking</span><span>Nilai</span><span>Status</span></div>{invoices.map(x => <div className="tableRow" key={x.id}><span><b>{x.invoiceNumber}</b><small>Terbit {new Date(x.issuedAt).toLocaleDateString('id-ID')}</small></span><span>{x.customer.fullName}<small>{x.booking.bookingCode} · {x.booking.packageName}</small></span><span>{money(Number(x.totalAmount))}<small>Outstanding {money(Number(x.totalAmount) - Number(x.paidAmount))}</small></span><span>{x.status}</span></div>)}</div><div className="paginationBar"><button type="button" onClick={() => setInvoicePage((v) => Math.max(1, v - 1))} disabled={invoiceMeta.page === 1}>Prev</button><span>Page {invoiceMeta.page} of {invoiceMeta.totalPages}</span><button type="button" onClick={() => setInvoicePage((v) => Math.min(invoiceMeta.totalPages, v + 1))} disabled={invoiceMeta.page === invoiceMeta.totalPages}>Next</button></div></section>{receipt && <section className="paymentReceipt"><header>{brand.documentLogoUrl ? <img src={brand.documentLogoUrl} alt="Logo" /> : <strong>BATAM TRAVELLING</strong>}<div><h1>BUKTI PEMBAYARAN</h1><b>{receipt.receiptNumber}</b></div></header><div className="receiptMeta"><p><span>Diterima dari</span><b>{receipt.customer.fullName}</b></p><p><span>Nomor invoice</span><b>{receipt.invoice.invoiceNumber}</b></p><p><span>Tanggal</span><b>{new Date(receipt.verifiedAt || receipt.receivedAt).toLocaleString('id-ID')}</b></p><p><span>Metode</span><b>{receipt.method}</b></p><p><span>Referensi</span><b>{receipt.reference || '—'}</b></p></div><div className="receiptAmount"><span>Jumlah diterima</span><strong>{money(Number(receipt.amount))}</strong></div><footer><p>Pembayaran telah diverifikasi dan tercatat dalam sistem.</p><small>{brand.contactAddress} · {brand.contactEmail} · WhatsApp +{brand.whatsappNumber}</small></footer></section>}</main>;
 }
