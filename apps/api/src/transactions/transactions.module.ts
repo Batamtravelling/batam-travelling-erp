@@ -61,13 +61,34 @@ import { ConfirmBookingDto, CreateBookingDto, CreatePaymentDto, VerifyPaymentDto
       return tx.booking.findUniqueOrThrow({where:{id:booking.id},include:{customer:true,invoice:true,departure:true}})
     })
   }
-  listInvoices(i:RequestIdentity){return this.prisma.invoice.findMany({where:{tenantId:i.tenantId},include:{customer:{select:{id:true,fullName:true}},booking:{select:{bookingCode:true,packageName:true}},payments:true},orderBy:{issuedAt:'desc'}})}
+  async listInvoices(i:RequestIdentity, query: { page?: number; pageSize?: number; search?: string; sort?: string } = {}) {
+    const page = Math.max(1, Number(query.page || 1));
+    const pageSize = Math.max(1, Math.min(100, Number(query.pageSize || 12)));
+    const search = String(query.search || '').trim();
+    const orderBy = query.sort === 'OLDEST' ? { issuedAt: 'asc' as const } : query.sort === 'VALUE_DESC' ? { totalAmount: 'desc' as const } : { issuedAt: 'desc' as const };
+    const where = {
+      tenantId: i.tenantId,
+      ...(search ? {
+        OR: [
+          { invoiceNumber: { contains: search, mode: 'insensitive' as const } },
+          { customer: { fullName: { contains: search, mode: 'insensitive' as const } } },
+          { booking: { bookingCode: { contains: search, mode: 'insensitive' as const } } },
+          { booking: { packageName: { contains: search, mode: 'insensitive' as const } } },
+        ],
+      } : {}),
+    };
+    const [total, items] = await Promise.all([
+      this.prisma.invoice.count({ where }),
+      this.prisma.invoice.findMany({ where, include: { customer: { select: { id: true, fullName: true } }, booking: { select: { bookingCode: true, packageName: true } }, payments: true }, orderBy, skip: (page - 1) * pageSize, take: pageSize }),
+    ]);
+    return { items, meta: { page, pageSize, total, totalPages: Math.max(1, Math.ceil(total / pageSize)) } };
+  }
   async confirmBooking(i:RequestIdentity,id:string,d:ConfirmBookingDto){const booking=await this.prisma.booking.findFirst({where:{id,tenantId:i.tenantId},include:{trip:true}});if(!booking)throw new NotFoundException('Booking tidak ditemukan');if(booking.trip)throw new BadRequestException('Booking sudah memiliki Trip');if(['CANCELLED','REFUNDED'].includes(booking.status))throw new BadRequestException('Booking batal/refund tidak dapat dikonfirmasi');if(booking.status==='CONFIRMED')return booking;return this.prisma.booking.update({where:{id},data:{status:'CONFIRMED',notes:[booking.notes,`Konfirmasi manual oleh ${i.userId}: ${d.reason}`].filter(Boolean).join('\n')}})}
   listPayments(i:RequestIdentity){return this.prisma.payment.findMany({where:{tenantId:i.tenantId},include:{customer:{select:{fullName:true}},invoice:{select:{invoiceNumber:true}},receivedBy:{select:{name:true}},verifiedBy:{select:{name:true}}},orderBy:{receivedAt:'desc'}})}
   async createPayment(i:RequestIdentity,d:CreatePaymentDto){const invoice=await this.prisma.invoice.findFirst({where:{id:d.invoiceId,tenantId:i.tenantId}});if(!invoice)throw new NotFoundException('Invoice tidak ditemukan');if(d.amount>Number(invoice.totalAmount)-Number(invoice.paidAmount))throw new BadRequestException('Pembayaran melebihi outstanding invoice');const n=await this.prisma.payment.count({where:{tenantId:i.tenantId}})+1;return this.prisma.payment.create({data:{tenantId:i.tenantId,paymentNumber:`PAY-${String(n).padStart(6,'0')}`,invoiceId:invoice.id,customerId:invoice.customerId,amount:d.amount,method:d.method,reference:d.reference,notes:d.notes,receivedById:i.userId}})}
   async verifyPayment(i:RequestIdentity,id:string,d:VerifyPaymentDto){if(d.status==='PENDING')throw new BadRequestException('Verifikasi harus VERIFIED atau REJECTED');return this.prisma.$transaction(async tx=>{const payment=await tx.payment.findFirst({where:{id,tenantId:i.tenantId}});if(!payment)throw new NotFoundException('Payment tidak ditemukan');if(payment.status!=='PENDING')throw new BadRequestException('Payment sudah diverifikasi');const updated=await tx.payment.update({where:{id},data:{status:d.status,verifiedById:i.userId,verifiedAt:new Date(),receiptNumber:d.status==='VERIFIED'?`RCT-${payment.paymentNumber.slice(4)}`:undefined}});if(d.status==='VERIFIED'){const invoice=await tx.invoice.findUniqueOrThrow({where:{id:payment.invoiceId}});const result=await tx.payment.aggregate({_sum:{amount:true},where:{invoiceId:invoice.id,status:'VERIFIED'}});const paid=Number(result._sum.amount??0),total=Number(invoice.totalAmount);await tx.invoice.update({where:{id:invoice.id},data:{paidAmount:paid,status:paid>=total?'PAID':'PARTIALLY_PAID'}});await tx.booking.update({where:{id:invoice.bookingId},data:{paidAmount:paid,status:paid>=total?'CONFIRMED':'PARTIALLY_PAID'}})}return updated})}
 }
 @UseGuards(IdentityGuard,PermissionGuard) @Controller('bookings') class BookingsController{constructor(@Inject(TransactionsService)private readonly s:TransactionsService){}@Get()@Permissions('booking.read')list(@CurrentIdentity()i:RequestIdentity,@Query('page')page?:string,@Query('pageSize')pageSize?:string,@Query('search')search?:string,@Query('status')status?:string){return this.s.listBookings(i,{page:page?Number(page):undefined,pageSize:pageSize?Number(pageSize):undefined,search,status})}@Post()@Permissions('booking.manage')create(@CurrentIdentity()i:RequestIdentity,@Body()d:CreateBookingDto){return this.s.createBooking(i,d)}@Patch(':id/confirm')@Permissions('booking.manage')confirm(@CurrentIdentity()i:RequestIdentity,@Param('id')id:string,@Body()d:ConfirmBookingDto){return this.s.confirmBooking(i,id,d)}}
-@UseGuards(IdentityGuard,PermissionGuard) @Controller('invoices') class InvoicesController{constructor(@Inject(TransactionsService)private readonly s:TransactionsService){}@Get()@Permissions('invoice.read')list(@CurrentIdentity()i:RequestIdentity){return this.s.listInvoices(i)}}
+@UseGuards(IdentityGuard,PermissionGuard) @Controller('invoices') class InvoicesController{constructor(@Inject(TransactionsService)private readonly s:TransactionsService){}@Get()@Permissions('invoice.read')list(@CurrentIdentity()i:RequestIdentity,@Query('page')page?:string,@Query('pageSize')pageSize?:string,@Query('search')search?:string,@Query('sort')sort?:string){return this.s.listInvoices(i,{page:page?Number(page):undefined,pageSize:pageSize?Number(pageSize):undefined,search,sort})}}
 @UseGuards(IdentityGuard,PermissionGuard) @Controller('payments') class PaymentsController{constructor(@Inject(TransactionsService)private readonly s:TransactionsService){}@Get()@Permissions('payment.read')list(@CurrentIdentity()i:RequestIdentity){return this.s.listPayments(i)}@Post()@Permissions('payment.manage')create(@CurrentIdentity()i:RequestIdentity,@Body()d:CreatePaymentDto){return this.s.createPayment(i,d)}@Patch(':id/verify')@Permissions('payment.verify')verify(@CurrentIdentity()i:RequestIdentity,@Param('id')id:string,@Body()d:VerifyPaymentDto){return this.s.verifyPayment(i,id,d)}}
 @Module({controllers:[BookingsController,InvoicesController,PaymentsController],providers:[TransactionsService,PrismaService,IdentityGuard,PermissionGuard]})export class TransactionsModule{}

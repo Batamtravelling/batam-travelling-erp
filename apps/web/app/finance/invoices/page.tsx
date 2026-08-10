@@ -1,64 +1,60 @@
-import Link from 'next/link';
+﻿'use client';
 
-const invoices = [
-  { code: 'INV-001', customer: 'Rina Suryani', amount: 'Rp 12.000.000', issued: '2026-08-01', status: 'Paid' },
-  { code: 'INV-002', customer: 'Budi Santoso', amount: 'Rp 8.500.000', issued: '2026-08-05', status: 'Outstanding' },
-  { code: 'INV-003', customer: 'Dewi Lestari', amount: 'Rp 15.750.000', issued: '2026-08-08', status: 'Pending' },
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import { apiGet } from '../../../lib/api';
+
+type I = { id: string; invoiceNumber: string; status: string; issuedAt: string; totalAmount: number; paidAmount: number; customer: { fullName: string }; booking: { bookingCode: string; packageName: string } };
+type Meta = { page: number; pageSize: number; total: number; totalPages: number };
+type PageResult<T> = { items: T[]; meta: Meta };
+const money = (n: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(n);
+const sortOptions = [
+  { value: 'LATEST', label: 'Terbaru' },
+  { value: 'OLDEST', label: 'Terlama' },
+  { value: 'VALUE_DESC', label: 'Nilai terbesar' },
 ];
 
-export default function InvoicesPage() {
+export default function Page() {
+  const [items, setItems] = useState<I[]>([]);
+  const [meta, setMeta] = useState<Meta>({ page: 1, pageSize: 12, total: 0, totalPages: 1 });
+  const [m, setM] = useState('');
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(12);
+  const [search, setSearch] = useState('');
+  const [sort, setSort] = useState<'LATEST' | 'OLDEST' | 'VALUE_DESC'>('LATEST');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search.trim()), 350);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  useEffect(() => {
+    apiGet<PageResult<I>>(`/invoices?page=${page}&pageSize=${pageSize}&search=${encodeURIComponent(debouncedSearch)}&sort=${sort}`)
+      .then((res) => { setItems(res.items); setMeta(res.meta); if (page > res.meta.totalPages) setPage(res.meta.totalPages); })
+      .catch((e) => setM(e.message));
+  }, [page, pageSize, debouncedSearch, sort]);
+
+  const total = meta.total;
+  const totalAmount = items.reduce((s, x) => s + Number(x.totalAmount), 0);
+  const paid = items.reduce((s, x) => s + Number(x.paidAmount), 0);
+
   return (
-    <main style={{ minHeight: '100vh', padding: '32px', background: '#f8fafc' }}>
-      <div style={{ maxWidth: '1100px', margin: '0 auto', background: 'white', borderRadius: '24px', padding: '24px', boxShadow: '0 16px 36px rgba(15, 23, 42, 0.08)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', flexWrap: 'wrap', marginBottom: '18px' }}>
-          <div>
-            <p style={{ margin: 0, textTransform: 'uppercase', letterSpacing: '0.2em', fontSize: '12px', color: '#64748b' }}>Finance</p>
-            <h1 style={{ margin: '6px 0', fontSize: '28px' }}>Invoices</h1>
-            <p style={{ margin: 0, color: '#64748b' }}>Pantau tagihan pelanggan dan status pembayaran.</p>
-          </div>
-          <Link href="/dashboard" style={{ textDecoration: 'none', color: '#0f766e', fontWeight: 700 }}>← Kembali</Link>
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', marginBottom: '16px' }}>
-          <div style={{ border: '1px solid #e2e8f0', borderRadius: '14px', padding: '14px' }}>
-            <div style={{ color: '#64748b', fontSize: '13px' }}>Total invoice</div>
-            <div style={{ fontSize: '22px', fontWeight: 800, marginTop: '4px' }}>3</div>
-          </div>
-          <div style={{ border: '1px solid #e2e8f0', borderRadius: '14px', padding: '14px' }}>
-            <div style={{ color: '#64748b', fontSize: '13px' }}>Paid</div>
-            <div style={{ fontSize: '22px', fontWeight: 800, marginTop: '4px' }}>1</div>
-          </div>
-          <div style={{ border: '1px solid #e2e8f0', borderRadius: '14px', padding: '14px' }}>
-            <div style={{ color: '#64748b', fontSize: '13px' }}>Outstanding</div>
-            <div style={{ fontSize: '22px', fontWeight: 800, marginTop: '4px' }}>1</div>
-          </div>
-        </div>
-
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ textAlign: 'left', borderBottom: '1px solid #e2e8f0' }}>
-              <th style={{ padding: '12px 10px' }}>Invoice</th>
-              <th style={{ padding: '12px 10px' }}>Customer</th>
-              <th style={{ padding: '12px 10px' }}>Amount</th>
-              <th style={{ padding: '12px 10px' }}>Issued</th>
-              <th style={{ padding: '12px 10px' }}>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {invoices.map((invoice) => (
-              <tr key={invoice.code} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                <td style={{ padding: '12px 10px', fontWeight: 700 }}>{invoice.code}</td>
-                <td style={{ padding: '12px 10px' }}>{invoice.customer}</td>
-                <td style={{ padding: '12px 10px' }}>{invoice.amount}</td>
-                <td style={{ padding: '12px 10px', color: '#64748b' }}>{invoice.issued}</td>
-                <td style={{ padding: '12px 10px' }}>
-                  <span style={{ padding: '6px 10px', borderRadius: '999px', background: invoice.status === 'Paid' ? '#dcfce7' : invoice.status === 'Outstanding' ? '#fef3c7' : '#e0f2fe', color: invoice.status === 'Paid' ? '#166534' : invoice.status === 'Outstanding' ? '#92400e' : '#075985', fontWeight: 700 }}>{invoice.status}</span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+    <main className="modulePage">
+      <div className="moduleHeading"><div><p>FINANCE</p><h1>Invoice</h1><span>Invoice diterbitkan otomatis dari booking dan tidak diedit langsung.</span></div><Link href="/finance/payments">Catat pembayaran →</Link></div>
+      <div className="crmToolbar">
+        <input value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} placeholder="Cari invoice, booking, customer..." />
+        <select value={sort} onChange={(e) => setSort(e.target.value as typeof sort)}>{sortOptions.map((x) => <option key={x.value} value={x.value}>{x.label}</option>)}</select>
+        <select value={pageSize} onChange={(e) => setPageSize(Number(e.target.value))}>{[12, 24, 48].map((n) => <option key={n} value={n}>{n} / halaman</option>)}</select>
+        <b>{total} invoice</b>
       </div>
+      {m && <p className="errorText">{m}</p>}
+      <section className="ownerMetrics"><article><span>Total invoice</span><strong>{meta.total}</strong></article><article><span>Nilai tagihan</span><strong>{money(totalAmount)}</strong></article><article><span>Terbayar</span><strong>{money(paid)}</strong></article><article><span>Outstanding</span><strong>{money(totalAmount - paid)}</strong></article></section>
+      <div className="dataTable">
+        <div className="tableRow tableHead"><span>Invoice</span><span>Customer / Booking</span><span>Nilai</span><span>Status</span></div>
+        {items.map((x) => <div className="tableRow" key={x.id}><span><b>{x.invoiceNumber}</b><small>Terbit {new Date(x.issuedAt).toLocaleDateString('id-ID')}</small></span><span>{x.customer.fullName}<small>{x.booking.bookingCode} · {x.booking.packageName}</small></span><span>{money(Number(x.totalAmount))}<small>Outstanding {money(Number(x.totalAmount) - Number(x.paidAmount))}</small></span><span>{x.status}</span></div>)}
+      </div>
+      <div className="paginationBar"><button type="button" onClick={() => setPage((v) => Math.max(1, v - 1))} disabled={meta.page === 1}>Prev</button><span>Page {meta.page} of {meta.totalPages}</span><button type="button" onClick={() => setPage((v) => Math.min(meta.totalPages, v + 1))} disabled={meta.page === meta.totalPages}>Next</button></div>
     </main>
   );
 }
