@@ -6,7 +6,6 @@ import { useEffect, useState } from 'react';
 import { apiGet } from '../lib/api';
 import { PackageRequirementsPanel } from './package-requirements-panel';
 import { PackageAddonsPanel } from './package-addons-panel';
-import { WhatsAppCustomerIntake } from './whatsapp-customer-intake';
 import { TripBookingConfirmation } from './trip-booking-confirmation';
 
 const navItems = [
@@ -75,7 +74,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
       </aside>
-      <div style={{ flex: 1, minWidth: 0 }}>{pathname==='/crm/customers'&&<WhatsAppCustomerIntake/>}{pathname==='/operations/trips'&&<TripBookingConfirmation/>}{pathname?.startsWith('/packages')&&<><PackageRequirementsPanel/><PackageAddonsPanel/></>}{children}</div>
+      <div style={{ flex: 1, minWidth: 0 }}>{pathname==='/operations/trips'&&<TripBookingConfirmation/>}{pathname?.startsWith('/packages')&&<><PackageRequirementsPanel/><PackageAddonsPanel/></>}{children}</div>
     </div>
   );
 }
