@@ -13,6 +13,7 @@ type Profile = {
   websiteLogoUrl?: string;
   erpLogoUrl?: string;
   documentLogoUrl?: string;
+  homepageSections?: string;
   heroTitle?: string;
   heroSubtitle?: string;
   heroImageUrl?: string;
@@ -71,7 +72,7 @@ export default function SettingsPage() {
         next[`${key}Url` as keyof Profile] = media.url;
       }
     }
-    for (const key of ['heroTitle', 'heroSubtitle', 'heroImageUrl', 'heroBadge', 'heroCtaPrimary', 'heroCtaSecondary', 'featureHeadline', 'featureText', 'howToBookTitle', 'howToBookText', 'aboutTitle', 'aboutText', 'whatsappNumber', 'whatsappNumberSecondary', 'contactEmail', 'contactAddress', 'contactHours', 'instagramUrl', 'facebookUrl', 'tiktokUrl', 'youtubeUrl'] as const) {
+    for (const key of ['homepageSections', 'heroTitle', 'heroSubtitle', 'heroImageUrl', 'heroBadge', 'heroCtaPrimary', 'heroCtaSecondary', 'featureHeadline', 'featureText', 'howToBookTitle', 'howToBookText', 'aboutTitle', 'aboutText', 'whatsappNumber', 'whatsappNumberSecondary', 'contactEmail', 'contactAddress', 'contactHours', 'instagramUrl', 'facebookUrl', 'tiktokUrl', 'youtubeUrl'] as const) {
       next[key] = String(f.get(key) || '');
     }
     await apiPatch('/asset-knowledge/profile', next);
@@ -90,6 +91,11 @@ export default function SettingsPage() {
         <section>
           <h2>Konten halaman Index</h2>
           <div className="contactSettings">
+            <label className="full">
+              Section aktif
+              <input name="homepageSections" defaultValue={p.homepageSections} placeholder="hero,highlights,tickets,trips,demo,how-to-book,about" />
+              <small>Pisahkan dengan koma. Kosongkan untuk memakai default.</small>
+            </label>
             <label className="full">
               Hero title
               <textarea name="heroTitle" defaultValue={p.heroTitle} placeholder={'Liburan terbaik\ndimulai dari Batam.'} />

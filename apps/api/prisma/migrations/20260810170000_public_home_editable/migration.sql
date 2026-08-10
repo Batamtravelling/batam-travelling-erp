@@ -10,7 +10,8 @@ ADD COLUMN "feature_text" TEXT,
 ADD COLUMN "how_to_book_title" TEXT,
 ADD COLUMN "how_to_book_text" TEXT,
 ADD COLUMN "about_title" TEXT,
-ADD COLUMN "about_text" TEXT;
+ADD COLUMN "about_text" TEXT,
+ADD COLUMN "homepage_sections" TEXT;
 
 ALTER TABLE "company_profiles"
 ADD COLUMN "whatsapp_number_secondary" TEXT,

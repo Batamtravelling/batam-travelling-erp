@@ -720,6 +720,7 @@ model CompanyProfile {
   websiteLogoUrl String? @map("website_logo_url")
   erpLogoUrl String? @map("erp_logo_url")
   documentLogoUrl String? @map("document_logo_url")
+  homepageSections String? @map("homepage_sections")
   whatsappNumber String? @map("whatsapp_number")
   whatsappNumberSecondary String? @map("whatsapp_number_secondary")
   contactEmail String? @map("contact_email")

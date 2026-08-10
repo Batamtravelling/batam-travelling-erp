@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { apiGet, apiPost } from '../lib/api';
 import { WebsiteHighlights } from './website-highlights';
-type BrandProfile = { heroTitle?: string; heroSubtitle?: string; heroImageUrl?: string; heroBadge?: string; heroCtaPrimary?: string; heroCtaSecondary?: string; featureHeadline?: string; featureText?: string; howToBookTitle?: string; howToBookText?: string; aboutTitle?: string; aboutText?: string; whatsappNumber?: string; whatsappNumberSecondary?: string; instagramUrl?: string; facebookUrl?: string; tiktokUrl?: string; youtubeUrl?: string };
+type BrandProfile = { homepageSections?: string; heroTitle?: string; heroSubtitle?: string; heroImageUrl?: string; heroBadge?: string; heroCtaPrimary?: string; heroCtaSecondary?: string; featureHeadline?: string; featureText?: string; howToBookTitle?: string; howToBookText?: string; aboutTitle?: string; aboutText?: string; whatsappNumber?: string; whatsappNumberSecondary?: string; instagramUrl?: string; facebookUrl?: string; tiktokUrl?: string; youtubeUrl?: string };
 
 type Component = { type: string; name: string; provider?: string; quantity: string; unit?: string; notes?: string; included: boolean };
 type Itinerary = { dayNumber: number; time?: string; title: string; location?: string; description?: string; duration?: string; notes?: string; included: boolean };
@@ -53,6 +53,7 @@ export function PublicHome() {
 
   const shown = packs.length ? packs.slice(0, 12) : DEMO_PACKS;
   const heroLines = (brand.heroTitle || 'Liburan terbaik\ndimulai dari Batam.').split(/\r?\n/);
+  const activeSections = new Set((brand.homepageSections || 'hero,highlights,tickets,trips,demo,how-to-book,about').split(',').map((x) => x.trim()).filter(Boolean));
   const destinations = useMemo(() => {
     if (!selected) return [];
     const explicit = lines(selected.visitedDestinations);
@@ -92,7 +93,7 @@ export function PublicHome() {
 
   return (
     <main className="publicSite">
-      <section className="publicHero">
+      {activeSections.has('hero') && <section className="publicHero">
         <div>
           <p>YOUR JOURNEY, BEAUTIFULLY PLANNED</p>
           <h1>{heroLines.map((line, i) => <span key={i}>{line}{i < heroLines.length - 1 ? <br /> : null}</span>)}</h1>
@@ -104,31 +105,31 @@ export function PublicHome() {
           <div className="heroScene" style={brand.heroImageUrl ? { backgroundImage: `linear-gradient(155deg,#1174df 0 34%,#0b4e98 34% 56%,#071d3a 56% 75%,#ffd524 75%), url(${brand.heroImageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}><span>{brand.heroBadge || 'BERANGKAT DARI BATAM'}</span><b>Perjalanan modern<br />yang terasa effortless</b><i>{brand.featureText || 'Booking lebih cepat, koordinasi lebih rapi, dan pengalaman pelanggan lebih nyaman'}</i></div>
           <article><span>Trip terencana</span><b>100%</b><small>Tim lokal & itinerary transparan</small></article>
         </aside>
-      </section>
+      </section>}
 
-      <WebsiteHighlights onSelect={(id) => { const p = packs.find((x) => x.id === id); if (p) open(p); }} />
+      {activeSections.has('highlights') && <WebsiteHighlights onSelect={(id) => { const p = packs.find((x) => x.id === id); if (p) open(p); }} />}
 
-      <section className="publicTrust" id="tickets">
+      {activeSections.has('tickets') && <section className="publicTrust" id="tickets">
         <span>⛴ Tiket Ferry</span><span>🚐 Transportasi</span><span>🏨 Hotel Terpilih</span><span>🧑‍✈️ Tour Guide</span><span>🗺 Custom Itinerary</span>
-      </section>
+      </section>}
 
-      <section className="publicTrips" id="trips">
+      {activeSections.has('trips') && <section className="publicTrips" id="trips">
         <header><div><p>CURATED JOURNEYS</p><h2>Pilih perjalananmu</h2></div><span>Bandingkan destinasi, itinerary, dan harga dengan tampilan yang mudah dibaca.</span></header>
         <div>{shown.map((p, i) => <article key={`${p.id}-${i}`}><div className={`tripVisual visual${i % 3 + 1}`} style={p.gallery[0] ? { backgroundImage: `linear-gradient(#001b3f55,#001b3faa),url(${p.gallery[0].imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}><small>{p.destination}</small><b>{p.durationDays}D{p.durationDays > 1 ? `${p.durationDays - 1}N` : ''}</b></div><section><span>{p.departures.length ? 'OPEN TRIP' : p.kind || 'PRIVATE / CUSTOM'}</span><h3>{p.name}</h3><p>{p.publicDescription || p.description}</p><div><b>{money(p.prices[0]?.sellingPrice)}</b><small>{p.minPax}—{p.maxPax || '∞'} peserta</small></div><button disabled={!p.id} onClick={() => open(p)}>{p.id ? 'Lihat detail paket →' : 'Segera tersedia'}</button></section></article>)}</div>
-      </section>
+      </section>}
 
-      <section className="publicTrips" id="demo-preview">
+      {activeSections.has('demo') && <section className="publicTrips" id="demo-preview">
         <header><div><p>DEMO PREVIEW</p><h2>{brand.featureHeadline || 'Template preview nyata'}</h2></div><span>{brand.featureText || 'Contoh tampilan siap pakai saat data backend belum lengkap.'}</span></header>
         <div>{DEMO_PACKS.map((p, i) => <article key={p.id}><div className={`tripVisual visual${i + 1}`}><small>{p.destination}</small><b>{p.durationDays}D</b></div><section><span>PREVIEW TEMPLATE</span><h3>{p.name}</h3><p>{p.publicDescription}</p><div><b>{money(p.prices[0]?.sellingPrice)}</b><small>{p.minPax}—{p.maxPax} peserta</small></div><button onClick={() => open(p)}>Buka Preview</button></section></article>)}</div>
-      </section>
+      </section>}
 
-      <section className="publicServices" id="how-to-book">
+      {activeSections.has('how-to-book') && <section className="publicServices" id="how-to-book">
         <header><p>HOW TO BOOK</p><h2>{brand.howToBookTitle || 'Booking perjalanan dibuat lebih ringkas'}</h2></header>
         <div className="publicServiceIntro">{brand.howToBookText || 'Lihat detail, pilih jadwal, isi data, lalu siap berangkat.'}</div>
         <div>{[['01', 'Buka Detail', 'Lihat rute, fasilitas, dan jadwal dengan jelas.'], ['02', 'Pilih Jadwal', 'Pilih Open Trip atau tanggal private trip.'], ['03', 'Isi Data', 'Lengkapi data singkat lalu lanjut konfirmasi.'], ['04', 'Siap Berangkat', 'Semua detail perjalanan tersimpan di akun Anda.']].map((x) => <article key={x[0]}><i>{x[0]}</i><h3>{x[1]}</h3><p>{x[2]}</p></article>)}</div>
-      </section>
+      </section>}
 
-      <section className="publicAbout" id="about"><div><p>ABOUT BATAM TRAVELLING</p><h2>{brand.aboutTitle || 'Perjalanan yang tertata, pengalaman yang terasa premium.'}</h2></div><div><p>{brand.aboutText || 'Kami membantu keluarga, komunitas, dan perusahaan menikmati perjalanan yang lebih mudah dipahami, lebih cepat dipesan, dan lebih nyaman dijalankan.'}</p><Link href="/articles">Cerita perjalanan kami →</Link></div></section>
+      {activeSections.has('about') && <section className="publicAbout" id="about"><div><p>ABOUT BATAM TRAVELLING</p><h2>{brand.aboutTitle || 'Perjalanan yang tertata, pengalaman yang terasa premium.'}</h2></div><div><p>{brand.aboutText || 'Kami membantu keluarga, komunitas, dan perusahaan menikmati perjalanan yang lebih mudah dipahami, lebih cepat dipesan, dan lebih nyaman dijalankan.'}</p><Link href="/articles">Cerita perjalanan kami →</Link></div></section>}
 
       <footer className="publicFooter" id="contact"><div className="publicLogo"><i>BT</i><span>BATAM<br /><b>TRAVELLING</b></span></div><p>© 2026 Batam Travelling.</p><div><Link href="/#how-to-book">Cara Booking</Link><Link href="/articles">Artikel</Link><Link href="/promotions">Promo</Link><Link href="/terms">Syarat & Ketentuan</Link><Link href="/contact">Kontak</Link></div></footer>
 
