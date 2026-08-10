@@ -4,6 +4,11 @@ import { CurrentIdentity, IdentityGuard, PermissionGuard, Permissions, RequestId
 import { ConfirmBookingDto, CreateBookingDto, CreatePaymentDto, VerifyPaymentDto } from './dto.js';
 @Injectable() class TransactionsService {
   constructor(@Inject(PrismaService) private readonly prisma:PrismaService){}
+  private bookingCodeFrom(index:number, at=new Date()){
+    const y = at.getFullYear();
+    const m = String(at.getMonth() + 1).padStart(2, '0');
+    return `BTV-${y}${m}-${String(index).padStart(4, '0')}`;
+  }
   async listBookings(i:RequestIdentity, query: { page?: number; pageSize?: number; search?: string; status?: string } = {}) {
     const page = Math.max(1, Number(query.page || 1));
     const pageSize = Math.max(1, Math.min(100, Number(query.pageSize || 12)));
@@ -53,8 +58,9 @@ import { ConfirmBookingDto, CreateBookingDto, CreatePaymentDto, VerifyPaymentDto
       const reserved=departure.bookings.reduce((sum,x)=>sum+x.pax,0);if(reserved+d.pax>departure.maxPax)throw new BadRequestException(`Sisa kursi hanya ${Math.max(0,departure.maxPax-reserved)} pax`);
     }
     return this.prisma.$transaction(async tx=>{
-      const n=await tx.booking.count({where:{tenantId:i.tenantId}})+1;
-      const booking=await tx.booking.create({data:{tenantId:i.tenantId,bookingCode:`BTV-${String(n).padStart(6,'0')}`,customerId:d.customerId,source:d.source,packageId:d.packageId,departureId:d.departureId,packageName:d.packageName,travelDate:departure?.startsAt??new Date(d.travelDate),returnDate:d.returnDate?new Date(d.returnDate):undefined,pax:d.pax,totalAmount:d.totalAmount,status:'PENDING_PAYMENT',notes:d.notes}});
+      const bookingDate = departure?.startsAt ?? new Date(d.travelDate);
+      const n=await tx.booking.count({where:{tenantId:i.tenantId,createdAt:{gte:new Date(Date.UTC(bookingDate.getFullYear(), bookingDate.getMonth(), 1)),lt:new Date(Date.UTC(bookingDate.getFullYear(), bookingDate.getMonth()+1, 1))}}})+1;
+      const booking=await tx.booking.create({data:{tenantId:i.tenantId,bookingCode:this.bookingCodeFrom(n, bookingDate),customerId:d.customerId,source:d.source,packageId:d.packageId,departureId:d.departureId,packageName:d.packageName,travelDate:bookingDate,returnDate:d.returnDate?new Date(d.returnDate):undefined,pax:d.pax,totalAmount:d.totalAmount,status:'PENDING_PAYMENT',notes:d.notes}});
       if(d.passengers?.length){await tx.bookingPassenger.createMany({data:d.passengers.map(x=>({tenantId:i.tenantId,bookingId:booking.id,packageId:x.packageId??d.packageId,serviceLevel:x.serviceLevel,passengerType:x.passengerType,quantity:x.quantity,unitPrice:x.unitPrice,totalPrice:Number(x.unitPrice)*x.quantity,notes:x.notes}))})}
       const m=await tx.invoice.count({where:{tenantId:i.tenantId}})+1;await tx.invoice.create({data:{tenantId:i.tenantId,invoiceNumber:`INV-${String(m).padStart(6,'0')}`,bookingId:booking.id,customerId:d.customerId,totalAmount:d.totalAmount,dueDate:d.dueDate?new Date(d.dueDate):undefined}});
       if(departure){const reserved=departure.bookings.reduce((sum,x)=>sum+x.pax,0)+d.pax;if(reserved>=departure.maxPax)await tx.packageDeparture.update({where:{id:departure.id},data:{status:'FULL'}})}

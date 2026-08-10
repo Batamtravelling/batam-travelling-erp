@@ -6,7 +6,7 @@ import { apiGet, apiPost } from '../../lib/api';
 
 type C = { id: string; fullName: string };
 type P = { id: string; name: string; serviceLevel?: string; destination?: string; prices?: { sellingPrice: string }[]; minPax?: number; maxPax?: number };
-type PassengerLine = { serviceLevel: 'REGULAR' | 'PREMIUM'; passengerType: 'ADULT' | 'CHILD' | 'INFANT'; quantity: number; unitPrice: number; notes?: string };
+type PassengerLine = { serviceLevel: 'REGULAR' | 'PREMIUM' | 'PRIVATE'; passengerType: 'ADULT' | 'CHILD' | 'INFANT'; quantity: number; unitPrice: number; notes?: string };
 type B = {
   id: string;
   bookingCode: string;
@@ -26,7 +26,7 @@ const money = (n: number) => new Intl.NumberFormat('id-ID', { style: 'currency',
 const blankLine = (): PassengerLine => ({ serviceLevel: 'REGULAR', passengerType: 'ADULT', quantity: 1, unitPrice: 0, notes: '' });
 const priceFactor = (serviceLevel: PassengerLine['serviceLevel'], passengerType: PassengerLine['passengerType']) => {
   const typeFactor = passengerType === 'CHILD' ? 0.75 : passengerType === 'INFANT' ? 0.15 : 1;
-  const levelFactor = serviceLevel === 'PREMIUM' ? 1.2 : 1;
+  const levelFactor = serviceLevel === 'PREMIUM' ? 1.2 : serviceLevel === 'PRIVATE' ? 1.35 : 1;
   return typeFactor * levelFactor;
 };
 
@@ -203,7 +203,7 @@ export default function Page() {
         </label>
         <label>
           Nama pesanan / trip
-          <input name="packageName" placeholder="Contoh: 3H2M Batam - Singapura" />
+          <input name="packageName" placeholder="Contoh: 3H2M Batam - Singapura / BTV-202608-0001" />
         </label>
         <label>
           Tanggal trip
@@ -246,6 +246,7 @@ export default function Page() {
                 >
                   <option value="REGULAR">REGULAR</option>
                   <option value="PREMIUM">PREMIUM</option>
+                  <option value="PRIVATE">PRIVATE</option>
                 </select>
               </label>
               <label>

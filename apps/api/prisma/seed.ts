@@ -127,9 +127,9 @@ async function main() {
   for(const item of serviceProducts)await prisma.serviceProduct.upsert({where:{tenantId_productCode:{tenantId:tenant.id,productCode:item.productCode}},update:{...item,active:true},create:{tenantId:tenant.id,...item,active:true,requiresDate:true}});
 
   const trips = [
-    { bookingCode: 'BKG-000001', packageName: '3H2M Batam - Singapore', travelDate: new Date('2026-08-15'), pax: 4, totalAmount: 6800000, paidAmount: 3400000, status: 'PARTIALLY_PAID' as const, customerId: customer.id, source: 'WEBSITE' as const, notes: 'Family demo booking' },
-    { bookingCode: 'BKG-000002', packageName: '2D1N Batam - Bintan Premium', travelDate: new Date('2026-08-18'), pax: 6, totalAmount: 9600000, paidAmount: 9600000, status: 'CONFIRMED' as const, customerId: customerTwo.id, source: 'SALES' as const, notes: 'Premium family trip' },
-    { bookingCode: 'BKG-000003', packageName: '1 Day Island Hopping', travelDate: new Date('2026-08-21'), pax: 10, totalAmount: 5500000, paidAmount: 1500000, status: 'PENDING_PAYMENT' as const, customerId: customerThree.id, source: 'POS' as const, notes: 'Group outgoing trip' },
+    { bookingCode: 'BTV-202608-0001', packageName: '3H2M Batam - Singapore', travelDate: new Date('2026-08-15'), pax: 4, totalAmount: 6800000, paidAmount: 3400000, status: 'PARTIALLY_PAID' as const, customerId: customer.id, source: 'WEBSITE' as const, notes: 'Family demo booking' },
+    { bookingCode: 'BTV-202608-0002', packageName: '2D1N Batam - Bintan Premium', travelDate: new Date('2026-08-18'), pax: 6, totalAmount: 9600000, paidAmount: 9600000, status: 'CONFIRMED' as const, customerId: customerTwo.id, source: 'SALES' as const, notes: 'Premium family trip' },
+    { bookingCode: 'BTV-202608-0003', packageName: '1 Day Island Hopping', travelDate: new Date('2026-08-21'), pax: 10, totalAmount: 5500000, paidAmount: 1500000, status: 'PENDING_PAYMENT' as const, customerId: customerThree.id, source: 'POS' as const, notes: 'Group outgoing trip' },
   ];
   for (const t of trips) {
     const booking = await prisma.booking.upsert({
