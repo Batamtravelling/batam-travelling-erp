@@ -7,3 +7,55 @@
 :where(.tableRow,.leadCard,.customerGrid>article,.taskCard,.calendarView article,.projectCard,.vendorCards>article,.reportPanel,.packageCard,.bookingTotal,.bookingPassengers,.taskParticipants,.leadInbox form,.customerProfile,.followUpWorkspace>article){padding-top:13px;padding-bottom:13px}
 :where(.moduleHeading h1,.reportHero h1,.vendorHero h1,.akHero h1,.contentStudioHero h1,.productAdmin>header h1,.projectCard h2,.taskCard h3,.leadCard h3,.customerGrid h2,.followUpWorkspace h2){letter-spacing:-.03em;line-height:1.12}
 :where(.moduleForm,.reportFilters,.taskToolbar,.crmToolbar,.customerSearch,.leadInbox form,.bookingSummary,.taskParticipants,.bookingPassengers,.followUpWorkspace>article,.projectFacts,.vendorBalances,.reportStats,.crmStats,.ownerMetrics,.tableRow,.leadCard,.customerGrid>article,.taskCard,.calendarView article,.projectCard,.vendorCards>article,.reportPanel,.packageCard,.bookingTotal){gap:10px}
+
+.taskWorkspace{max-width:1500px;margin:0 auto}
+.taskOverview{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:0 0 16px}
+.taskOverview article{background:#fff;border:1px solid var(--line);border-radius:18px;padding:16px 18px;box-shadow:0 10px 24px rgba(16,35,61,.04)}
+.taskOverview span{display:block;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.08em;font-weight:700}
+.taskOverview strong{display:block;font-size:28px;line-height:1;margin:10px 0 6px;color:var(--nav)}
+.taskOverview small{color:var(--muted)}
+.taskToolbar{display:flex;flex-wrap:wrap;align-items:center;gap:12px;background:#fff;border:1px solid var(--line);padding:14px 16px;border-radius:18px;box-shadow:0 10px 24px rgba(16,35,61,.04)}
+.taskToolbar input,.taskToolbar select{min-height:42px}
+.viewTabs{display:flex;gap:8px;flex-wrap:wrap}
+.viewTabs button{border-radius:999px;padding:9px 14px;background:#f4f7fb}
+.viewTabs button.active{background:var(--nav);color:#fff;border-color:var(--nav)}
+.kanbanBoard{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;align-items:start}
+.kanbanColumn{background:#f8fafc;border:1px solid #e2e8f0;border-radius:22px;padding:14px;box-shadow:0 10px 24px rgba(16,35,61,.03)}
+.kanbanColumn header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid #e2e8f0;height:auto}
+.kanbanColumn header b{font-size:14px;letter-spacing:.02em}
+.kanbanColumn header span{background:#eaf0f6;border-radius:999px;padding:4px 10px;font-size:12px;color:var(--muted);font-weight:700}
+.taskCard{background:#fff;border:1px solid #e4eaf1;border-radius:18px;padding:16px;display:grid;gap:10px;box-shadow:0 10px 24px rgba(16,35,61,.05);margin-bottom:12px}
+.taskCardTop{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.priority,.taskStatus{display:inline-flex;align-items:center;border-radius:999px;padding:5px 10px;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+.priority-neutral{background:#eef2f7;color:#43536a}
+.priority-low{background:#edf9f4;color:#177245}
+.priority-normal{background:#eef4ff;color:#2351c2}
+.priority-high{background:#fff3e8;color:#c45a00}
+.priority-urgent{background:#feecec;color:#b42318}
+.taskStatus-neutral{background:#eef2f7;color:#43536a}
+.taskStatus-blue{background:#e8f1ff;color:#1f5fbf}
+.taskStatus-amber{background:#fff3d9;color:#a16207}
+.taskStatus-green{background:#e7f8ef;color:#157347}
+.taskCard h3{font-size:17px}
+.taskCard p{margin:0;color:var(--muted);font-size:14px;line-height:1.55}
+.taskMetaGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.taskMetaGrid span{background:#f8fafc;border:1px solid #e6edf4;border-radius:14px;padding:10px}
+.taskMetaGrid b{display:block;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
+.taskMetaGrid small{display:block;color:var(--nav);font-size:13px;font-weight:600;line-height:1.35}
+.taskNote{background:#f5f8fc;border-left:3px solid var(--blue);border-radius:12px;padding:10px 12px;color:#28405f;font-size:13px;line-height:1.45}
+.taskCard footer{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;border-top:1px solid #eef2f7;padding-top:10px}
+.taskCard footer small{color:var(--muted)}
+.taskTable .tableHead,.taskTable .tableRow{grid-template-columns:1.25fr 1.2fr .8fr 1fr .7fr 1fr .7fr 1.1fr}
+.taskTable .tableRow span small{display:block;color:var(--muted)}
+.taskTable .taskStatus{justify-self:start}
+.calendarView article{background:#fff;border:1px solid var(--line);border-radius:18px;padding:16px;box-shadow:0 10px 24px rgba(16,35,61,.04)}
+.calendarView article>header{height:auto;border:0;padding:0 0 10px;margin-bottom:12px;border-bottom:1px solid #e9eef4}
+.calendarView article>div{display:flex;align-items:center;gap:10px;padding:12px 0;border-top:1px solid #eef2f7}
+.calendarView article>div:first-of-type{border-top:0;padding-top:0}
+.calendarView article>div i{width:10px;height:10px;border-radius:50%;display:inline-block}
+.calendarView article>div i.low{background:#34d399}
+.calendarView article>div i.normal{background:#60a5fa}
+.calendarView article>div i.high{background:#f59e0b}
+.calendarView article>div i.urgent{background:#ef4444}
+@media(max-width:1100px){.taskOverview,.kanbanBoard,.taskTable .tableHead,.taskTable .tableRow{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){.taskOverview,.kanbanBoard,.taskTable .tableHead,.taskTable .tableRow{grid-template-columns:1fr}.taskCard footer,.taskToolbar{align-items:stretch}.taskCardTop,.taskCard footer{flex-direction:column;align-items:flex-start}}

@@ -28,6 +28,7 @@ type T = {
 
 const statuses = ['TODO', 'IN_PROGRESS', 'BLOCKED', 'DONE'] as const;
 const labels: Record<string, string> = { TODO: 'To Do', IN_PROGRESS: 'In Progress', BLOCKED: 'Blocked', DONE: 'Done' };
+const statusTone: Record<string, string> = { TODO: 'neutral', IN_PROGRESS: 'blue', BLOCKED: 'amber', DONE: 'green' };
 const fmt = (d?: string) => (d ? new Date(d).toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-');
 const fmtDate = (d?: string) => (d ? new Date(d).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' }) : 'Tanpa tenggat');
 const escapeHtml = (value: string) => value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
@@ -143,6 +144,12 @@ export default function TasksPage() {
       });
     return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0]));
   }, [visible]);
+  const summary = {
+    total: visible.length,
+    doing: visible.filter((t) => t.status === 'IN_PROGRESS').length,
+    blocked: visible.filter((t) => t.status === 'BLOCKED').length,
+    overdue: visible.filter((t) => t.dueDate && t.status !== 'DONE' && new Date(t.dueDate).getTime() < Date.now()).length,
+  };
 
   return (
     <main className="modulePage taskWorkspace">
@@ -237,6 +244,29 @@ export default function TasksPage() {
         <b>{visible.length} tugas</b>
       </div>
 
+      <section className="taskOverview">
+        <article>
+          <span>Total terlihat</span>
+          <strong>{summary.total}</strong>
+          <small>Hasil sesuai filter saat ini</small>
+        </article>
+        <article>
+          <span>Berjalan</span>
+          <strong>{summary.doing}</strong>
+          <small>Masih aktif dikerjakan</small>
+        </article>
+        <article>
+          <span>Blocked</span>
+          <strong>{summary.blocked}</strong>
+          <small>Butuh perhatian lebih cepat</small>
+        </article>
+        <article>
+          <span>Terlambat</span>
+          <strong>{summary.overdue}</strong>
+          <small>Lewat tenggat namun belum selesai</small>
+        </article>
+      </section>
+
       <form className="moduleForm" onSubmit={submitComment}>
         <label>
           Pilih task
@@ -282,18 +312,21 @@ export default function TasksPage() {
                 .filter((t) => t.status === s)
                 .map((t) => (
                   <article className="taskCard" key={t.id}>
-                    <div>
-                      <em>{t.priority}</em>
-                      <small>{t.project.name}</small>
+                    <div className="taskCardTop">
+                      <em className={`priority priority-${t.priority.toLowerCase()}`}>{t.priority}</em>
+                      <span className={`taskStatus taskStatus-${statusTone[t.status] || 'neutral'}`}>{labels[t.status] || t.status}</span>
                     </div>
                     <h3>{t.title}</h3>
                     {t.description && <p>{t.description}</p>}
-                    <span>{t.participants?.length ?? 0} petugas</span>
-                    <span>PIC: {t.assignee?.name || 'Belum ada PIC'}</span>
-                    <span>{t.milestone?.title || 'Tanpa milestone'}</span>
-                    <span>Progres: {t.progress}%</span>
-                    <span>{timeLabel(t.updatedAt, t.completedAt)}</span>
-                    {t.comments?.[0] && <small>Catatan terakhir: {t.comments[0].message}</small>}
+                    <div className="taskMetaGrid">
+                      <span><b>Proyek</b><small>{t.project.name}</small></span>
+                      <span><b>PIC</b><small>{t.assignee?.name || 'Belum ada PIC'}</small></span>
+                      <span><b>Petugas</b><small>{t.participants?.length ?? 0} orang</small></span>
+                      <span><b>Milestone</b><small>{t.milestone?.title || 'Tanpa milestone'}</small></span>
+                      <span><b>Progress</b><small>{t.progress}%</small></span>
+                      <span><b>Update</b><small>{timeLabel(t.updatedAt, t.completedAt)}</small></span>
+                    </div>
+                    {t.comments?.[0] && <div className="taskNote">Catatan terakhir: {t.comments[0].message}</div>}
                     <footer>
                       <small>{fmtDate(t.dueDate)}</small>
                       <div className="bookingActions">
@@ -325,14 +358,15 @@ export default function TasksPage() {
             <span>Status</span>
           </div>
           {visible.map((t) => (
-            <div className="tableRow" key={t.id}>
-              <span>
-                <b>{t.title}</b>
-                <small>{fmtDate(t.dueDate)}</small>
-              </span>
-              <span>
-                {t.project.name}
-                <small>{t.milestone?.title || '-'}</small>
+              <div className="tableRow" key={t.id}>
+                <span>
+                  <b>{t.title}</b>
+                  <small>{fmtDate(t.dueDate)}</small>
+                  <small>{t.project.name}</small>
+                </span>
+                <span>
+                  {t.project.name}
+                  <small>{t.milestone?.title || '-'}</small>
               </span>
               <span>{t.assignee?.name || '-'}</span>
               <span>{t.participants?.map((x) => x.user.name).join(', ') || '-'}</span>
@@ -352,6 +386,9 @@ export default function TasksPage() {
               </span>
               <span>
                 <small>{timeLabel(t.updatedAt, t.completedAt)}</small>
+              </span>
+              <span>
+                <span className={`taskStatus taskStatus-${statusTone[t.status] || 'neutral'}`}>{labels[t.status] || t.status}</span>
               </span>
               <div className="bookingActions">
                 <button type="button" onClick={() => printTask(t)}>Print</button>
