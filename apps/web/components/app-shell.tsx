@@ -42,7 +42,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   useEffect(()=>{if(typeof window==='undefined')return;const saved=Number(localStorage.getItem('bt_whatsapp_rotation')||'0');if(Number.isFinite(saved))setWaIndex(saved)},[]);
   useEffect(()=>{if(pathname!=='/'||typeof location==='undefined')return;const id=new URLSearchParams(location.search).get('package');if(!id)return;apiGet<{id:string;name:string}[]>('/public/packages').then(rows=>{const target=rows.find(x=>x.id===id);if(!target)return;let tries=0;const timer=setInterval(()=>{tries++;const cards=Array.from(document.querySelectorAll<HTMLElement>('.publicTrips article'));const card=cards.find(x=>x.querySelector('h3')?.textContent?.trim()===target.name);const button=card?.querySelector<HTMLButtonElement>('button');if(button){clearInterval(timer);button.click();history.replaceState(null,'',`${location.pathname}#trips`)}else if(tries>20)clearInterval(timer)},150)}).catch(()=>undefined)},[pathname]);
   const required:Record<string,string>={'/pos':'booking.manage','/employees':'employee.read','/projects':'project.read','/tasks':'task.read','/dashboard':'dashboard.owner','/crm/customers':'customer.read','/packages':'package.read','/service-products':'package.read','/package-reviews':'package.read','/asset-knowledge':'knowledge.read','/media-library':'media.read','/vendors':'vendor.read','/finance/cashflow':'payment.read','/sales/quotations':'lead.read','/bookings':'booking.read','/operations/trips':'trip.read','/operations/open-trips':'trip.read','/finance/invoices':'invoice.read','/reports':'dashboard.owner','/archives':'archive.read','/content':'content.read'};
-  const visibleItems=navItems.filter(item=>!required[item.href]||access.permissions.includes(required[item.href]));
+  const permissionReady=access.role!=='Memuat akses...'&&access.role!=='Akses tidak tersedia';
+  const visibleItems=permissionReady&&access.permissions.length>0
+    ? navItems.filter(item=>!required[item.href]||access.permissions.includes(required[item.href]))
+    : navItems;
+  const menuItems=visibleItems.length>0?visibleItems:navItems;
 
   const publicPage=pathname==='/'||pathname?.startsWith('/trip/')||pathname?.startsWith('/articles')||pathname?.startsWith('/promotions')||pathname?.startsWith('/tickets')||pathname?.startsWith('/transportation')||pathname?.startsWith('/terms')||pathname?.startsWith('/contact')||pathname?.startsWith('/sign-')||pathname?.startsWith('/account')||pathname?.startsWith('/erp-sign-in');
   if(pathname?.startsWith('/my-trip'))return <>{children}</>;
@@ -50,10 +54,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--brand-canvas)', color: 'var(--brand-ink)' }}>
-      <aside style={{ width: '250px', flexShrink: 0, height: '100vh', position: 'sticky', top: 0, overflowY: 'auto', background: 'var(--brand-navy)', color: 'white', padding: '24px 18px', display: 'flex', flexDirection: 'column', gap: '18px', zIndex: 40 }}>
+      <aside style={{ width: '280px', flexShrink: 0, height: '100vh', position: 'sticky', top: 0, overflowY: 'auto', background: 'var(--brand-navy)', color: 'white', padding: '24px 18px', display: 'flex', flexDirection: 'column', gap: '18px', zIndex: 40 }}>
         <Link href="/dashboard" className="erpBrand">{brand.erpLogoUrl?<img src={brand.erpLogoUrl} alt="Batam Travelling ERP"/>:'BATAM TRAVELLING'}</Link>
+        <div style={{ fontSize: '12px', letterSpacing: '0.08em', textTransform: 'uppercase', color: '#9fb3ca', fontWeight: 700 }}>Modul ERP</div>
         <nav style={{ display: 'grid', gap: '6px' }}>
-          {visibleItems.map((item) => {
+          {menuItems.map((item) => {
             const active = pathname?.startsWith(item.href);
             return (
               <Link key={item.href} href={item.href} style={{ textDecoration: 'none', color: active ? 'var(--brand-yellow)' : '#d9e4f2', background: active ? 'var(--brand-blue-soft)' : 'transparent', borderLeft: active ? '3px solid var(--brand-yellow)' : '3px solid transparent', borderRadius: '8px', padding: '10px 12px', fontWeight: 650, display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -66,7 +71,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div style={{ marginTop: 'auto', fontSize: '13px', color: '#94a3b8' }}>
           <div style={{ border: '1px solid rgba(255,255,255,0.12)', borderRadius: '12px', padding: '10px', background: 'rgba(255,255,255,0.04)' }}>
             <div style={{ color: '#ffd524', fontWeight: 700 }}>Tenant: Batam Travelling</div>
-            <div>Role: {access.role}</div>
+            <div>Role: {permissionReady ? access.role : 'Memuat akses...'}</div>
           </div>
           <div style={{ marginTop: '10px', display: 'grid', gap: '8px' }}>
             <Link href="/erp-sign-in" style={{ color: '#ffd524', textDecoration: 'none', fontWeight: 700 }}>Masuk ERP</Link>
