@@ -1,34 +1,218 @@
-import Link from 'next/link';
+'use client';
 
-const settingsCards = [
-  { title: 'Tenant profile', detail: 'Identitas tenant, branding, dan preferensi operasional' },
-  { title: 'User roles', detail: 'Kelola akses pengguna dan izin berdasarkan peran' },
-  { title: 'Integrations', detail: 'Koneksi dengan payment gateway, email, dan supplier' },
-  { title: 'Automation', detail: 'Atur workflow notifikasi dan rule bisnis' },
-];
+import { FormEvent, useEffect, useState } from 'react';
+import { apiGet, apiPatch, apiPost } from '../../lib/api';
+
+type Profile = {
+  vision: string;
+  mission: string;
+  coreValues?: string;
+  customerTerms?: string;
+  privacyPolicy?: string;
+  cancellationPolicy?: string;
+  websiteLogoUrl?: string;
+  erpLogoUrl?: string;
+  documentLogoUrl?: string;
+  heroTitle?: string;
+  heroSubtitle?: string;
+  heroImageUrl?: string;
+  heroBadge?: string;
+  heroCtaPrimary?: string;
+  heroCtaSecondary?: string;
+  featureHeadline?: string;
+  featureText?: string;
+  howToBookTitle?: string;
+  howToBookText?: string;
+  aboutTitle?: string;
+  aboutText?: string;
+  whatsappNumber?: string;
+  whatsappNumberSecondary?: string;
+  contactEmail?: string;
+  contactAddress?: string;
+  contactHours?: string;
+  instagramUrl?: string;
+  facebookUrl?: string;
+  tiktokUrl?: string;
+  youtubeUrl?: string;
+};
+
+const blank: Profile = {
+  vision: 'Menjadi partner perjalanan terpercaya dari Batam.',
+  mission: 'Memberikan perjalanan yang aman, transparan, dan berkesan.',
+};
+
+async function upload(file: File) {
+  const base64 = await new Promise<string>((ok, no) => {
+    const r = new FileReader();
+    r.onload = () => ok(String(r.result));
+    r.onerror = () => no(r.error);
+    r.readAsDataURL(file);
+  });
+  return apiPost<{ url: string }>('/media', { fileName: file.name, mimeType: file.type, base64, altText: 'Logo Batam Travelling', category: 'LOGO' });
+}
 
 export default function SettingsPage() {
-  return (
-    <main style={{ minHeight: '100vh', padding: '32px', background: '#f8fafc' }}>
-      <div style={{ maxWidth: '1100px', margin: '0 auto', background: 'white', borderRadius: '24px', padding: '24px', boxShadow: '0 16px 36px rgba(15, 23, 42, 0.08)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', flexWrap: 'wrap', marginBottom: '18px' }}>
-          <div>
-            <p style={{ margin: 0, textTransform: 'uppercase', letterSpacing: '0.2em', fontSize: '12px', color: '#64748b' }}>Settings</p>
-            <h1 style={{ margin: '6px 0', fontSize: '28px' }}>Platform settings</h1>
-            <p style={{ margin: 0, color: '#64748b' }}>Konfigurasi tenant, users, dan integrasi platform.</p>
-          </div>
-          <Link href="/dashboard" style={{ textDecoration: 'none', color: '#0f766e', fontWeight: 700 }}>← Kembali</Link>
-        </div>
+  const [p, setP] = useState<Profile>(blank);
+  const [msg, setMsg] = useState('');
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
-          {settingsCards.map((card) => (
-            <article key={card.title} style={{ border: '1px solid #e2e8f0', borderRadius: '16px', padding: '16px' }}>
-              <div style={{ fontWeight: 700 }}>{card.title}</div>
-              <div style={{ color: '#64748b', fontSize: '14px', marginTop: '8px' }}>{card.detail}</div>
-            </article>
-          ))}
-        </div>
-      </div>
+  useEffect(() => {
+    apiGet<Profile | null>('/asset-knowledge/profile').then((x) => x && setP(x)).catch((e) => setMsg((e as Error).message));
+  }, []);
+
+  async function submit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setMsg('Menyimpan pengaturan...');
+    const f = new FormData(e.currentTarget);
+    const next = { ...p };
+    for (const key of ['websiteLogo', 'erpLogo', 'documentLogo'] as const) {
+      const file = f.get(key) as File;
+      if (file?.size) {
+        const media = await upload(file);
+        next[`${key}Url` as keyof Profile] = media.url;
+      }
+    }
+    for (const key of ['heroTitle', 'heroSubtitle', 'heroImageUrl', 'heroBadge', 'heroCtaPrimary', 'heroCtaSecondary', 'featureHeadline', 'featureText', 'howToBookTitle', 'howToBookText', 'aboutTitle', 'aboutText', 'whatsappNumber', 'whatsappNumberSecondary', 'contactEmail', 'contactAddress', 'contactHours', 'instagramUrl', 'facebookUrl', 'tiktokUrl', 'youtubeUrl'] as const) {
+      next[key] = String(f.get(key) || '');
+    }
+    await apiPatch('/asset-knowledge/profile', next);
+    setP(next);
+    setMsg('Branding, kontak, dan sosial media berhasil disimpan. Muat ulang halaman untuk melihat perubahan.');
+  }
+
+  return (
+    <main className="brandSettings">
+      <header>
+        <span>PENGATURAN PERUSAHAAN</span>
+        <h1>Branding, Logo, Kontak & Sosial</h1>
+        <p>Satu pengaturan untuk website, ERP, quotation, bukti pembayaran, WhatsApp, dan media sosial.</p>
+      </header>
+      <form onSubmit={submit}>
+        <section>
+          <h2>Konten halaman Index</h2>
+          <div className="contactSettings">
+            <label className="full">
+              Hero title
+              <textarea name="heroTitle" defaultValue={p.heroTitle} placeholder={'Liburan terbaik\ndimulai dari Batam.'} />
+            </label>
+            <label className="full">
+              Hero subtitle
+              <textarea name="heroSubtitle" defaultValue={p.heroSubtitle} placeholder="Semua kebutuhan perjalanan tersusun rapi dalam satu pengalaman yang mudah, cepat, dan nyaman." />
+            </label>
+            <label>
+              Badge hero
+              <input name="heroBadge" defaultValue={p.heroBadge} placeholder="BERANGKAT DARI BATAM" />
+            </label>
+            <label>
+              Label CTA utama
+              <input name="heroCtaPrimary" defaultValue={p.heroCtaPrimary} placeholder="Lihat Open Trip" />
+            </label>
+            <label>
+              Label CTA kedua
+              <input name="heroCtaSecondary" defaultValue={p.heroCtaSecondary} placeholder="Cara Booking" />
+            </label>
+            <label className="full">
+              Gambar hero body atas
+              <input name="heroImageUrl" defaultValue={p.heroImageUrl} placeholder="https://..." />
+            </label>
+            <label className="full">
+              Headline fitur
+              <input name="featureHeadline" defaultValue={p.featureHeadline} placeholder="Template preview nyata" />
+            </label>
+            <label className="full">
+              Copy fitur
+              <textarea name="featureText" defaultValue={p.featureText} placeholder="Contoh tampilan siap pakai..." />
+            </label>
+            <label className="full">
+              Judul how to book
+              <input name="howToBookTitle" defaultValue={p.howToBookTitle} placeholder="Booking perjalanan dibuat lebih ringkas" />
+            </label>
+            <label className="full">
+              Teks how to book
+              <textarea name="howToBookText" defaultValue={p.howToBookText} placeholder="Lihat detail, pilih jadwal, isi data..." />
+            </label>
+            <label className="full">
+              Judul about
+              <input name="aboutTitle" defaultValue={p.aboutTitle} placeholder="Perjalanan yang tertata..." />
+            </label>
+            <label className="full">
+              Teks about
+              <textarea name="aboutText" defaultValue={p.aboutText} placeholder="Kami membantu keluarga..." />
+            </label>
+          </div>
+        </section>
+
+        <section>
+          <h2>Logo perusahaan</h2>
+          <p>Gunakan PNG atau WEBP transparan, disarankan rasio horizontal.</p>
+          <div className="logoSettings">
+            {[
+              ['websiteLogo', 'Logo Website', p.websiteLogoUrl],
+              ['erpLogo', 'Logo ERP', p.erpLogoUrl],
+              ['documentLogo', 'Logo Dokumen', p.documentLogoUrl],
+            ].map((x) => (
+              <label key={x[0]}>
+                <b>{x[1]}</b>
+                <span className="logoPreview">{x[2] ? <img src={x[2]} alt={x[1]} /> : <i>BT</i>}</span>
+                <input name={x[0]} type="file" accept="image/png,image/jpeg,image/webp" />
+                <small>{x[2] ? 'Logo aktif tersimpan' : 'Belum ada logo khusus'}</small>
+              </label>
+            ))}
+          </div>
+        </section>
+
+        <section>
+          <h2>Kontak & WhatsApp</h2>
+          <div className="contactSettings">
+            <label>
+              Nomor WhatsApp Utama
+              <input name="whatsappNumber" defaultValue={p.whatsappNumber} placeholder="6281234567890" />
+              <small>Gunakan kode negara tanpa tanda +.</small>
+            </label>
+            <label>
+              Nomor WhatsApp Kedua
+              <input name="whatsappNumberSecondary" defaultValue={p.whatsappNumberSecondary} placeholder="6281234567891" />
+              <small>Nomor cadangan untuk rotasi chat.</small>
+            </label>
+            <label>
+              Email
+              <input name="contactEmail" type="email" defaultValue={p.contactEmail} placeholder="hello@batamtravelling.com" />
+            </label>
+            <label>
+              Jam pelayanan
+              <input name="contactHours" defaultValue={p.contactHours} placeholder="Senin–Sabtu, 09.00–18.00 WIB" />
+            </label>
+            <label className="full">
+              Alamat
+              <textarea name="contactAddress" defaultValue={p.contactAddress} placeholder="Alamat kantor lengkap" />
+            </label>
+          </div>
+        </section>
+
+        <section>
+          <h2>Sosial media</h2>
+          <div className="contactSettings">
+            <label>
+              Instagram
+              <input name="instagramUrl" defaultValue={p.instagramUrl} placeholder="https://instagram.com/batamtravelling" />
+            </label>
+            <label>
+              Facebook
+              <input name="facebookUrl" defaultValue={p.facebookUrl} placeholder="https://facebook.com/batamtravelling" />
+            </label>
+            <label>
+              TikTok
+              <input name="tiktokUrl" defaultValue={p.tiktokUrl} placeholder="https://tiktok.com/@batamtravelling" />
+            </label>
+            <label>
+              YouTube
+              <input name="youtubeUrl" defaultValue={p.youtubeUrl} placeholder="https://youtube.com/@batamtravelling" />
+            </label>
+          </div>
+        </section>
+
+        <button className="saveBrand">Simpan Pengaturan</button>
+        {msg && <p className="brandMessage">{msg}</p>}
+      </form>
     </main>
   );
 }
