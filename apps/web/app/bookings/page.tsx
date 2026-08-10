@@ -39,6 +39,7 @@ export default function Page() {
   const [lines, setLines] = useState<PassengerLine[]>([blankLine()]);
   const [msg, setMsg] = useState('');
   const [page, setPage] = useState(1);
+  const [customerDraftId, setCustomerDraftId] = useState('');
 
   const load = async () => {
     try {
@@ -114,6 +115,30 @@ export default function Page() {
   const totalPages = Math.max(1, Math.ceil(b.length / PAGE_SIZE));
   const visibleBookings = b.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
+  async function quickCreateCustomer(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const f = new FormData(e.currentTarget);
+    try {
+      const customer = await apiPost<{ id: string; fullName: string }>('/customers', {
+        fullName: f.get('fullName'),
+        type: f.get('type') || undefined,
+        phone: f.get('phone') || undefined,
+        email: f.get('email') || undefined,
+        address: f.get('address') || undefined,
+        city: f.get('city') || undefined,
+        country: f.get('country') || undefined,
+        leadSource: 'MANUAL',
+        notes: f.get('notes') || undefined,
+      });
+      setCustomerDraftId(customer.id);
+      e.currentTarget.reset();
+      await load();
+      setMsg(`Customer baru ${customer.fullName} siap dipakai untuk booking.`);
+    } catch (x) {
+      setMsg((x as Error).message);
+    }
+  }
+
   useEffect(() => {
     if (page > totalPages) setPage(totalPages);
   }, [page, totalPages]);
@@ -132,7 +157,7 @@ export default function Page() {
       <form className="moduleForm" onSubmit={submit}>
         <label>
           Nama customer
-          <select name="customerId" required>
+          <select name="customerId" value={customerDraftId} onChange={(e) => setCustomerDraftId(e.target.value)} required>
             <option value="">Pilih customer</option>
             {c.map((x) => <option key={x.id} value={x.id}>{x.fullName}</option>)}
           </select>
@@ -236,6 +261,27 @@ export default function Page() {
 
         <button className="primary">Buat booking</button>
       </form>
+
+      <details className="leadInbox">
+        <summary>＋ Customer Baru untuk Booking</summary>
+        <form onSubmit={quickCreateCustomer} className="customerInlineForm">
+          <input name="fullName" placeholder="Nama customer" required />
+          <select name="type">
+            <option value="">Tipe customer</option>
+            <option>INDIVIDUAL</option>
+            <option>COMPANY</option>
+            <option>AGENT</option>
+            <option>GROUP</option>
+          </select>
+          <input name="phone" placeholder="Nomor WhatsApp" />
+          <input name="email" type="email" placeholder="Email" />
+          <input name="city" placeholder="Kota" />
+          <input name="country" placeholder="Negara" />
+          <input name="address" className="full" placeholder="Alamat" />
+          <textarea name="notes" className="full" placeholder="Catatan customer" />
+          <button className="primary">Simpan Customer</button>
+        </form>
+      </details>
 
       {msg && <p className="errorText">{msg}</p>}
 

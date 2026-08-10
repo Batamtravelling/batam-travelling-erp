@@ -100,6 +100,29 @@ export default function CrmCustomerPage() {
     await load();
   }
 
+  async function createCustomer(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const f = new FormData(e.currentTarget);
+    try {
+      await apiPost('/customers', {
+        fullName: f.get('fullName'),
+        type: f.get('type') || undefined,
+        phone: f.get('phone') || undefined,
+        email: f.get('email') || undefined,
+        address: f.get('address') || undefined,
+        city: f.get('city') || undefined,
+        country: f.get('country') || undefined,
+        leadSource: 'MANUAL',
+        notes: f.get('notes') || undefined,
+      });
+      e.currentTarget.reset();
+      await load();
+      setMsg('Customer baru berhasil ditambahkan.');
+    } catch (x) {
+      setMsg((x as Error).message);
+    }
+  }
+
   const activePipeline = leads.filter((x) => x.status !== 'LOST').reduce((n, x) => n + Number(x.estimatedValue || 0), 0);
   const revenue = customers.reduce((n, c) => n + c.bookings.reduce((m, b) => m + Number(b.totalAmount), 0), 0);
 
@@ -130,6 +153,26 @@ export default function CrmCustomerPage() {
 
       {view === 'customers' && (
         <>
+          <details className="leadInbox" open>
+            <summary>＋ Tambah Customer Baru</summary>
+            <form onSubmit={createCustomer} className="customerInlineForm">
+              <input name="fullName" placeholder="Nama customer" required />
+              <select name="type">
+                <option value="">Tipe customer</option>
+                <option>INDIVIDUAL</option>
+                <option>COMPANY</option>
+                <option>AGENT</option>
+                <option>GROUP</option>
+              </select>
+              <input name="phone" placeholder="Nomor WhatsApp" />
+              <input name="email" type="email" placeholder="Email" />
+              <input name="city" placeholder="Kota" />
+              <input name="country" placeholder="Negara" />
+              <input name="address" className="full" placeholder="Alamat" />
+              <textarea name="notes" className="full" placeholder="Catatan customer" />
+              <button className="primary">Simpan Customer</button>
+            </form>
+          </details>
           <div className="customerSearch">
             <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Cari nama, telepon, atau email..." />
             <b>{visibleCustomers.length} customer</b>
