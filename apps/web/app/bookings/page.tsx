@@ -7,10 +7,23 @@ import { apiGet, apiPost } from '../../lib/api';
 type C = { id: string; fullName: string };
 type P = { id: string; name: string; serviceLevel?: string; destination?: string; prices?: { sellingPrice: string }[]; minPax?: number; maxPax?: number };
 type PassengerLine = { serviceLevel: 'REGULAR' | 'PREMIUM'; passengerType: 'ADULT' | 'CHILD' | 'INFANT'; quantity: number; unitPrice: number; notes?: string };
-type B = { id: string; bookingCode: string; packageName: string; travelDate: string; pax: number; totalAmount: number; paidAmount: number; status: string; customer: C; passengers?: { id: string; serviceLevel: string; passengerType: string; quantity: number; unitPrice: number; totalPrice: number; package?: { name: string; serviceLevel: string } }[]; invoice?: { invoiceNumber: string } };
+type B = {
+  id: string;
+  bookingCode: string;
+  packageName: string;
+  travelDate: string;
+  pax: number;
+  totalAmount: number;
+  paidAmount: number;
+  status: string;
+  customer: C;
+  passengers?: { id: string; serviceLevel: string; passengerType: string; quantity: number; unitPrice: number; totalPrice: number; package?: { name: string; serviceLevel: string } }[];
+  invoice?: { invoiceNumber: string };
+};
 
 const money = (n: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(n);
 const blankLine = (): PassengerLine => ({ serviceLevel: 'REGULAR', passengerType: 'ADULT', quantity: 1, unitPrice: 0, notes: '' });
+const PAGE_SIZE = 8;
 
 const priceFactor = (serviceLevel: PassengerLine['serviceLevel'], passengerType: PassengerLine['passengerType']) => {
   const typeFactor = passengerType === 'CHILD' ? 0.75 : passengerType === 'INFANT' ? 0.15 : 1;
@@ -25,6 +38,7 @@ export default function Page() {
   const [selectedPackageId, setSelectedPackageId] = useState('');
   const [lines, setLines] = useState<PassengerLine[]>([blankLine()]);
   const [msg, setMsg] = useState('');
+  const [page, setPage] = useState(1);
 
   const load = async () => {
     try {
@@ -88,6 +102,7 @@ export default function Page() {
       e.currentTarget.reset();
       setLines([blankLine()]);
       setSelectedPackageId('');
+      setPage(1);
       await load();
     } catch (x) {
       setMsg((x as Error).message);
@@ -96,6 +111,12 @@ export default function Page() {
 
   const addLine = () => setLines((prev) => [...prev, { ...blankLine(), unitPrice: basePrice }]);
   const removeLine = (index: number) => setLines((prev) => (prev.length === 1 ? prev : prev.filter((_, i) => i !== index)));
+  const totalPages = Math.max(1, Math.ceil(b.length / PAGE_SIZE));
+  const visibleBookings = b.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
 
   return (
     <main className="modulePage">
@@ -109,8 +130,15 @@ export default function Page() {
       </div>
 
       <form className="moduleForm" onSubmit={submit}>
-        <label>Nama customer<select name="customerId" required><option value="">Pilih customer</option>{c.map((x) => <option key={x.id} value={x.id}>{x.fullName}</option>)}</select></label>
-        <label>Paket utama
+        <label>
+          Nama customer
+          <select name="customerId" required>
+            <option value="">Pilih customer</option>
+            {c.map((x) => <option key={x.id} value={x.id}>{x.fullName}</option>)}
+          </select>
+        </label>
+        <label>
+          Paket utama
           <select
             name="packageId"
             value={selectedPackageId}
@@ -125,12 +153,30 @@ export default function Page() {
             {p.map((x) => <option key={x.id} value={x.id}>{x.name} {x.serviceLevel ? `· ${x.serviceLevel}` : ''} {x.destination ? `· ${x.destination}` : ''} {x.prices?.[0]?.sellingPrice ? `· ${money(Number(x.prices[0].sellingPrice))}` : ''}</option>)}
           </select>
         </label>
-        <label>Nama pesanan / trip<input name="packageName" placeholder="Contoh: 3H2M Batam - Singapura" /></label>
-        <label>Tanggal trip<input name="travelDate" type="date" required /></label>
-        <label>Jumlah peserta total<input name="pax" type="number" min="1" placeholder="Jika belum isi rincian peserta" /></label>
-        <label>Total booking<input name="totalAmount" type="number" min="1" placeholder="Jika belum isi rincian peserta" /></label>
-        <label>Jatuh tempo invoice<input name="dueDate" type="date" /></label>
-        <label className="bookingNote">Catatan booking<textarea name="notes" placeholder="Permintaan khusus, info tamu, catatan operasional" /></label>
+        <label>
+          Nama pesanan / trip
+          <input name="packageName" placeholder="Contoh: 3H2M Batam - Singapura" />
+        </label>
+        <label>
+          Tanggal trip
+          <input name="travelDate" type="date" required />
+        </label>
+        <label>
+          Jumlah peserta total
+          <input name="pax" type="number" min="1" placeholder="Jika belum isi rincian peserta" />
+        </label>
+        <label>
+          Total booking
+          <input name="totalAmount" type="number" min="1" placeholder="Jika belum isi rincian peserta" />
+        </label>
+        <label>
+          Jatuh tempo invoice
+          <input name="dueDate" type="date" />
+        </label>
+        <label className="bookingNote">
+          Catatan booking
+          <textarea name="notes" placeholder="Permintaan khusus, info tamu, catatan operasional" />
+        </label>
 
         <section className="bookingPassengers" style={{ gridColumn: '1 / -1' }}>
           <div className="sectionTitle">
@@ -140,7 +186,8 @@ export default function Page() {
           {!selectedPackageId && <p className="errorText">Pilih paket utama dulu agar harga peserta bisa dihitung otomatis.</p>}
           {lines.map((line, index) => (
             <div className="passengerRow" key={index}>
-              <label>Level layanan
+              <label>
+                Level layanan
                 <select
                   value={line.serviceLevel}
                   onChange={(e) => {
@@ -153,7 +200,8 @@ export default function Page() {
                   <option value="PREMIUM">PREMIUM</option>
                 </select>
               </label>
-              <label>Jenis peserta
+              <label>
+                Jenis peserta
                 <select
                   value={line.passengerType}
                   onChange={(e) => {
@@ -167,10 +215,19 @@ export default function Page() {
                   <option value="INFANT">Bayi</option>
                 </select>
               </label>
-              <label>Qty<input type="number" min="1" value={line.quantity} onChange={(e) => updateLine(index, { quantity: Number(e.target.value) })} /></label>
-              <label>Harga satuan<input type="number" min="0" value={line.unitPrice} onChange={(e) => updateLine(index, { unitPrice: Number(e.target.value) })} /></label>
+              <label>
+                Qty
+                <input type="number" min="1" value={line.quantity} onChange={(e) => updateLine(index, { quantity: Number(e.target.value) })} />
+              </label>
+              <label>
+                Harga satuan
+                <input type="number" min="0" value={line.unitPrice} onChange={(e) => updateLine(index, { unitPrice: Number(e.target.value) })} />
+              </label>
               <button type="button" onClick={() => removeLine(index)}>Hapus</button>
-              <label className="full">Catatan item<input value={line.notes || ''} onChange={(e) => updateLine(index, { notes: e.target.value })} placeholder="Contoh: harga anak berbeda, infant free, dll." /></label>
+              <label className="full">
+                Catatan item
+                <input value={line.notes || ''} onChange={(e) => updateLine(index, { notes: e.target.value })} placeholder="Contoh: harga anak berbeda, infant free, dll." />
+              </label>
             </div>
           ))}
           <div className="bookingTotal"><span>Total dari rincian peserta</span><strong>{money(summary.total)}</strong></div>
@@ -190,14 +247,23 @@ export default function Page() {
 
       <div className="dataTable bookingList">
         <div className="tableRow tableHead"><span>Booking</span><span>Customer</span><span>Nilai</span><span>Status</span></div>
-        {b.map((x) => (
+        {visibleBookings.map((x) => (
           <div className="tableRow" key={x.id}>
-            <span><b>{x.bookingCode}</b><small>{x.packageName} · {x.pax} pax · {new Date(x.travelDate).toLocaleDateString('id-ID')}</small></span>
+            <span>
+              <b>{x.bookingCode}</b>
+              <small>{x.packageName} · {x.pax} pax · {new Date(x.travelDate).toLocaleDateString('id-ID')}</small>
+            </span>
             <span>{x.customer.fullName}<small>{x.invoice?.invoiceNumber}</small></span>
             <span>{money(Number(x.totalAmount))}<small>Terbayar {money(Number(x.paidAmount))}</small></span>
             <span>{x.status}</span>
           </div>
         ))}
+      </div>
+
+      <div className="paginationBar">
+        <button type="button" onClick={() => setPage((v) => Math.max(1, v - 1))} disabled={page === 1}>← Sebelumnya</button>
+        <span>Halaman {page} dari {totalPages}</span>
+        <button type="button" onClick={() => setPage((v) => Math.min(totalPages, v + 1))} disabled={page === totalPages}>Berikutnya →</button>
       </div>
     </main>
   );
