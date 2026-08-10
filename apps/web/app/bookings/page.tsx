@@ -20,11 +20,10 @@ type B = {
   passengers?: { id: string; serviceLevel: string; passengerType: string; quantity: number; unitPrice: number; totalPrice: number; package?: { name: string; serviceLevel: string } }[];
   invoice?: { invoiceNumber: string };
 };
+type PageResult<T> = { items: T[]; meta: { page: number; pageSize: number; total: number; totalPages: number } };
 
 const money = (n: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(n);
 const blankLine = (): PassengerLine => ({ serviceLevel: 'REGULAR', passengerType: 'ADULT', quantity: 1, unitPrice: 0, notes: '' });
-const PAGE_SIZE = 8;
-
 const priceFactor = (serviceLevel: PassengerLine['serviceLevel'], passengerType: PassengerLine['passengerType']) => {
   const typeFactor = passengerType === 'CHILD' ? 0.75 : passengerType === 'INFANT' ? 0.15 : 1;
   const levelFactor = serviceLevel === 'PREMIUM' ? 1.2 : 1;
@@ -40,13 +39,23 @@ export default function Page() {
   const [msg, setMsg] = useState('');
   const [page, setPage] = useState(1);
   const [customerDraftId, setCustomerDraftId] = useState('');
+  const [pageSize, setPageSize] = useState(8);
+  const [search, setSearch] = useState('');
+  const [status, setStatus] = useState('');
+  const [meta, setMeta] = useState({ page: 1, pageSize: 8, total: 0, totalPages: 1 });
 
   const load = async () => {
     try {
-      const [x, y, z] = await Promise.all([apiGet<B[]>('/bookings'), apiGet<C[]>('/customers'), apiGet<P[]>('/packages')]);
-      setB(x);
+      const [x, y, z] = await Promise.all([
+        apiGet<PageResult<B>>(`/bookings?page=${page}&pageSize=${pageSize}&search=${encodeURIComponent(search)}&status=${encodeURIComponent(status)}`),
+        apiGet<C[]>('/customers'),
+        apiGet<P[]>('/packages'),
+      ]);
+      setB(x.items);
       setC(y);
       setP(z);
+      setMeta(x.meta);
+      setPage(x.meta.page);
     } catch (e) {
       setMsg((e as Error).message);
     }
@@ -54,7 +63,7 @@ export default function Page() {
 
   useEffect(() => {
     load();
-  }, []);
+  }, [page, pageSize, search, status]);
 
   const selectedPackage = useMemo(() => p.find((x) => x.id === selectedPackageId), [p, selectedPackageId]);
   const basePrice = Number(selectedPackage?.prices?.[0]?.sellingPrice || 0);
@@ -112,8 +121,7 @@ export default function Page() {
 
   const addLine = () => setLines((prev) => [...prev, { ...blankLine(), unitPrice: basePrice }]);
   const removeLine = (index: number) => setLines((prev) => (prev.length === 1 ? prev : prev.filter((_, i) => i !== index)));
-  const totalPages = Math.max(1, Math.ceil(b.length / PAGE_SIZE));
-  const visibleBookings = b.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const visibleBookings = b;
 
   async function quickCreateCustomer(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -140,8 +148,8 @@ export default function Page() {
   }
 
   useEffect(() => {
-    if (page > totalPages) setPage(totalPages);
-  }, [page, totalPages]);
+    if (page > meta.totalPages) setPage(meta.totalPages);
+  }, [page, meta.totalPages]);
 
   return (
     <main className="modulePage">
@@ -152,6 +160,21 @@ export default function Page() {
           <span>Satu booking hanya untuk satu trip. Dewasa, anak, dan bayi bisa dihitung berbeda di dalam booking yang sama.</span>
         </div>
         <Link href="/finance/invoices">Lihat invoice →</Link>
+      </div>
+
+      <div className="crmToolbar">
+        <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Cari kode booking, paket, customer..." />
+        <select value={status} onChange={(e) => setStatus(e.target.value)}>
+          <option value="">Semua status</option>
+          <option value="PENDING_PAYMENT">PENDING_PAYMENT</option>
+          <option value="PARTIALLY_PAID">PARTIALLY_PAID</option>
+          <option value="CONFIRMED">CONFIRMED</option>
+          <option value="CANCELLED">CANCELLED</option>
+        </select>
+        <select value={pageSize} onChange={(e) => setPageSize(Number(e.target.value))}>
+          {[8, 12, 24, 48].map((n) => <option key={n} value={n}>{n} / halaman</option>)}
+        </select>
+        <b>{meta.total} booking</b>
       </div>
 
       <form className="moduleForm" onSubmit={submit}>
@@ -286,9 +309,9 @@ export default function Page() {
       {msg && <p className="errorText">{msg}</p>}
 
       <section className="bookingSummary">
-        <article><span>Booking aktif</span><b>{b.length}</b></article>
-        <article><span>Total pax</span><b>{b.reduce((sum, x) => sum + x.pax, 0)}</b></article>
-        <article><span>Total nilai</span><b>{money(b.reduce((sum, x) => sum + Number(x.totalAmount), 0))}</b></article>
+        <article><span>Booking di halaman ini</span><b>{b.length}</b></article>
+        <article><span>Total pax di halaman ini</span><b>{b.reduce((sum, x) => sum + x.pax, 0)}</b></article>
+        <article><span>Total nilai di halaman ini</span><b>{money(b.reduce((sum, x) => sum + Number(x.totalAmount), 0))}</b></article>
       </section>
 
       <div className="dataTable bookingList">
@@ -308,8 +331,8 @@ export default function Page() {
 
       <div className="paginationBar">
         <button type="button" onClick={() => setPage((v) => Math.max(1, v - 1))} disabled={page === 1}>← Sebelumnya</button>
-        <span>Halaman {page} dari {totalPages}</span>
-        <button type="button" onClick={() => setPage((v) => Math.min(totalPages, v + 1))} disabled={page === totalPages}>Berikutnya →</button>
+        <span>Halaman {meta.page} dari {meta.totalPages}</span>
+        <button type="button" onClick={() => setPage((v) => Math.min(meta.totalPages, v + 1))} disabled={page === meta.totalPages}>Berikutnya →</button>
       </div>
     </main>
   );
