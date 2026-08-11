@@ -18,5 +18,5 @@ Support tour packages, open trips, private trips, one-day trips, multi-day trips
 
 ## Identifier Policy
 
-Booking format is `BTV-YYYYMM-NNNN`. Month semantics require an approved decision. Sequence allocation must be atomic, tenant-scoped, retry-safe, non-reusable, and tested under concurrency. Historical identifiers remain immutable unless an approved migration explicitly maps them.
+Booking format is `BTV-YYYYMM-NNNN`. `YYYYMM` is the canonical travel/departure month, not the record creation month. Sequence allocation must be atomic, tenant-scoped, retry-safe, non-reusable, and tested under concurrency. Historical identifiers remain immutable unless an approved migration explicitly maps them.
 

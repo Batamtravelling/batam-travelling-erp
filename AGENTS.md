@@ -44,7 +44,7 @@ Use `$batam-travelling-erp-guardian` for production-affecting changes, reviews, 
 
 ## Transaction Identifier Rule
 
-Booking codes use `BTV-YYYYMM-NNNN`. `YYYYMM` is based on the approved business meaning recorded in the canonical specification. Until that decision is explicit, report `BUSINESS DECISION REQUIRED` instead of choosing booking-created month or travel month.
+Booking codes use `BTV-YYYYMM-NNNN`. `YYYYMM` is derived from the booking travel/departure month using the canonical travel date. The sequence resets per tenant and travel month.
 
 The sequence must be generated atomically in the database and unique per tenant and month. Never use `count() + 1`, `max() + 1` without locking, or client-generated sequencing. Concurrent requests, deletion, cancellation, historical imports, and retries must not produce duplicates or reuse a finalized code.
 
