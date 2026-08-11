@@ -1,14 +1,10 @@
 import { BadRequestException, Body, Controller, Get, Inject, Injectable, Module, NotFoundException, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { PrismaService } from '../core/prisma.service.js';
+import { BookingCodeService } from '../core/booking-code.service.js';
 import { CurrentIdentity, IdentityGuard, PermissionGuard, Permissions, RequestIdentity } from '../core/request-context.js';
 import { ConfirmBookingDto, CreateBookingDto, CreatePaymentDto, VerifyPaymentDto } from './dto.js';
 @Injectable() class TransactionsService {
-  constructor(@Inject(PrismaService) private readonly prisma:PrismaService){}
-  private bookingCodeFrom(index:number, at=new Date()){
-    const y = at.getFullYear();
-    const m = String(at.getMonth() + 1).padStart(2, '0');
-    return `BTV-${y}${m}-${String(index).padStart(4, '0')}`;
-  }
+  constructor(@Inject(PrismaService) private readonly prisma:PrismaService,@Inject(BookingCodeService) private readonly codes:BookingCodeService){}
   async listBookings(i:RequestIdentity, query: { page?: number; pageSize?: number; search?: string; status?: string } = {}) {
     const page = Math.max(1, Number(query.page || 1));
     const pageSize = Math.max(1, Math.min(100, Number(query.pageSize || 12)));
@@ -59,8 +55,8 @@ import { ConfirmBookingDto, CreateBookingDto, CreatePaymentDto, VerifyPaymentDto
     }
     return this.prisma.$transaction(async tx=>{
       const bookingDate = departure?.startsAt ?? new Date(d.travelDate);
-      const n=await tx.booking.count({where:{tenantId:i.tenantId,createdAt:{gte:new Date(Date.UTC(bookingDate.getFullYear(), bookingDate.getMonth(), 1)),lt:new Date(Date.UTC(bookingDate.getFullYear(), bookingDate.getMonth()+1, 1))}}})+1;
-      const booking=await tx.booking.create({data:{tenantId:i.tenantId,bookingCode:this.bookingCodeFrom(n, bookingDate),customerId:d.customerId,source:d.source,packageId:d.packageId,departureId:d.departureId,packageName:d.packageName,travelDate:bookingDate,returnDate:d.returnDate?new Date(d.returnDate):undefined,pax:d.pax,totalAmount:d.totalAmount,status:'PENDING_PAYMENT',notes:d.notes}});
+      const bookingCode=await this.codes.next(tx,i.tenantId,bookingDate);
+      const booking=await tx.booking.create({data:{tenantId:i.tenantId,bookingCode,customerId:d.customerId,source:d.source,packageId:d.packageId,departureId:d.departureId,packageName:d.packageName,travelDate:bookingDate,returnDate:d.returnDate?new Date(d.returnDate):undefined,pax:d.pax,totalAmount:d.totalAmount,status:'PENDING_PAYMENT',notes:d.notes}});
       if(d.passengers?.length){await tx.bookingPassenger.createMany({data:d.passengers.map(x=>({tenantId:i.tenantId,bookingId:booking.id,packageId:x.packageId??d.packageId,serviceLevel:x.serviceLevel,passengerType:x.passengerType,quantity:x.quantity,unitPrice:x.unitPrice,totalPrice:Number(x.unitPrice)*x.quantity,notes:x.notes}))})}
       const m=await tx.invoice.count({where:{tenantId:i.tenantId}})+1;await tx.invoice.create({data:{tenantId:i.tenantId,invoiceNumber:`INV-${String(m).padStart(6,'0')}`,bookingId:booking.id,customerId:d.customerId,totalAmount:d.totalAmount,dueDate:d.dueDate?new Date(d.dueDate):undefined}});
       if(departure){const reserved=departure.bookings.reduce((sum,x)=>sum+x.pax,0)+d.pax;if(reserved>=departure.maxPax)await tx.packageDeparture.update({where:{id:departure.id},data:{status:'FULL'}})}
@@ -119,4 +115,4 @@ import { ConfirmBookingDto, CreateBookingDto, CreatePaymentDto, VerifyPaymentDto
 @UseGuards(IdentityGuard,PermissionGuard) @Controller('bookings') class BookingsController{constructor(@Inject(TransactionsService)private readonly s:TransactionsService){}@Get()@Permissions('booking.read')list(@CurrentIdentity()i:RequestIdentity,@Query('page')page?:string,@Query('pageSize')pageSize?:string,@Query('search')search?:string,@Query('status')status?:string){return this.s.listBookings(i,{page:page?Number(page):undefined,pageSize:pageSize?Number(pageSize):undefined,search,status})}@Post()@Permissions('booking.manage')create(@CurrentIdentity()i:RequestIdentity,@Body()d:CreateBookingDto){return this.s.createBooking(i,d)}@Patch(':id/confirm')@Permissions('booking.manage')confirm(@CurrentIdentity()i:RequestIdentity,@Param('id')id:string,@Body()d:ConfirmBookingDto){return this.s.confirmBooking(i,id,d)}}
 @UseGuards(IdentityGuard,PermissionGuard) @Controller('invoices') class InvoicesController{constructor(@Inject(TransactionsService)private readonly s:TransactionsService){}@Get()@Permissions('invoice.read')list(@CurrentIdentity()i:RequestIdentity,@Query('page')page?:string,@Query('pageSize')pageSize?:string,@Query('search')search?:string,@Query('sort')sort?:string){return this.s.listInvoices(i,{page:page?Number(page):undefined,pageSize:pageSize?Number(pageSize):undefined,search,sort})}}
 @UseGuards(IdentityGuard,PermissionGuard) @Controller('payments') class PaymentsController{constructor(@Inject(TransactionsService)private readonly s:TransactionsService){}@Get()@Permissions('payment.read')list(@CurrentIdentity()i:RequestIdentity,@Query('page')page?:string,@Query('pageSize')pageSize?:string,@Query('search')search?:string,@Query('status')status?:string){return this.s.listPayments(i,{page:page?Number(page):undefined,pageSize:pageSize?Number(pageSize):undefined,search,status})}@Post()@Permissions('payment.manage')create(@CurrentIdentity()i:RequestIdentity,@Body()d:CreatePaymentDto){return this.s.createPayment(i,d)}@Patch(':id/verify')@Permissions('payment.verify')verify(@CurrentIdentity()i:RequestIdentity,@Param('id')id:string,@Body()d:VerifyPaymentDto){return this.s.verifyPayment(i,id,d)}}
-@Module({controllers:[BookingsController,InvoicesController,PaymentsController],providers:[TransactionsService,PrismaService,IdentityGuard,PermissionGuard]})export class TransactionsModule{}
+@Module({controllers:[BookingsController,InvoicesController,PaymentsController],providers:[TransactionsService,PrismaService,BookingCodeService,IdentityGuard,PermissionGuard]})export class TransactionsModule{}
