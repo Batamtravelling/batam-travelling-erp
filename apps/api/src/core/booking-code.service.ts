@@ -3,28 +3,63 @@ import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class BookingCodeService {
-  private periodFromTravelDate(travelDate: Date) {
-    const year = travelDate.getUTCFullYear();
-    const month = String(travelDate.getUTCMonth() + 1).padStart(2, '0');
-    return `${year}${month}`;
+  private async lock(tx: Prisma.TransactionClient, key: string) {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${key}, 0))`;
+  }
+
+  private async nextSequence(
+    tx: Prisma.TransactionClient,
+    tenantId: string,
+    prefix: string,
+    digits: number,
+    loadLatest: () => Promise<string | undefined>,
+  ) {
+    await this.lock(tx, `${tenantId}:${prefix}`);
+    const latest = await loadLatest();
+    const match = latest?.match(new RegExp(`^${prefix}(\\d{${digits}})$`));
+    const sequence = Number(match?.[1] ?? 0) + 1;
+    const maximum = (10 ** digits) - 1;
+    if (sequence > maximum) throw new ConflictException(`Nomor ${prefix} sudah penuh`);
+    return `${prefix}${String(sequence).padStart(digits, '0')}`;
   }
 
   async next(tx: Prisma.TransactionClient, tenantId: string, travelDate: Date) {
-    const period = this.periodFromTravelDate(travelDate);
+    const period = `${travelDate.getUTCFullYear()}${String(travelDate.getUTCMonth() + 1).padStart(2, '0')}`;
     const prefix = `BTV-${period}-`;
+    return this.nextSequence(tx, tenantId, prefix, 4, async () => (
+      await tx.booking.findFirst({
+        where: { tenantId, bookingCode: { startsWith: prefix } },
+        orderBy: { bookingCode: 'desc' },
+        select: { bookingCode: true },
+      })
+    )?.bookingCode);
+  }
 
-    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`${tenantId}:${period}`}, 0))`;
+  async nextCustomer(tx: Prisma.TransactionClient, tenantId: string) {
+    const prefix = 'CUS-';
+    return this.nextSequence(tx, tenantId, prefix, 6, async () => (
+      await tx.customer.findFirst({ where: { tenantId, customerCode: { startsWith: prefix } }, orderBy: { customerCode: 'desc' }, select: { customerCode: true } })
+    )?.customerCode);
+  }
 
-    const latest = await tx.booking.findFirst({
-      where: { tenantId, bookingCode: { startsWith: prefix } },
-      orderBy: { bookingCode: 'desc' },
-      select: { bookingCode: true },
-    });
+  async nextLead(tx: Prisma.TransactionClient, tenantId: string) {
+    const prefix = 'LEAD-';
+    return this.nextSequence(tx, tenantId, prefix, 6, async () => (
+      await tx.lead.findFirst({ where: { tenantId, leadCode: { startsWith: prefix } }, orderBy: { leadCode: 'desc' }, select: { leadCode: true } })
+    )?.leadCode);
+  }
 
-    const previous = latest?.bookingCode.match(/^BTV-\d{6}-(\d{4})$/);
-    const sequence = Number(previous?.[1] ?? 0) + 1;
-    if (sequence > 9999) throw new ConflictException(`Nomor booking untuk periode ${period} sudah penuh`);
+  async nextInvoice(tx: Prisma.TransactionClient, tenantId: string) {
+    const prefix = 'INV-';
+    return this.nextSequence(tx, tenantId, prefix, 6, async () => (
+      await tx.invoice.findFirst({ where: { tenantId, invoiceNumber: { startsWith: prefix } }, orderBy: { invoiceNumber: 'desc' }, select: { invoiceNumber: true } })
+    )?.invoiceNumber);
+  }
 
-    return `${prefix}${String(sequence).padStart(4, '0')}`;
+  async nextPayment(tx: Prisma.TransactionClient, tenantId: string) {
+    const prefix = 'PAY-';
+    return this.nextSequence(tx, tenantId, prefix, 6, async () => (
+      await tx.payment.findFirst({ where: { tenantId, paymentNumber: { startsWith: prefix } }, orderBy: { paymentNumber: 'desc' }, select: { paymentNumber: true } })
+    )?.paymentNumber);
   }
 }
