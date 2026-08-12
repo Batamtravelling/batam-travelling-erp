@@ -5,7 +5,8 @@ import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { apiGet, apiPost } from '../../lib/api';
 
 type C = { id: string; fullName: string };
-type P = { id: string; name: string; status: string; approvalStatus: string; serviceLevel?: 'REGULAR' | 'PREMIUM'; destination?: string; adultPrice?: string; childPrice?: string; infantPrice?: string; prices?: { sellingPrice: string }[]; minPax?: number; maxPax?: number };
+type Departure = { id: string; startsAt: string; bookingCloseAt?: string | null; status: string; maxPax: number; reservedPax: number; remainingPax: number; occupancyPercent: number; surchargeAmount: string | number; surchargeBasis: 'PER_PAX' | 'PER_BOOKING'; surchargeLabel?: string | null };
+type P = { id: string; name: string; status: string; approvalStatus: string; serviceLevel?: 'REGULAR' | 'PREMIUM'; destination?: string; adultPrice?: string; childPrice?: string; infantPrice?: string; prices?: { sellingPrice: string }[]; minPax?: number; maxPax?: number; departures?: Departure[] };
 type PassengerLine = { serviceLevel: 'REGULAR' | 'PREMIUM'; passengerType: 'ADULT' | 'CHILD' | 'INFANT'; quantity: number; unitPrice: number; notes?: string };
 type B = {
   id: string;
@@ -31,6 +32,7 @@ export default function Page() {
   const [c, setC] = useState<C[]>([]);
   const [p, setP] = useState<P[]>([]);
   const [selectedPackageId, setSelectedPackageId] = useState('');
+  const [selectedDepartureId, setSelectedDepartureId] = useState('');
   const [lines, setLines] = useState<PassengerLine[]>([blankLine()]);
   const [msg, setMsg] = useState('');
   const [page, setPage] = useState(1);
@@ -64,13 +66,15 @@ export default function Page() {
   }, [page, pageSize, search, status]);
 
   const selectedPackage = useMemo(() => p.find((x) => x.id === selectedPackageId), [p, selectedPackageId]);
+  const selectedDeparture = selectedPackage?.departures?.find((x) => x.id === selectedDepartureId);
   const basePrice = packagePrice(selectedPackage, 'ADULT');
 
   const summary = useMemo(() => {
     const pax = lines.reduce((sum, line) => sum + (line.quantity || 0), 0);
     const total = lines.reduce((sum, line) => sum + (Number(line.unitPrice) || 0) * (Number(line.quantity) || 0), 0);
-    return { pax, total };
-  }, [lines]);
+    const surcharge = selectedDeparture ? Number(selectedDeparture.surchargeAmount) * (selectedDeparture.surchargeBasis === 'PER_PAX' ? pax : 1) : 0;
+    return { pax, baseTotal: total, surcharge, total: total + surcharge };
+  }, [lines, selectedDeparture]);
 
   const updateLine = (index: number, patch: Partial<PassengerLine>) => {
     setLines((prev) => prev.map((line, i) => (i === index ? { ...line, ...patch } : line)));
@@ -101,8 +105,9 @@ export default function Page() {
         source: 'MANUAL',
         customerId: f.get('customerId'),
         packageId,
+        departureId: selectedDepartureId || undefined,
         packageName: packageName || selectedPackage?.name || 'Booking trip',
-        travelDate: f.get('travelDate'),
+        travelDate: selectedDeparture?.startsAt ?? f.get('travelDate'),
         pax: passengers.length ? passengers.reduce((sum, x) => sum + x.quantity, 0) : Number(f.get('pax') || 1),
         totalAmount: passengers.length ? passengers.reduce((sum, x) => sum + x.quantity * x.unitPrice, 0) : Number(f.get('totalAmount') || 0),
         passengers: passengers.length ? passengers : undefined,
@@ -112,6 +117,7 @@ export default function Page() {
       e.currentTarget.reset();
       setLines([blankLine()]);
       setSelectedPackageId('');
+      setSelectedDepartureId('');
       setPage(1);
       await load();
     } catch (x) {
@@ -193,6 +199,7 @@ export default function Page() {
             onChange={(e) => {
               const value = e.target.value;
               setSelectedPackageId(value);
+              setSelectedDepartureId('');
               syncLinePrices(value);
             }}
             required
@@ -206,9 +213,26 @@ export default function Page() {
           <input name="packageName" placeholder="Contoh: 3H2M Batam - Singapura / BTV-202608-0001" />
         </label>
         <label>
-          Tanggal trip
-          <input name="travelDate" type="date" required />
+          Jadwal Open Trip
+          <select value={selectedDepartureId} onChange={(e) => setSelectedDepartureId(e.target.value)}>
+            <option value="">Private / tanggal fleksibel</option>
+            {selectedPackage?.departures?.map((departure) => {
+              const closed = !['OPEN', 'SCHEDULED'].includes(departure.status) || departure.remainingPax <= 0;
+              return <option key={departure.id} value={departure.id} disabled={closed}>
+                {new Date(departure.startsAt).toLocaleString('id-ID')} · {departure.remainingPax} kursi tersisa · {departure.status}
+              </option>;
+            })}
+          </select>
         </label>
+        <label>
+          Tanggal trip
+          <input name="travelDate" type="date" required={!selectedDepartureId} disabled={Boolean(selectedDepartureId)} />
+        </label>
+        {selectedDeparture && <div className={selectedDeparture.occupancyPercent >= 80 ? 'moduleNotice warning' : 'moduleNotice'} style={{ gridColumn: '1 / -1' }}>
+          <strong>{selectedDeparture.occupancyPercent >= 80 ? '⚠ Kursi hampir penuh' : 'Ketersediaan jadwal'}</strong>
+          <span>{selectedDeparture.reservedPax}/{selectedDeparture.maxPax} pax terisi · {selectedDeparture.remainingPax} kursi tersisa · surcharge {money(Number(selectedDeparture.surchargeAmount))} {selectedDeparture.surchargeBasis === 'PER_PAX' ? '/ pax' : '/ booking'}</span>
+          {summary.pax > selectedDeparture.remainingPax && <b>Jumlah peserta melebihi sisa kursi.</b>}
+        </div>}
         <label>
           Jumlah peserta total
           <input name="pax" type="number" min="1" placeholder="Jika belum isi rincian peserta" />
@@ -265,11 +289,11 @@ export default function Page() {
               </label>
             </div>
           ))}
-          <div className="bookingTotal"><span>Total dari rincian peserta</span><strong>{money(summary.total)}</strong></div>
+          <div className="bookingTotal"><span>Total peserta {money(summary.baseTotal)}{summary.surcharge > 0 ? ` + surcharge ${money(summary.surcharge)}` : ''}</span><strong>{money(summary.total)}</strong></div>
           <button type="button" onClick={addLine}>+ Tambah baris peserta</button>
         </section>
 
-        <button className="primary">Buat booking</button>
+        <button className="primary" disabled={Boolean(selectedDeparture && summary.pax > selectedDeparture.remainingPax)}>Buat booking</button>
       </form>
 
       <details className="leadInbox">
