@@ -1,4 +1,5 @@
 import { BadRequestException, Body, Controller, Get, Inject, Injectable, Module, NotFoundException, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { PackageServiceLevel } from '@prisma/client';
 import { PrismaService } from '../core/prisma.service.js';
 import { BookingCodeService } from '../core/booking-code.service.js';
 import { DepartureCapacityService } from '../core/departure-capacity.service.js';
@@ -43,9 +44,15 @@ import { ConfirmBookingDto, CreateBookingDto, CreatePaymentDto, VerifyPaymentDto
   }
   async createBooking(i:RequestIdentity,d:CreateBookingDto){
     const customer=await this.prisma.customer.findFirst({where:{id:d.customerId,tenantId:i.tenantId}});if(!customer)throw new BadRequestException('Customer tidak valid');
-    const pkg=d.packageId?await this.prisma.travelPackage.findFirst({where:{id:d.packageId,tenantId:i.tenantId}}):null;if(d.packageId&&!pkg)throw new BadRequestException('Package tidak valid');
+    const pkg=d.packageId?await this.prisma.travelPackage.findFirst({where:{id:d.packageId,tenantId:i.tenantId,archivedAt:null,status:{not:'ARCHIVED'}},include:{prices:{where:{active:true},orderBy:{priority:'desc'},take:1}}}):null;if(d.packageId&&!pkg)throw new BadRequestException('Package tidak valid');
     if((d.passengers?.length??0)>0&&!d.packageId)throw new BadRequestException('Pilih paket utama sebelum menambahkan peserta');
     if(d.passengers?.some(x=>x.packageId&&x.packageId!==d.packageId))throw new BadRequestException('Booking hanya dapat memakai satu paket trip');
+    if(d.passengers?.length&&d.passengers.reduce((sum,x)=>sum+x.quantity,0)!==d.pax)throw new BadRequestException('Jumlah kategori peserta harus sama dengan total pax');
+    const fallbackPrice=pkg?Number(pkg.prices[0]?.sellingPrice??0):0;
+    const priceFor=(type:'ADULT'|'CHILD'|'INFANT')=>Number(type==='ADULT'?pkg?.adultPrice??fallbackPrice:type==='CHILD'?pkg?.childPrice??pkg?.adultPrice??fallbackPrice:pkg?.infantPrice??pkg?.adultPrice??fallbackPrice);
+    const canonicalPassengers=pkg?(d.passengers?.length?d.passengers.map(x=>({...x,unitPrice:priceFor(x.passengerType)})):[{packageId:d.packageId,serviceLevel:pkg.serviceLevel as PackageServiceLevel,passengerType:'ADULT' as const,quantity:d.pax,unitPrice:priceFor('ADULT'),notes:undefined}]):d.passengers;
+    const canonicalTotal=pkg?canonicalPassengers!.reduce((sum,x)=>sum+x.unitPrice*x.quantity,0):d.totalAmount;
+    if(pkg&&canonicalTotal<=0)throw new BadRequestException('Harga paket belum dikonfigurasi');
     const departure=d.departureId?await this.prisma.packageDeparture.findFirst({where:{id:d.departureId,tenantId:i.tenantId},include:{bookings:{where:{status:{notIn:['CANCELLED','REFUNDED']}},select:{pax:true}}}}):null;
     if(d.departureId&&!departure)throw new BadRequestException('Jadwal Open Trip tidak valid');
     if(departure){
@@ -58,9 +65,10 @@ import { ConfirmBookingDto, CreateBookingDto, CreatePaymentDto, VerifyPaymentDto
       const bookingDate = departure?.startsAt ?? new Date(d.travelDate);
       if(departure)await this.capacity.assertAvailable(tx,i.tenantId,departure.id,d.pax);
       const bookingCode=await this.codes.next(tx,i.tenantId,bookingDate);
-      const booking=await tx.booking.create({data:{tenantId:i.tenantId,bookingCode,customerId:d.customerId,source:d.source,packageId:d.packageId,departureId:d.departureId,packageName:d.packageName,travelDate:bookingDate,returnDate:d.returnDate?new Date(d.returnDate):undefined,pax:d.pax,totalAmount:d.totalAmount,status:'PENDING_PAYMENT',notes:d.notes}});
-      if(d.passengers?.length){await tx.bookingPassenger.createMany({data:d.passengers.map(x=>({tenantId:i.tenantId,bookingId:booking.id,packageId:x.packageId??d.packageId,serviceLevel:x.serviceLevel,passengerType:x.passengerType,quantity:x.quantity,unitPrice:x.unitPrice,totalPrice:Number(x.unitPrice)*x.quantity,notes:x.notes}))})}
-      const invoiceNumber=await this.codes.nextInvoice(tx,i.tenantId);await tx.invoice.create({data:{tenantId:i.tenantId,invoiceNumber,bookingId:booking.id,customerId:d.customerId,totalAmount:d.totalAmount,dueDate:d.dueDate?new Date(d.dueDate):undefined}});
+      const booking=await tx.booking.create({data:{tenantId:i.tenantId,bookingCode,customerId:d.customerId,source:d.source,packageId:d.packageId,departureId:d.departureId,packageName:pkg?.name??d.packageName,travelDate:bookingDate,returnDate:d.returnDate?new Date(d.returnDate):undefined,pax:d.pax,totalAmount:canonicalTotal,status:'PENDING_PAYMENT',notes:d.notes}});
+      if(canonicalPassengers?.length){await tx.bookingPassenger.createMany({data:canonicalPassengers.map(x=>({tenantId:i.tenantId,bookingId:booking.id,packageId:x.packageId??d.packageId,serviceLevel:x.serviceLevel,passengerType:x.passengerType,quantity:x.quantity,unitPrice:x.unitPrice,totalPrice:Number(x.unitPrice)*x.quantity,notes:x.notes}))})}
+      const invoiceNumber=await this.codes.nextInvoice(tx,i.tenantId);await tx.invoice.create({data:{tenantId:i.tenantId,invoiceNumber,bookingId:booking.id,customerId:d.customerId,totalAmount:canonicalTotal,dueDate:d.dueDate?new Date(d.dueDate):undefined}});
+      await tx.auditLog.create({data:{tenantId:i.tenantId,actorId:i.userId,action:'booking.created',resourceType:'Booking',resourceId:booking.id,requestId:i.requestId,metadata:{source:d.source,packageId:d.packageId,totalAmount:canonicalTotal,pax:d.pax}}});
       if(departure){const reserved=await tx.booking.aggregate({_sum:{pax:true},where:{tenantId:i.tenantId,departureId:departure.id,status:{notIn:['CANCELLED','REFUNDED']}}});if(Number(reserved._sum.pax??0)>=departure.maxPax)await tx.packageDeparture.update({where:{id:departure.id},data:{status:'FULL'}})}
       return tx.booking.findUniqueOrThrow({where:{id:booking.id},include:{customer:true,invoice:true,departure:true}})
     })
