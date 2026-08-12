@@ -5,12 +5,15 @@ import {
   Controller,
   Get,
   Headers,
+  HttpException,
+  HttpStatus,
   Inject,
   Injectable,
   Module,
   NotFoundException,
   Param,
   Post,
+  Req,
 } from "@nestjs/common";
 import { createHash } from "node:crypto";
 import { Type } from "class-transformer";
@@ -29,6 +32,7 @@ import {
 import { PrismaService } from "../core/prisma.service.js";
 import { BookingCodeService } from "../core/booking-code.service.js";
 import { DepartureCapacityService } from "../core/departure-capacity.service.js";
+import { calculateDepartureSurcharge } from "../core/surcharge.js";
 function maskPhone(phone?: string | null) {
   const digits = (phone ?? "").replace(/\D/g, "");
   if (digits.length < 6) return digits ? `${digits.slice(0, 2)}***` : undefined;
@@ -230,6 +234,9 @@ class PublicService {
             maxPax: true,
             meetingPoint: true,
             notes: true,
+            surchargeLabel: true,
+            surchargeAmount: true,
+            surchargeBasis: true,
           },
         },
       },
@@ -327,6 +334,37 @@ class PublicService {
           orderBy: [{ featured: "desc" }, { category: "asc" }, { name: "asc" }],
         })
       : [];
+  }
+  async articles(slug?: string) {
+    const t = await this.tenant();
+    if (!t) return slug ? null : [];
+    const where = { tenantId: t.id, status: "PUBLISHED" as const, ...(slug ? { slug } : {}) };
+    const select = {
+      slug: true, title: true, excerpt: true, content: true, coverImage: true,
+      publishedAt: true, author: { select: { name: true } },
+      packages: { orderBy: { sortOrder: "asc" as const }, select: { package: { select: { id: true, name: true, destination: true } } } },
+    };
+    if (slug) {
+      const article = await this.p.article.findFirst({ where, select });
+      if (!article) throw new NotFoundException("Artikel tidak ditemukan");
+      return article;
+    }
+    return this.p.article.findMany({ where, select, orderBy: { publishedAt: "desc" }, take: 24 });
+  }
+  async promotions() {
+    const t = await this.tenant();
+    if (!t) return [];
+    const now = new Date();
+    return this.p.promotion.findMany({
+      where: { tenantId: t.id, status: "PUBLISHED", startsAt: { lte: now }, endsAt: { gte: now } },
+      select: {
+        id: true, code: true, title: true, description: true, discountType: true, discountValue: true,
+        startsAt: true, endsAt: true, bannerImage: true, terms: true,
+        packages: { select: { package: { select: { id: true, name: true, destination: true } } } },
+      },
+      orderBy: { endsAt: "asc" },
+      take: 24,
+    });
   }
   private hash(d: unknown) {
     return createHash("sha256").update(JSON.stringify(d)).digest("hex");
@@ -451,7 +489,8 @@ class PublicService {
         0,
       ),
       date = departure?.startsAt ?? new Date(d.travelDate),
-      total = unit * d.pax + addonTotal;
+      surcharge = departure ? calculateDepartureSurcharge(Number(departure.surchargeAmount), departure.surchargeBasis, d.pax) : 0,
+      total = unit * d.pax + addonTotal + surcharge;
     return this.p.$transaction(async (tx) => {
       const replay = await this.replay(tx, t.id, "package-order", key, d);
       if (replay) return replay;
@@ -716,6 +755,24 @@ class PublicService {
       },
     };
   }
+
+  async bookingWithThrottle(d: BookingAccessDto, clientIp: string) {
+    const t = await this.tenant();
+    if (!t) throw new BadRequestException("Website belum terhubung ke tenant");
+    const fingerprint = this.hash(`${clientIp}:${d.bookingCode.trim().toUpperCase()}:${normalizePhone(d.phone)}`);
+    await this.p.$transaction(async (tx) => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`${t.id}:portal:${fingerprint}`},0))`;
+      const existing = await tx.publicAccessAttempt.findUnique({ where: { tenantId_fingerprint: { tenantId: t.id, fingerprint } } });
+      const cutoff = new Date(Date.now() - 15 * 60 * 1000);
+      if (!existing || existing.windowStartedAt < cutoff) {
+        await tx.publicAccessAttempt.upsert({ where: { tenantId_fingerprint: { tenantId: t.id, fingerprint } }, create: { tenantId: t.id, fingerprint }, update: { attemptCount: 1, windowStartedAt: new Date() } });
+      } else {
+        if (existing.attemptCount >= 8) throw new HttpException("Terlalu banyak percobaan. Coba kembali dalam 15 menit.", HttpStatus.TOO_MANY_REQUESTS);
+        await tx.publicAccessAttempt.update({ where: { id: existing.id }, data: { attemptCount: { increment: 1 } } });
+      }
+    });
+    return this.booking(d);
+  }
 }
 @Controller("public")
 class PublicController {
@@ -732,6 +789,15 @@ class PublicController {
   @Get("service-products") products() {
     return this.s.products();
   }
+  @Get("articles") articles() {
+    return this.s.articles();
+  }
+  @Get("articles/:slug") article(@Param("slug") slug: string) {
+    return this.s.articles(slug);
+  }
+  @Get("promotions") promotions() {
+    return this.s.promotions();
+  }
   @Post("orders") order(
     @Headers("idempotency-key") key: string,
     @Body() d: WebsiteOrderDto,
@@ -744,8 +810,8 @@ class PublicController {
   ) {
     return this.s.productOrder(d, key);
   }
-  @Post("booking-access") booking(@Body() d: BookingAccessDto) {
-    return this.s.booking(d);
+  @Post("booking-access") booking(@Body() d: BookingAccessDto, @Req() request: { ip: string }) {
+    return this.s.bookingWithThrottle(d, request.ip);
   }
 }
 @Module({

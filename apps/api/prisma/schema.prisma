@@ -319,6 +319,10 @@ enum AssignmentStatus {
   COMPLETED
   CANCELLED
 }
+enum SurchargeBasis {
+  PER_PAX
+  PER_BOOKING
+}
 
 model Tenant {
   id        String   @id @default(uuid()) @db.Uuid
@@ -371,6 +375,7 @@ model Tenant {
   assignments TripAssignment[]
   businessSequences BusinessSequence[]
   idempotencyRecords IdempotencyRecord[]
+  publicAccessAttempts PublicAccessAttempt[]
   @@map("tenants")
 }
 
@@ -401,6 +406,19 @@ model IdempotencyRecord {
   @@unique([tenantId,operation,key])
   @@index([expiresAt])
   @@map("idempotency_records")
+}
+
+model PublicAccessAttempt {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  fingerprint String
+  attemptCount Int     @default(1) @map("attempt_count")
+  windowStartedAt DateTime @default(now()) @map("window_started_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  tenant      Tenant   @relation(fields:[tenantId],references:[id],onDelete:Cascade)
+  @@unique([tenantId,fingerprint])
+  @@index([windowStartedAt])
+  @@map("public_access_attempts")
 }
 
 model TravelPackage {
@@ -560,6 +578,9 @@ model PackageDeparture {
   maxPax    Int @map("max_pax")
   meetingPoint String? @map("meeting_point")
   notes     String?
+  surchargeLabel String? @map("surcharge_label")
+  surchargeAmount Decimal @default(0) @map("surcharge_amount") @db.Decimal(18,2)
+  surchargeBasis SurchargeBasis @default(PER_PAX) @map("surcharge_basis")
   status    DepartureStatus @default(SCHEDULED)
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")

@@ -1,8 +1,6 @@
 ﻿import { BadRequestException, Body, Controller, Delete, Get, Inject, Injectable, Module, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { Type } from 'class-transformer';
 import { IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
-import { mkdir, unlink, writeFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { PrismaService } from '../core/prisma.service.js';
 import { CurrentIdentity, IdentityGuard, PermissionGuard, Permissions, RequestIdentity } from '../core/request-context.js';
@@ -26,8 +24,6 @@ class PeriodDto {
   @IsOptional() @Type(() => Number) @IsInt() @Min(1) paymentPageSize?: number;
 }
 
-const storageRoot = resolve(process.cwd(), 'storage', 'website-media');
-
 @Injectable()
 class MediaService {
   constructor(@Inject(PrismaService) private readonly p: PrismaService) {}
@@ -42,16 +38,24 @@ class MediaService {
     const clean = d.base64.replace(/^data:[^;]+;base64,/, '');
     const bytes = Buffer.from(clean, 'base64');
     if (!bytes.length || bytes.length > 8 * 1024 * 1024) throw new BadRequestException('Ukuran gambar maksimal 8 MB');
-    await mkdir(storageRoot, { recursive: true });
-    const storedName = `${Date.now()}-${randomUUID()}.${ext[d.mimeType]}`;
-    await writeFile(resolve(storageRoot, storedName), bytes, { flag: 'wx' });
-    return this.p.websiteMediaFile.create({ data: { tenantId: i.tenantId, uploadedById: i.userId, originalName: d.fileName, storedName, mimeType: d.mimeType, size: bytes.length, url: `http://localhost:3000/media/${storedName}`, altText: d.altText, category: d.category ?? 'WEBSITE' }, include: { uploadedBy: { select: { name: true } } } });
+    const url = process.env.SUPABASE_URL?.replace(/\/$/, '');
+    const secret = process.env.SUPABASE_SECRET_KEY;
+    const bucket = process.env.SUPABASE_MEDIA_BUCKET ?? 'erp-media';
+    if (!url || !secret) throw new BadRequestException('Supabase Storage belum dikonfigurasi');
+    const storedName = `${i.tenantId}/${randomUUID()}.${ext[d.mimeType]}`;
+    const upload = await fetch(`${url}/storage/v1/object/${bucket}/${storedName}`, { method: 'POST', headers: { authorization: `Bearer ${secret}`, apikey: secret, 'content-type': d.mimeType, 'x-upsert': 'false' }, body: bytes });
+    if (!upload.ok) throw new BadRequestException('Upload media gagal');
+    const publicUrl = `${url}/storage/v1/object/public/${bucket}/${storedName}`;
+    return this.p.websiteMediaFile.create({ data: { tenantId: i.tenantId, uploadedById: i.userId, originalName: d.fileName, storedName, mimeType: d.mimeType, size: bytes.length, url: publicUrl, altText: d.altText, category: d.category ?? 'WEBSITE' }, include: { uploadedBy: { select: { name: true } } } });
   }
 
   async remove(i: RequestIdentity, id: string) {
     const f = await this.p.websiteMediaFile.findFirst({ where: { id, tenantId: i.tenantId } });
     if (!f) throw new BadRequestException('File tidak ditemukan');
-    await unlink(resolve(storageRoot, f.storedName)).catch(() => undefined);
+    const url = process.env.SUPABASE_URL?.replace(/\/$/, '');
+    const secret = process.env.SUPABASE_SECRET_KEY;
+    const bucket = process.env.SUPABASE_MEDIA_BUCKET ?? 'erp-media';
+    if (url && secret) await fetch(`${url}/storage/v1/object/${bucket}/${f.storedName}`, { method: 'DELETE', headers: { authorization: `Bearer ${secret}`, apikey: secret } });
     return this.p.websiteMediaFile.delete({ where: { id } });
   }
 }
@@ -109,10 +113,12 @@ class ReportsService {
       ] } : {}),
     };
 
-    const [invoiceRows, bookingTotal, paymentTotal, bookings, payments] = await Promise.all([
+    const [invoiceRows, bookingTotal, bookingSums, paymentTotal, receivedSums, bookings, payments] = await Promise.all([
       this.p.invoice.findMany({ where: { tenantId: i.tenantId, issuedAt: { gte: r.gte, lt: r.lt } }, select: { totalAmount: true, paidAmount: true } }),
       this.p.booking.count({ where: bookingWhere }),
+      this.p.booking.aggregate({ where: bookingWhere, _sum: { pax: true, totalAmount: true } }),
       this.p.payment.count({ where: paymentWhere }),
+      this.p.payment.aggregate({ where: { ...paymentWhere, status: 'VERIFIED' }, _sum: { amount: true } }),
       this.p.booking.findMany({ where: bookingWhere, include: { customer: { select: { fullName: true, phone: true } }, invoice: { select: { invoiceNumber: true } }, package: { select: { name: true } } }, orderBy: this.bookingOrder(q.sort), skip: (bookingPage - 1) * bookingPageSize, take: bookingPageSize }),
       this.p.payment.findMany({ where: paymentWhere, include: { customer: { select: { fullName: true } }, invoice: { select: { invoiceNumber: true } }, receivedBy: { select: { name: true } }, verifiedBy: { select: { name: true } } }, orderBy: this.paymentOrder(q.sort), skip: (paymentPage - 1) * paymentPageSize, take: paymentPageSize }),
     ]);
@@ -121,10 +127,10 @@ class ReportsService {
       period: r.label,
       summary: {
         bookingCount: bookingTotal,
-        pax: bookings.reduce((s, b) => s + b.pax, 0),
-        bookingValue: bookings.reduce((s, b) => s + Number(b.totalAmount), 0),
+        pax: bookingSums._sum.pax ?? 0,
+        bookingValue: Number(bookingSums._sum.totalAmount ?? 0),
         invoiced: invoiceRows.reduce((s, x) => s + Number(x.totalAmount), 0),
-        received: payments.filter((p) => p.status === 'VERIFIED').reduce((s, p) => s + Number(p.amount), 0),
+        received: Number(receivedSums._sum.amount ?? 0),
         outstanding: invoiceRows.reduce((s, x) => s + Number(x.totalAmount) - Number(x.paidAmount), 0),
         paymentCount: paymentTotal,
       },

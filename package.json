@@ -11,9 +11,10 @@
     "build": "pnpm --filter @batam/api build && pnpm --filter @batam/web build",
     "test": "pnpm --filter @batam/api test",
     "lint": "pnpm --filter @batam/api lint && pnpm --filter @batam/web lint",
-    "check": "pnpm lint && pnpm test && pnpm build",
+    "check": "pnpm audit --prod --audit-level=moderate && pnpm lint && pnpm test && pnpm build",
     "db:generate": "pnpm --filter @batam/api prisma:generate",
     "db:migrate": "pnpm --filter @batam/api prisma:migrate",
     "db:seed": "pnpm --filter @batam/api prisma:seed"
+    ,"verify:production-env": "node scripts/verify-production-env.mjs"
   }
 }

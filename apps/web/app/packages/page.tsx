@@ -13,6 +13,7 @@ interface PackageRow {
   adultPrice?: number;
   prices?: { sellingPrice: number }[];
   status: string;
+  departures?: {id:string;startsAt:string;maxPax:number;status:string;surchargeLabel?:string;surchargeAmount:number;surchargeBasis:string}[];
 }
 
 const emptyForm = {
@@ -29,6 +30,7 @@ export default function PackagesPage() {
   const [form, setForm] = useState(emptyForm);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
+  const [schedule,setSchedule]=useState({packageId:'',startsAt:'',endsAt:'',bookingCloseAt:'',minPax:'1',maxPax:'25',meetingPoint:'',surchargeLabel:'',surchargeAmount:'0',surchargeBasis:'PER_PAX'});
 
   const fetchPackages = async () => {
     setLoading(true);
@@ -40,6 +42,7 @@ export default function PackagesPage() {
       setLoading(false);
     }
   };
+  const createSchedule=async(event:React.FormEvent)=>{event.preventDefault();if(!schedule.packageId)return;await apiPost(`/packages/${schedule.packageId}/departures`,{startsAt:new Date(schedule.startsAt).toISOString(),endsAt:schedule.endsAt?new Date(schedule.endsAt).toISOString():undefined,bookingCloseAt:schedule.bookingCloseAt?new Date(schedule.bookingCloseAt).toISOString():undefined,minPax:Number(schedule.minPax),maxPax:Number(schedule.maxPax),meetingPoint:schedule.meetingPoint||undefined,status:'OPEN',surchargeLabel:schedule.surchargeLabel||undefined,surchargeAmount:Number(schedule.surchargeAmount),surchargeBasis:schedule.surchargeBasis});setMessage('Jadwal dan surcharge berhasil disimpan. Harga akan dihitung otomatis oleh API saat booking.');void fetchPackages()};
 
   useEffect(() => {
     void fetchPackages();
@@ -88,6 +91,22 @@ export default function PackagesPage() {
         </div>
 
         <div style={{ background: 'white', borderRadius: '24px', padding: '24px', boxShadow: '0 16px 36px rgba(15, 23, 42, 0.08)' }}>
+          <p style={{ margin: 0, textTransform:'uppercase',letterSpacing:'.18em',fontSize:12,color:'#64748b' }}>Jadwal & Surcharge</p><h2>Atur biaya berdasarkan tanggal keberangkatan</h2><p style={{color:'#64748b'}}>Surcharge tidak mengubah harga dasar paket dan hanya diterapkan pada jadwal ini.</p>
+          <form onSubmit={createSchedule} style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(180px,1fr))',gap:10}}>
+            <select required value={schedule.packageId} onChange={e=>setSchedule({...schedule,packageId:e.target.value})} style={inputStyle}><option value="">Pilih paket</option>{packages.map(p=><option value={p.id} key={p.id}>{p.packageCode} · {p.name}</option>)}</select>
+            <label>Tanggal berangkat<input required type="datetime-local" value={schedule.startsAt} onChange={e=>setSchedule({...schedule,startsAt:e.target.value})} style={inputStyle}/></label>
+            <label>Booking ditutup<input type="datetime-local" value={schedule.bookingCloseAt} onChange={e=>setSchedule({...schedule,bookingCloseAt:e.target.value})} style={inputStyle}/></label>
+            <input required type="number" min="1" value={schedule.minPax} onChange={e=>setSchedule({...schedule,minPax:e.target.value})} placeholder="Minimum pax" style={inputStyle}/>
+            <input required type="number" min="1" value={schedule.maxPax} onChange={e=>setSchedule({...schedule,maxPax:e.target.value})} placeholder="Maksimum pax" style={inputStyle}/>
+            <input value={schedule.meetingPoint} onChange={e=>setSchedule({...schedule,meetingPoint:e.target.value})} placeholder="Meeting point" style={inputStyle}/>
+            <input value={schedule.surchargeLabel} onChange={e=>setSchedule({...schedule,surchargeLabel:e.target.value})} placeholder="Nama surcharge (contoh: High Season)" style={inputStyle}/>
+            <input type="number" min="0" value={schedule.surchargeAmount} onChange={e=>setSchedule({...schedule,surchargeAmount:e.target.value})} placeholder="Biaya surcharge" style={inputStyle}/>
+            <select value={schedule.surchargeBasis} onChange={e=>setSchedule({...schedule,surchargeBasis:e.target.value})} style={inputStyle}><option value="PER_PAX">Per peserta</option><option value="PER_BOOKING">Per booking</option></select>
+            <button type="submit" style={{border:0,borderRadius:10,background:'#0d5fba',color:'#fff',fontWeight:700,padding:'12px 14px'}}>Simpan jadwal</button>
+          </form>
+        </div>
+
+        <div style={{ background: 'white', borderRadius: '24px', padding: '24px', boxShadow: '0 16px 36px rgba(15, 23, 42, 0.08)' }}>
           {message && <p className="moduleNotice">{message}</p>}
           {loading ? <div>Memuat paket...</div> : (
             <div style={{ display: 'grid', gap: '12px' }}>
@@ -96,6 +115,7 @@ export default function PackagesPage() {
                   <div>
                     <div style={{ fontWeight: 700 }}>{pkg.name}</div>
                     <div style={{ color: '#64748b', fontSize: '14px', marginTop: '4px' }}>{pkg.packageCode} • {pkg.destination} • {pkg.durationDays} hari</div>
+                    {pkg.departures?.map(d=><small key={d.id} style={{display:'block',marginTop:6,color:'#475569'}}>{new Date(d.startsAt).toLocaleString('id-ID')} · {d.maxPax} pax{Number(d.surchargeAmount)>0?` · ${d.surchargeLabel||'Surcharge'} Rp ${Number(d.surchargeAmount).toLocaleString('id-ID')} ${d.surchargeBasis==='PER_PAX'?'/ pax':'/ booking'}`:''}</small>)}
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <div style={{ fontWeight: 700 }}>Rp {Number(pkg.prices?.[0]?.sellingPrice ?? pkg.adultPrice ?? 0).toLocaleString('id-ID')}</div>
