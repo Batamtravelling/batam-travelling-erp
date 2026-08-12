@@ -726,7 +726,8 @@ model User {
   uploadedWebsiteMedia WebsiteMediaFile[]
   managedVendors Vendor[] @relation("VendorPic")
   recordedVendorLedger VendorLedgerEntry[]
-  recordedFinancialEntries FinancialEntry[]
+  recordedFinancialEntries FinancialEntry[] @relation("FinancialEntryRecordedBy")
+  reversedFinancialEntries FinancialEntry[] @relation("FinancialEntryReversedBy")
   uploadedPaymentProofs PaymentProof[]
   createdQuotations Quotation[] @relation("QuotationCreator")
   sentQuotations Quotation[] @relation("QuotationSender")
@@ -941,6 +942,10 @@ model FinancialEntry {
   id String @id @default(uuid()) @db.Uuid
   tenantId String @map("tenant_id") @db.Uuid
   recordedById String @map("recorded_by_id") @db.Uuid
+  reversedById String? @map("reversed_by_id") @db.Uuid
+  reversalOfId String? @unique @map("reversal_of_id") @db.Uuid
+  reversalReason String? @map("reversal_reason")
+  reversedAt DateTime? @map("reversed_at")
   paymentId String? @unique @map("payment_id") @db.Uuid
   invoiceId String? @map("invoice_id") @db.Uuid
   bookingId String? @map("booking_id") @db.Uuid
@@ -961,7 +966,10 @@ model FinancialEntry {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
   tenant Tenant @relation(fields:[tenantId],references:[id],onDelete:Restrict)
-  recordedBy User @relation(fields:[recordedById],references:[id],onDelete:Restrict)
+  recordedBy User @relation("FinancialEntryRecordedBy",fields:[recordedById],references:[id],onDelete:Restrict)
+  reversedBy User? @relation("FinancialEntryReversedBy",fields:[reversedById],references:[id],onDelete:Restrict)
+  reversalOf FinancialEntry? @relation("FinancialEntryReversal",fields:[reversalOfId],references:[id],onDelete:Restrict)
+  reversal FinancialEntry? @relation("FinancialEntryReversal")
   payment Payment? @relation(fields:[paymentId],references:[id],onDelete:Restrict)
   invoice Invoice? @relation(fields:[invoiceId],references:[id],onDelete:Restrict)
   booking Booking? @relation(fields:[bookingId],references:[id],onDelete:Restrict)
