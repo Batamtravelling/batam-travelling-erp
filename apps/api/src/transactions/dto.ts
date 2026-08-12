@@ -1,6 +1,6 @@
 import { BookingSource, BookingStatus, PackageServiceLevel, PassengerType, PaymentMethod, PaymentStatus } from '@prisma/client';
 import { Type } from 'class-transformer';
-import { IsArray, IsDateString, IsEnum, IsInt, IsNumber, IsOptional, IsString, IsUUID, Max, MaxLength, Min, MinLength, ValidateNested } from 'class-validator';
+import { ArrayMaxSize, ArrayMinSize, IsArray, IsDateString, IsEnum, IsInt, IsNumber, IsOptional, IsString, IsUUID, Max, MaxLength, Min, MinLength, ValidateNested } from 'class-validator';
 
 export class PageQueryDto {
   @IsOptional() @Type(() => Number) @IsInt() @Min(1) page?: number;
@@ -16,9 +16,9 @@ export class BookingPassengerDto {
   @IsOptional() @IsUUID() packageId?: string;
   @IsEnum(PackageServiceLevel) serviceLevel!: PackageServiceLevel;
   @IsEnum(PassengerType) passengerType!: PassengerType;
-  @Type(() => Number) @IsInt() @Min(1) quantity!: number;
-  @Type(() => Number) @IsNumber() @Min(0) unitPrice!: number;
-  @IsOptional() @IsString() notes?: string;
+  @Type(() => Number) @IsInt() @Min(1) @Max(100000) quantity!: number;
+  @Type(() => Number) @IsNumber({ maxDecimalPlaces: 2 }) @Min(0) @Max(1_000_000_000_000) unitPrice!: number;
+  @IsOptional() @IsString() @MaxLength(2000) notes?: string;
 }
 
 export class CreateBookingDto {
@@ -33,7 +33,7 @@ export class CreateBookingDto {
   @Type(() => Number) @IsNumber() @Min(0) totalAmount!: number;
   @IsOptional() @IsDateString() dueDate?: string;
   @IsOptional() @IsString() notes?: string;
-  @IsOptional() @IsArray() @ValidateNested({ each: true }) @Type(() => BookingPassengerDto)
+  @IsOptional() @IsArray() @ArrayMinSize(1) @ArrayMaxSize(100) @ValidateNested({ each: true }) @Type(() => BookingPassengerDto)
   passengers?: BookingPassengerDto[];
 }
 
