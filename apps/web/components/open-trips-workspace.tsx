@@ -60,10 +60,10 @@ export function OpenTripsWorkspace() {
     <div className="crmToolbar"><input value={search} onChange={(event) => { setSearch(event.target.value); setPage(1); }} placeholder="Cari nama paket…" /></div>
     <section className="workspaceCards">
       {items.map((item) => <article key={item.id}>
-        <small>{item.status}</small>
+        <small>{item.status}{item.occupancyPercent >= 80 && item.remainingPax > 0 ? ' · KURSI HAMPIR PENUH' : ''}</small>
         <h2>{item.package.name}</h2>
         <p>{date.format(new Date(item.startsAt))}</p>
-        <div className="otProgress" aria-label={`Okupansi ${item.occupancyPercent}%`}><i style={{ width: `${item.occupancyPercent}%` }} /></div>
+        <div className={item.occupancyPercent >= 80 ? 'otProgress nearFull' : 'otProgress'} aria-label={`Okupansi ${item.occupancyPercent}%`}><i style={{ width: `${item.occupancyPercent}%` }} /></div>
         <p><strong>{item.reservedPax}/{item.maxPax} pax</strong> · {item.remainingPax} kursi tersisa · {item.bookingCount} booking</p>
         {item.bookingCloseAt && <p>Cutoff: {date.format(new Date(item.bookingCloseAt))}</p>}
         <p>Surcharge: {rupiah.format(Number(item.surchargeAmount))} {item.surchargeBasis === 'PER_PAX' ? '/ pax' : '/ booking'}</p>
