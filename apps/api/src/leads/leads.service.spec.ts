@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { canTransitionLead, validateLeadTransition } from './leads.service.js';
+import { canTransitionLead, LeadsService, validateLeadTransition } from './leads.service.js';
 
 describe('lead state transitions', () => {
   it('allows the supported sales path', () => {
@@ -29,7 +29,7 @@ describe('lead tenant reference validation', () => {
     const prisma = {
       user: { findFirst: vi.fn().mockResolvedValue(null) },
     } as any;
-    const service = new (await import('./leads.service.js')).LeadsService(prisma, {} as any, {} as any);
+    const service = new LeadsService(prisma, {} as any, {} as any);
 
     await expect(service.create(identity, {
       senderName: 'Tamu',
