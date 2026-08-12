@@ -10,7 +10,9 @@ const navItems = [
   { href: '/crm/customers', label: 'CRM Customer', icon: '👥' },
   { href: '/sales/quotations', label: 'Quotations', icon: '🧾' },
   { href: '/bookings', label: 'Bookings', icon: '🛳️' },
+  { href: '/pos', label: 'POS / Kasir', icon: 'S' },
   { href: '/packages', label: 'Paket Trip', icon: '🎒' },
+  { href: '/package-reviews', label: 'Review Paket', icon: 'R' },
   { href: '/service-products', label: 'Produk Layanan', icon: 'PL' },
   { href: '/operations/open-trips', label: 'Open Trip', icon: 'OT' },
   { href: '/operations/trips', label: 'Trip & Assignment', icon: '🧭' },
@@ -21,6 +23,10 @@ const navItems = [
   { href: '/finance/invoices', label: 'Finance & Invoice', icon: '💳' },
   { href: '/finance/cashflow', label: 'Arus Kas & Biaya', icon: 'CF' },
   { href: '/reports', label: 'Reports & Backup', icon: '📈' },
+  { href: '/content', label: 'Content Studio', icon: 'C' },
+  { href: '/media-library', label: 'Media Library', icon: 'M' },
+  { href: '/asset-knowledge', label: 'Asset & Knowledge', icon: 'AK' },
+  { href: '/archives', label: 'Arsip', icon: 'A' },
   { href: '/settings', label: 'Settings', icon: '⚙️' },
 ];
 

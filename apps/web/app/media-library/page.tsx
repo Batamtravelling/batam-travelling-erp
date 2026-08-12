@@ -1,0 +1,1 @@
+import{MediaWorkspace}from'../../components/admin-workspaces';export default MediaWorkspace;

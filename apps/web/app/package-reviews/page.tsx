@@ -1,0 +1,1 @@
+import{PackageReviewWorkspace}from'../../components/admin-workspaces';export default PackageReviewWorkspace;

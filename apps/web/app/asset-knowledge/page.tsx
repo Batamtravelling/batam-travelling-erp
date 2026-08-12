@@ -1,0 +1,1 @@
+import{AssetKnowledgeWorkspace}from'../../components/admin-workspaces';export default AssetKnowledgeWorkspace;
