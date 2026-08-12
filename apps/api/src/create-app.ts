@@ -7,16 +7,32 @@ import multipart from '@fastify/multipart';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module.js';
 import Redis from 'ioredis';
+import { randomUUID } from 'node:crypto';
 
 export async function createApp(): Promise<NestFastifyApplication> {
   const app = await NestFactory.create<NestFastifyApplication>(AppModule, new FastifyAdapter());
+  const fastify = app.getHttpAdapter().getInstance();
+  fastify.addHook('onRequest', async (request, reply) => {
+    const incoming = request.headers['x-request-id'];
+    const requestId = typeof incoming === 'string' && /^[a-zA-Z0-9._:-]{8,100}$/.test(incoming) ? incoming : randomUUID();
+    request.headers['x-request-id'] = requestId;
+    reply.header('x-request-id', requestId);
+  });
+  fastify.addHook('onResponse', async (request, reply) => {
+    const requestId = String(request.headers['x-request-id'] ?? request.id);
+    console.info(JSON.stringify({ level: 'info', event: 'http.request.completed', requestId, method: request.method, route: request.routeOptions.url, statusCode: reply.statusCode, responseTimeMs: Math.round(reply.elapsedTime) }));
+  });
+  fastify.addHook('onError', async (request, reply, error) => {
+    const requestId = String(request.headers['x-request-id'] ?? request.id);
+    console.error(JSON.stringify({ level: 'error', event: 'http.request.failed', requestId, method: request.method, route: request.routeOptions.url, statusCode: reply.statusCode, errorName: error.name, errorMessage: error.message }));
+  });
 
   await app.register(helmet);
   const redis = process.env.REDIS_URL ? new Redis(process.env.REDIS_URL, { lazyConnect: true, maxRetriesPerRequest: 1 }) : undefined;
   if (process.env.NODE_ENV === 'production' && !redis) throw new Error('REDIS_URL wajib dikonfigurasi untuk production');
   if (redis) {
     await redis.connect();
-    app.getHttpAdapter().getInstance().addHook('onClose', async () => { await redis.quit(); });
+    fastify.addHook('onClose', async () => { await redis.quit(); });
   }
   await app.register(rateLimit, {
     global: true,

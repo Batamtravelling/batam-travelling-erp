@@ -33,6 +33,10 @@ export default function CrmCustomerPage() {
   const [msg, setMsg] = useState('');
   const [expanded, setExpanded] = useState<string>();
 
+  useEffect(() => {
+    if (new URLSearchParams(location.search).get('view') === 'pipeline') setView('pipeline');
+  }, []);
+
   const loadCustomers = async () => {
     const res = await apiGet<PageResult<Customer>>(`/customers?page=${customerPage}&pageSize=${customerPageSize}&search=${encodeURIComponent(q)}`);
     setCustomers(res.items);
@@ -244,7 +248,7 @@ export default function CrmCustomerPage() {
             {statuses.map((s) => (
               <div className="leadColumn" key={s}>
                 <header><b>{s}</b><span>{leads.filter((x) => x.status === s).length}</span></header>
-                {leads.slice((leadPage - 1) * leadPageSize, leadPage * leadPageSize).filter((x) => x.status === s).map((l) => (
+                {leads.filter((x) => x.status === s).map((l) => (
                   <article className="leadCard" key={l.id}>
                     <div className="leadCardTop"><small>{l.leadCode} · {l.source}</small><em className={l.priority.toLowerCase()}>{l.priority}</em></div>
                     <h3>{l.customer?.fullName || l.senderName}</h3>

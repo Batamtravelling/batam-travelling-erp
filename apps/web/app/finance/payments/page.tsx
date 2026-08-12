@@ -1,10 +1,10 @@
 ﻿'use client';
 
 import { FormEvent, useEffect, useState } from 'react';
-import { apiGet, apiPatch, apiPost } from '../../../lib/api';
+import { apiGet, apiPatch, apiPost, apiUpload } from '../../../lib/api';
 
 type InvoiceRow = { id: string; invoiceNumber: string; issuedAt: string; status: string; totalAmount: number; paidAmount: number; customer: { fullName: string }; booking: { bookingCode: string; packageName: string } };
-type P = { id: string; paymentNumber: string; receiptNumber?: string; amount: number; method: string; status: string; reference?: string; receivedAt: string; verifiedAt?: string; customer: { fullName: string }; invoice: { invoiceNumber: string }; verifiedBy?: { name: string } };
+type P = { id: string; paymentNumber: string; receiptNumber?: string; amount: number; method: string; status: string; reference?: string; receivedAt: string; verifiedAt?: string; customer: { fullName: string }; invoice: { invoiceNumber: string }; verifiedBy?: { name: string }; proofs: { id: string; originalName: string; mimeType: string; size: number; createdAt: string }[] };
 type Brand = { documentLogoUrl?: string; contactEmail?: string; whatsappNumber?: string; contactAddress?: string };
 type Meta = { page: number; pageSize: number; total: number; totalPages: number };
 type PageResult<T> = { items: T[]; meta: Meta };
@@ -63,8 +63,10 @@ export default function Page() {
 
   const load = async () => {
     try {
+      const paymentQuery = new URLSearchParams({ page: String(page), pageSize: String(pageSize), search: debouncedPaymentsSearch });
+      if (status) paymentQuery.set('status', status);
       const [a, b, c] = await Promise.all([
-        apiGet<PageResult<P>>(`/payments?page=${page}&pageSize=${pageSize}&search=${encodeURIComponent(debouncedPaymentsSearch)}&status=${encodeURIComponent(status)}`),
+        apiGet<PageResult<P>>(`/payments?${paymentQuery}`),
         apiGet<PageResult<InvoiceRow>>(`/invoices?page=${invoicePage}&pageSize=${invoicePageSize}&search=${encodeURIComponent(debouncedInvoiceSearch)}&sort=${invoiceSort}${invoiceFrom ? `&from=${encodeURIComponent(invoiceFrom)}` : ''}${invoiceTo ? `&to=${encodeURIComponent(invoiceTo)}` : ''}`),
         apiGet<Brand>('/public/company-profile'),
       ]);
@@ -91,6 +93,28 @@ export default function Page() {
       await load();
     } catch (x) {
       setM((x as Error).message);
+    }
+  }
+
+  async function uploadProof(event: FormEvent<HTMLFormElement>, paymentId: string) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    try {
+      await apiUpload(`/payments/${paymentId}/proof`, new FormData(form));
+      form.reset();
+      setM('Bukti pembayaran tersimpan di private storage dan menunggu verifikasi.');
+      await load();
+    } catch (error) {
+      setM((error as Error).message);
+    }
+  }
+
+  async function openProof(paymentId: string, proofId: string) {
+    try {
+      const signed = await apiGet<{ url: string }>(`/payments/${paymentId}/proofs/${proofId}/url`);
+      window.open(signed.url, '_blank', 'noopener,noreferrer');
+    } catch (error) {
+      setM((error as Error).message);
     }
   }
 
@@ -153,10 +177,8 @@ export default function Page() {
         <select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }}>
           <option value="">Semua status</option>
           <option value="PENDING">PENDING</option>
-          <option value="APPROVED">APPROVED</option>
-          <option value="PAID">PAID</option>
-          <option value="FAILED">FAILED</option>
-          <option value="CANCELLED">CANCELLED</option>
+          <option value="VERIFIED">VERIFIED</option>
+          <option value="REJECTED">REJECTED</option>
         </select>
         <select value={pageSize} onChange={(e) => setPageSize(Number(e.target.value))}>{pageSizes.map((n) => <option key={n} value={n}>{n} / halaman</option>)}</select>
         <b>{meta.total} payment</b>
@@ -164,7 +186,7 @@ export default function Page() {
 
       <section className="dataTable financeTable">
         <div className="tableRow tableHead"><span>Payment</span><span>Invoice / Customer</span><span>Nilai</span><span>Status / Dokumen</span></div>
-        {items.map((x) => <div className="tableRow" key={x.id}><span><b>{x.paymentNumber}</b><small>{x.receiptNumber || new Date(x.receivedAt).toLocaleString('id-ID')}</small></span><span>{x.invoice.invoiceNumber}<small>{x.customer.fullName} · {x.method}</small></span><span>{money(Number(x.amount))}</span><span>{x.status === 'PENDING' ? <span style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}><button type="button" onClick={async () => { await apiPatch(`/payments/${x.id}/verify`, { status: 'VERIFIED' }); await load(); }}>Verifikasi</button><button type="button" onClick={async () => { await apiPatch(`/payments/${x.id}/verify`, { status: 'REJECTED' }); await load(); }}>Tolak</button></span> : <><b>{x.status}</b>{x.status === 'VERIFIED' && <button type="button" className="receiptButton" onClick={() => print(x)}>Print Bukti</button>}</>}</span></div>)}
+        {items.map((x) => <div className="tableRow" key={x.id}><span><b>{x.paymentNumber}</b><small>{x.receiptNumber || new Date(x.receivedAt).toLocaleString('id-ID')}</small></span><span>{x.invoice.invoiceNumber}<small>{x.customer.fullName} · {x.method}</small>{x.proofs?.map((proof) => <button type="button" key={proof.id} onClick={() => void openProof(x.id, proof.id)}>Lihat {proof.originalName}</button>)}</span><span>{money(Number(x.amount))}</span><span>{x.status === 'PENDING' ? <><form onSubmit={(event) => void uploadProof(event, x.id)}><input name="file" type="file" accept="image/png,image/jpeg,image/webp,application/pdf" required/><button type="submit">Upload bukti</button></form><span style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}><button type="button" onClick={async () => { await apiPatch(`/payments/${x.id}/verify`, { status: 'VERIFIED' }); await load(); }}>Verifikasi</button><button type="button" onClick={async () => { await apiPatch(`/payments/${x.id}/verify`, { status: 'REJECTED' }); await load(); }}>Tolak</button></span></> : <><b>{x.status}</b>{x.status === 'VERIFIED' && <button type="button" className="receiptButton" onClick={() => print(x)}>Print Bukti</button>}</>}</span></div>)}
       </section>
 
       <div className="paginationBar">

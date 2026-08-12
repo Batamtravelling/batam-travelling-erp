@@ -5,17 +5,18 @@ import { DevAuthController } from './auth/dev-auth.controller.js';
 import { LeadsModule } from './leads/leads.module.js';
 import { PackagesController } from './packages/packages.controller.js';
 import { PackagesService } from './packages/packages.service.js';
-import { SalesController } from './sales/sales.controller.js';
+import { SalesModule } from './sales/sales.module.js';
 import { PublicModule } from './public/public.module.js';
 import { TransactionsModule } from './transactions/transactions.module.js';
 import { ConnectedModulesModule } from './connected-modules.module.js';
 import { AdminWorkspaceModule } from './admin-workspace.module.js';
 import { HealthController } from './health.controller.js';
+import { HousekeepingService } from './core/housekeeping.service.js';
 
 @Module({
-  imports: [CustomersModule, LeadsModule, PublicModule, TransactionsModule, ConnectedModulesModule, AdminWorkspaceModule],
-  controllers: [PackagesController, DevAuthController, SalesController, HealthController],
-  providers: [PrismaService, PackagesService],
+  imports: [CustomersModule, LeadsModule, SalesModule, PublicModule, TransactionsModule, ConnectedModulesModule, AdminWorkspaceModule],
+  controllers: [PackagesController, DevAuthController, HealthController],
+  providers: [PrismaService, PackagesService, HousekeepingService],
   exports: [PrismaService],
 })
 export class AppModule {}

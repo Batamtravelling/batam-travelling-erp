@@ -6,7 +6,7 @@ const identity = { tenantId: 'tenant-a', userId: 'user-a', permissions: new Set<
 describe('PackagesService', () => {
   it('lists only active tenant-owned records', async () => {
     const prisma = {
-      travelPackage: { findMany: vi.fn().mockResolvedValue([]) },
+      travelPackage: { count: vi.fn().mockResolvedValue(0), findMany: vi.fn().mockResolvedValue([]) },
     } as any;
     await new PackagesService(prisma).list(identity);
     expect(prisma.travelPackage.findMany).toHaveBeenCalledWith(expect.objectContaining({

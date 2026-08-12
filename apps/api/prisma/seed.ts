@@ -9,11 +9,14 @@ const permissions = [
   'booking.read', 'booking.manage', 'invoice.read',
   'payment.read', 'payment.manage', 'payment.verify',
   'package.read', 'package.create', 'package.update',
+  'package.approve',
   'trip.read', 'trip.manage', 'assignment.manage',
   'archive.read', 'archive.manage',
   'content.read', 'content.manage',
-  'media.read', 'media.manage', 'vendor.read',
+  'media.read', 'media.manage', 'vendor.read', 'vendor.manage',
   'asset.read', 'asset.manage', 'knowledge.read', 'knowledge.manage',
+  'settings.read', 'settings.manage',
+  'quotation.view', 'quotation.create', 'quotation.edit', 'quotation.send', 'quotation.accept',
 ];
 
 async function main() {
@@ -42,6 +45,10 @@ async function main() {
     update: { name: ownerName }, create: { tenantId: tenant.id, email: ownerEmail, name: ownerName },
   });
   await prisma.userRole.upsert({ where: { userId_roleId: { userId: user.id, roleId: role.id } }, update: {}, create: { userId: user.id, roleId: role.id } });
+
+  // Production bootstrap must never create example customers, bookings, trips,
+  // projects, or placeholder content. Demo data is opt-in for local/staging only.
+  if (process.env.NODE_ENV === 'production' || process.env.SEED_DEMO_DATA !== 'true') return;
 
   const customer = await prisma.customer.upsert({
     where: { tenantId_customerCode: { tenantId: tenant.id, customerCode: 'CUS-000001' } },
