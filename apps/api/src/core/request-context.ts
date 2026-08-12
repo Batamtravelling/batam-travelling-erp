@@ -1,12 +1,14 @@
 import { CanActivate, createParamDecorator, ExecutionContext, ForbiddenException, Injectable, SetMetadata, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { createRemoteJWKSet, jwtVerify, JWTPayload } from 'jose';
 import { PrismaService } from './prisma.service.js';
 
 export type RequestIdentity = { tenantId: string; userId: string; permissions: Set<string>; requestId?: string };
 export const CurrentIdentity = createParamDecorator((_data: unknown, ctx: ExecutionContext): RequestIdentity => ctx.switchToHttp().getRequest().identity);
 export const Permissions = (...permissions: string[]) => SetMetadata('permissions', permissions);
 
-type SupabaseUser = { id?: string; email?: string; email_confirmed_at?: string | null };
+type SupabaseClaims = JWTPayload & { email?: string; role?: string; session_id?: string; is_anonymous?: boolean };
+const jwksByUrl = new Map<string, ReturnType<typeof createRemoteJWKSet>>();
 
 @Injectable()
 export class IdentityGuard implements CanActivate {
@@ -14,25 +16,28 @@ export class IdentityGuard implements CanActivate {
 
   private async authenticateSupabase(authorization: string) {
     const supabaseUrl = process.env.SUPABASE_URL?.replace(/\/$/, '');
-    const publishableKey = process.env.SUPABASE_PUBLISHABLE_KEY;
-    if (!supabaseUrl || !publishableKey) throw new UnauthorizedException('Supabase Auth belum dikonfigurasi');
-
-    const response = await fetch(`${supabaseUrl}/auth/v1/user`, {
-      headers: { authorization, apikey: publishableKey },
-      signal: AbortSignal.timeout(5000),
-    }).catch(() => null);
-    if (!response?.ok) throw new UnauthorizedException('Sesi tidak valid atau sudah berakhir');
-
-    const authUser = await response.json() as SupabaseUser;
-    if (!authUser.id || !authUser.email || !authUser.email_confirmed_at) {
-      throw new UnauthorizedException('Akun Supabase belum memiliki email terverifikasi');
+    if (!supabaseUrl) throw new UnauthorizedException('Supabase Auth belum dikonfigurasi');
+    const token = authorization.slice('Bearer '.length).trim();
+    const issuer = `${supabaseUrl}/auth/v1`;
+    let jwks = jwksByUrl.get(supabaseUrl);
+    if (!jwks) {
+      jwks = createRemoteJWKSet(new URL(`${issuer}/.well-known/jwks.json`), { cooldownDuration: 300_000, cacheMaxAge: 600_000 });
+      jwksByUrl.set(supabaseUrl, jwks);
     }
+    let authUser: SupabaseClaims;
+    try {
+      const verified = await jwtVerify(token, jwks, { issuer, audience: 'authenticated', clockTolerance: 5 });
+      authUser = verified.payload as SupabaseClaims;
+    } catch {
+      throw new UnauthorizedException('Sesi tidak valid atau sudah berakhir');
+    }
+    if (!authUser.sub || !authUser.email || authUser.role !== 'authenticated' || authUser.is_anonymous || !authUser.session_id) throw new UnauthorizedException('Akun Supabase tidak valid');
 
     let user = await this.prisma.user.findFirst({
       where: {
         active: true,
         OR: [
-          { cognitoId: authUser.id },
+          { cognitoId: authUser.sub },
           { email: { equals: authUser.email, mode: 'insensitive' } },
         ],
       },
@@ -43,10 +48,10 @@ export class IdentityGuard implements CanActivate {
     if (!user.cognitoId) {
       user = await this.prisma.user.update({
         where: { id: user.id },
-        data: { cognitoId: authUser.id },
+        data: { cognitoId: authUser.sub },
         include: { roles: { include: { role: { include: { permissions: { include: { permission: true } } } } } } },
       });
-    } else if (user.cognitoId !== authUser.id) {
+    } else if (user.cognitoId !== authUser.sub) {
       throw new UnauthorizedException('Email ERP sudah terhubung ke akun autentikasi lain');
     }
     return user;
