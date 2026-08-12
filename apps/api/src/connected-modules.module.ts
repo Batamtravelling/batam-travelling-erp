@@ -4,13 +4,7 @@ import { BookingCodeService } from './core/booking-code.service.js';
 import { CurrentIdentity, IdentityGuard, PermissionGuard, Permissions, RequestIdentity } from './core/request-context.js';
 import { AssignTripDto, BusinessReportQueryDto, CashflowQueryDto, CreateCashflowDto, CreateEmployeeDto, CreateProjectDto, CreateTaskDto, CreateTripDto, CreateVendorDto, PageQueryDto, TaskCommentDto, TransitionTripDto, UpdateAssignmentDto, UpdateEmployeeDto, UpdateProfileDto, UpdateProjectDto, UpdateTaskDto, UpdateVendorDto } from './connected-dto.js';
 import { TripStatus } from '@prisma/client';
-
-export function summarizeDepartureCapacity(maxPax: number, bookings: { pax: number }[]) {
-  const reservedPax = bookings.reduce((sum, booking) => sum + booking.pax, 0);
-  const remainingPax = Math.max(0, maxPax - reservedPax);
-  const occupancyPercent = maxPax > 0 ? Math.min(100, Math.round((reservedPax / maxPax) * 100)) : 0;
-  return { reservedPax, remainingPax, occupancyPercent, bookingCount: bookings.length };
-}
+import { summarizeDepartureCapacity } from './core/departure-capacity-summary.js';
 
 const taskInclude = { project: { include: { milestones: true } }, assignee: { select: { id: true, name: true } }, milestone: true, participants: { include: { user: { select: { id: true, name: true } } } }, comments: { include: { author: { select: { name: true } } }, orderBy: { createdAt: 'desc' as const }, take: 5 } };
 
