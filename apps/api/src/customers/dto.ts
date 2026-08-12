@@ -1,4 +1,5 @@
 import { CustomerStatus, CustomerType } from '@prisma/client';
+import { PartialType } from '@nestjs/swagger';
 import { IsEmail, IsEnum, IsOptional, IsString, MaxLength } from 'class-validator';
 
 export class CreateCustomerDto {
@@ -12,5 +13,5 @@ export class CreateCustomerDto {
   @IsOptional() @IsString() leadSource?: string;
   @IsOptional() @IsString() notes?: string;
 }
-export class UpdateCustomerDto extends CreateCustomerDto { @IsOptional() @IsEnum(CustomerStatus) status?: CustomerStatus; }
+export class UpdateCustomerDto extends PartialType(CreateCustomerDto) { @IsOptional() @IsEnum(CustomerStatus) status?: CustomerStatus; }
 
