@@ -8,8 +8,13 @@ type Promotion = {
 
 async function load(): Promise<Promotion[]> {
   const api = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000/api/v1';
-  const response = await fetch(`${api}/public/promotions`, { next: { revalidate: 120 } });
-  return response.ok ? response.json() : [];
+  try {
+    const response = await fetch(`${api}/public/promotions`, { next: { revalidate: 120 } });
+    return response.ok ? response.json() : [];
+  } catch {
+    // The public site must still build and render its empty state when the API is unavailable.
+    return [];
+  }
 }
 
 export default async function PromotionsPage() {

@@ -5,8 +5,12 @@ type Article = { slug:string; title:string; excerpt?:string; content:string; cov
 
 async function load(slug:string):Promise<Article|null>{
   const api=process.env.NEXT_PUBLIC_API_URL??'http://localhost:3000/api/v1';
-  const response=await fetch(`${api}/public/articles/${encodeURIComponent(slug)}`,{next:{revalidate:120}});
-  return response.ok?response.json():null;
+  try {
+    const response=await fetch(`${api}/public/articles/${encodeURIComponent(slug)}`,{next:{revalidate:120}});
+    return response.ok?response.json():null;
+  } catch {
+    return null;
+  }
 }
 
 export default async function ArticlePage({params}:{params:Promise<{slug:string}>}){
