@@ -2,6 +2,7 @@ import { ConflictException, Inject, Injectable, NotFoundException } from '@nestj
 import { DepartureStatus, PackageStatus, Prisma, SurchargeBasis } from '@prisma/client';
 import { PrismaService } from '../core/prisma.service.js';
 import { RequestIdentity } from '../core/request-context.js';
+import { summarizeDepartureCapacity } from '../core/departure-capacity-summary.js';
 
 export type PackageInput = {
   packageCode: string;
@@ -26,12 +27,13 @@ export class PackagesService {
         id: true, packageCode: true, name: true, destination: true, durationDays: true,
         adultPrice: true, childPrice: true, infantPrice: true, serviceLevel: true, status: true, approvalStatus: true, minPax: true, maxPax: true,
         prices: { where: { active: true }, orderBy: { priority: 'desc' }, take: 1, select: { sellingPrice: true } },
-        departures: { where: { startsAt: { gte: new Date() } }, orderBy: { startsAt: 'asc' }, take: 12, select: { id:true,startsAt:true,endsAt:true,bookingCloseAt:true,minPax:true,maxPax:true,status:true,meetingPoint:true,surchargeLabel:true,surchargeAmount:true,surchargeBasis:true } },
+        departures: { where: { startsAt: { gte: new Date() } }, orderBy: { startsAt: 'asc' }, take: 12, select: { id:true,startsAt:true,endsAt:true,bookingCloseAt:true,minPax:true,maxPax:true,status:true,meetingPoint:true,surchargeLabel:true,surchargeAmount:true,surchargeBasis:true,bookings:{where:{status:{notIn:['CANCELLED','REFUNDED']}},select:{pax:true}} } },
       },
       orderBy: [{ status: 'asc' }, { name: 'asc' }],
       skip:(page-1)*pageSize,take:pageSize,
     })]);
-    return{items,meta:{page,pageSize,total,totalPages:Math.max(1,Math.ceil(total/pageSize))}};
+    const availabilityItems=items.map(item=>({...item,departures:item.departures.map(({bookings,...departure})=>({...departure,...summarizeDepartureCapacity(departure.maxPax,bookings)}))}));
+    return{items:availabilityItems,meta:{page,pageSize,total,totalPages:Math.max(1,Math.ceil(total/pageSize))}};
   }
 
   async create(identity: RequestIdentity, input: PackageInput) {
