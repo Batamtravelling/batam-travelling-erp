@@ -43,6 +43,15 @@ function decimalNumber(value: Prisma.Decimal | number | string): number {
   return Number(value);
 }
 
+export function quotationItemsRequireRepricing(input: {
+  itemsProvided: boolean;
+  packageChanged: boolean;
+  paxChanged: boolean;
+  hasPackage: boolean;
+}) {
+  return input.itemsProvided || input.packageChanged || (input.paxChanged && input.hasPackage);
+}
+
 function snapshotOf(quotation: Record<string, any>, items: ResolvedItem[]) {
   return {
     quotationNumber: quotation.quotationNumber,
@@ -231,7 +240,14 @@ export class SalesService {
       dto.validUntil ?? new Date(current.validUntil).toISOString(),
     );
     const packageChanged = dto.packageId !== undefined && dto.packageId !== current.packageId;
-    const items: ResolvedItem[] = dto.items || packageChanged
+    const paxChanged = dto.pax !== undefined && dto.pax !== current.pax;
+    const repriceItems = quotationItemsRequireRepricing({
+      itemsProvided: dto.items !== undefined,
+      packageChanged,
+      paxChanged,
+      hasPackage: Boolean(merged.packageId),
+    });
+    const items: ResolvedItem[] = repriceItems
       ? await this.resolveItems(identity, dto.items, travelPackage, dto.pax ?? current.pax)
       : current.items.map((item: any, index: number) => ({ serviceProductId: item.serviceProductId ?? undefined, name: item.name, description: item.description ?? undefined, quantity: new Prisma.Decimal(item.quantity), unit: item.unit, unitPrice: new Prisma.Decimal(item.unitPrice), totalPrice: new Prisma.Decimal(item.totalPrice), sortOrder: index }));
     const subtotal = items.reduce((sum, item) => sum.add(item.totalPrice), new Prisma.Decimal(0));
