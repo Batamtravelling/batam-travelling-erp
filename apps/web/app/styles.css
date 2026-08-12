@@ -63,7 +63,7 @@
 
 /* ERP shell and shared module responsiveness */
 .erpMain{width:100%;min-width:0}
-.moduleNotice{margin:0 0 14px;padding:12px 14px;border:1px solid #bfdbfe;border-radius:12px;background:#eff6ff;color:#1e40af}
+.moduleNotice{margin:0 0 14px;padding:12px 14px;border:1px solid #bfdbfe;border-radius:12px;background:#eff6ff;color:#1e40af;display:grid;gap:4px}.moduleNotice.warning{border-color:#f59e0b;background:#fffbeb;color:#92400e}
 @media(max-width:900px){
   .erpShell{display:block!important}
   .erpSidebar{position:sticky!important;top:0!important;width:100%!important;height:auto!important;max-height:none!important;padding:12px!important;gap:10px!important;overflow:visible!important}
