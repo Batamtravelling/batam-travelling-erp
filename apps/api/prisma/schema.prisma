@@ -168,6 +168,14 @@ enum CostType {
   VENDOR
   OTHER
 }
+enum FinancialEntryOrigin {
+  MANUAL
+  PAYMENT
+}
+enum FinancialEntryStatus {
+  POSTED
+  REVERSED
+}
 enum VendorRateType {
   CORPORATE_RATE
   NET_COST
@@ -933,9 +941,14 @@ model FinancialEntry {
   id String @id @default(uuid()) @db.Uuid
   tenantId String @map("tenant_id") @db.Uuid
   recordedById String @map("recorded_by_id") @db.Uuid
+  paymentId String? @unique @map("payment_id") @db.Uuid
+  invoiceId String? @map("invoice_id") @db.Uuid
+  bookingId String? @map("booking_id") @db.Uuid
   projectId String? @map("project_id") @db.Uuid
   tripId String? @map("trip_id") @db.Uuid
   vendorId String? @map("vendor_id") @db.Uuid
+  origin FinancialEntryOrigin @default(MANUAL)
+  status FinancialEntryStatus @default(POSTED)
   direction CashDirection
   costType CostType @map("cost_type")
   category String
@@ -949,10 +962,16 @@ model FinancialEntry {
   updatedAt DateTime @updatedAt @map("updated_at")
   tenant Tenant @relation(fields:[tenantId],references:[id],onDelete:Restrict)
   recordedBy User @relation(fields:[recordedById],references:[id],onDelete:Restrict)
+  payment Payment? @relation(fields:[paymentId],references:[id],onDelete:Restrict)
+  invoice Invoice? @relation(fields:[invoiceId],references:[id],onDelete:Restrict)
+  booking Booking? @relation(fields:[bookingId],references:[id],onDelete:Restrict)
   project Project? @relation(fields:[projectId],references:[id],onDelete:SetNull)
   trip Trip? @relation(fields:[tripId],references:[id],onDelete:SetNull)
   vendor Vendor? @relation(fields:[vendorId],references:[id],onDelete:SetNull)
   @@index([tenantId,transactionDate,direction,costType])
+  @@index([tenantId,status,transactionDate])
+  @@index([tenantId,invoiceId])
+  @@index([tenantId,bookingId])
   @@map("financial_entries")
 }
 
@@ -1237,6 +1256,7 @@ model Booking {
   trip            Trip?
   items           BookingItem[]
   passengers      BookingPassenger[]
+  financialEntries FinancialEntry[]
   @@unique([tenantId,bookingCode])
   @@index([tenantId,status,travelDate])
   @@index([tenantId,departureId,status])
@@ -1345,6 +1365,7 @@ model Invoice {
   booking       Booking       @relation(fields:[bookingId],references:[id],onDelete:Restrict)
   customer      Customer      @relation(fields:[customerId],references:[id],onDelete:Restrict)
   payments      Payment[]
+  financialEntries FinancialEntry[]
   @@unique([tenantId,invoiceNumber])
   @@index([tenantId,status,dueDate])
   @@map("invoices")
@@ -1373,6 +1394,7 @@ model Payment {
   receivedBy     User?         @relation("PaymentReceiver",fields:[receivedById],references:[id],onDelete:SetNull)
   verifiedBy     User?         @relation("PaymentVerifier",fields:[verifiedById],references:[id],onDelete:SetNull)
   proofs         PaymentProof[]
+  financialEntry FinancialEntry?
   @@unique([tenantId,paymentNumber])
   @@unique([tenantId,receiptNumber])
   @@index([tenantId,invoiceId,status])
