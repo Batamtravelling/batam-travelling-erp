@@ -86,8 +86,6 @@ All numbered specifications now live in `docs/`. The root directory contains pro
 | 03 | `docs/03_BUSINESS_RULES_AND_POLICY.md` | Business rules, policies, governance |
 | 04 | `docs/04_PRD_SYSTEM_REQUIREMENTS.md` | Product/system requirements |
 | 07 | `docs/07_USER_ROLES_PERMISSIONS_MATRIX.md` | User roles, permissions, data scope, and approval authority |
-| 07 | `docs/07_USER_ROLES_PERMISSIONS_MATRIX.md` | User roles, permissions, data scope, and approval authority |
-| 07 | `docs/07_USER_ROLES_PERMISSIONS_MATRIX.md` | User roles, permissions, data scope, and approval authority |
 
 ### Product, UX, API & Security
 

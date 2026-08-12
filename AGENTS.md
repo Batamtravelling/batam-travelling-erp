@@ -1,4 +1,4 @@
-# Batam Travelling ERP — Agent Instructions
+# Batam Travelling ERP - Agent Instructions
 
 These instructions apply to the whole repository. Human instructions remain authoritative, but an agent must not silently violate an approved business rule, security boundary, or data-integrity invariant.
 
@@ -10,6 +10,9 @@ These instructions apply to the whole repository. Human instructions remain auth
 - Database: PostgreSQL 16.
 - Product: multi-tenant travel commerce, CRM, booking, POS, finance, operations, public content, and customer portal.
 - Core product must not depend on AI features unless explicitly approved.
+- `PROJECT_STATUS.md`, `BUSINESS_RULES.md`, `MODULE_MAP.md`, `WORKFLOWS.md`, `DATABASE_RULES.md`, `SECURITY_RULES.md`, `TESTING_CHECKLIST.md`, `DEPLOYMENT.md`, `DECISIONS.md`, and `BACKLOG.md` are the consolidated documentation layer when present.
+- `docs/CHATGPT_CODEX_HANDOFF_2026-08-12.md` is contextual history, not canonical truth.
+- `docs/IMPLEMENTATION_STATUS_1_16.md` is a release gate, not a completion claim.
 
 ## Instruction Routing
 
@@ -20,14 +23,14 @@ Before changing code, read:
 3. `docs/ai-governance/AI-01_AGENT_OPERATING_PROTOCOL.md`.
 4. Only the task-relevant governance files listed below.
 
-- Architecture/cross-module → `AI-02`
-- Booking, travel products, departures, POS, operations → `AI-03`
-- API, website orders, webhooks, integrations → `AI-04`
-- Prisma, PostgreSQL, migrations, identifiers → `AI-05`
-- Authentication, authorization, tenant scope, audit → `AI-06`
-- Refactor, replacement, legacy migration → `AI-07`
-- Tests and validation → `AI-08`
-- Review, merge, deploy, rollback → `AI-09`
+- Architecture/cross-module -> `AI-02`
+- Booking, travel products, departures, POS, operations -> `AI-03`
+- API, website orders, webhooks, integrations -> `AI-04`
+- Prisma, PostgreSQL, migrations, identifiers -> `AI-05`
+- Authentication, authorization, tenant scope, audit -> `AI-06`
+- Refactor, replacement, legacy migration -> `AI-07`
+- Tests and validation -> `AI-08`
+- Review, merge, deploy, rollback -> `AI-09`
 
 Use `$batam-travelling-erp-guardian` for production-affecting changes, reviews, migrations, booking/payment logic, public ordering, or deployment preparation.
 
@@ -81,4 +84,3 @@ Use `pnpm check` when the full repository gate is appropriate. Database changes 
 ## Completion Report
 
 Report: change classification; behavior changed; files changed; migrations/configuration; tests actually run; authorization/tenant checks; documentation impact; remaining risks; deployment and rollback notes.
-
