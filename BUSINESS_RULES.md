@@ -11,7 +11,8 @@
 - Quotation, booking, invoice, payment, departure, trip, assignment, dan task memiliki lifecycle masing-masing tetapi saling terhubung melalui identifier yang stabil.
 - Pricing, capacity, approval, dan access control divalidasi di backend.
 - Database adalah sumber kebenaran, bukan UI, cache, atau spreadsheet operasional.
-- Data transaksi tidak boleh dihapus atau ditulis ulang hanya untuk memperbaiki histori; koreksi harus mempertahankan audit trail.
+- Data transaksi yang sudah posted tidak boleh dihapus atau ditulis ulang untuk memperbaiki histori; koreksi harus mempertahankan audit trail melalui adjustment, refund, atau reversal.
+- Setiap angka keuangan harus dapat ditelusuri dari Dashboard -> Ledger -> Transaction -> Invoice/Payment -> Booking -> Customer dan sebaliknya.
 
 ## CRM dan customer lifecycle
 
@@ -47,8 +48,102 @@
 - Payment lifecycle minimum: `PENDING_VERIFICATION -> VERIFIED/REJECTED`.
 - Hanya payment `VERIFIED` yang boleh memengaruhi paid amount, outstanding balance, receipt, dan canonical financial ledger.
 - Outstanding dihitung dari kewajiban invoice dikurangi payment terverifikasi dan adjustment sah; angka ini tidak boleh diketik manual sebagai sumber kebenaran.
-- Payment yang sudah masuk ledger tidak dihapus. Koreksi menggunakan refund/reversal workflow yang mempertahankan lineage dan audit trail.
+- Satu invoice dapat dibayar melalui beberapa payment.
+- Arsitektur Finance tidak boleh mengasumsikan Payment dan Invoice selalu one-to-one; satu transfer dapat dialokasikan ke beberapa invoice bila business flow membutuhkannya.
 - CRM boleh menampilkan status pembayaran, tetapi Finance/ledger tetap menjadi sumber kebenaran finansial.
+
+## Fondasi Finance dan Transaction Control
+
+### Canonical financial ledger
+
+- Semua kejadian bisnis yang berdampak keuangan harus bermuara pada ledger kanonik.
+- Posting ledger harus berasal dari business event yang sah seperti verified payment, approved refund, vendor payment, approved adjustment, atau reversal; bukan angka bebas dari dashboard.
+- Setiap ledger entry wajib mempertahankan lineage ke transaksi sumber yang relevan.
+- Payment yang telah posted ke ledger tidak boleh dihapus.
+
+### Transaction Journal, Adjustment, dan Reversal
+
+- Sistem menyediakan mekanisme Transaction Journal & Adjustment untuk salah nominal, duplicate payment, overpayment, underpayment, salah alokasi, biaya tambahan, koreksi vendor cost, write-off, refund, customer credit, dan koreksi periode sebelumnya.
+- Koreksi transaksi posted dilakukan dengan transaksi lawan/reversal atau adjustment baru, bukan mengubah histori asli.
+- Adjustment minimum menyimpan reason, createdBy, approvedBy bila diperlukan, originalTransactionId/reference, timestamp, tenant, dan audit trail.
+- Reversal harus idempotent: transaksi yang sama tidak boleh direversal dua kali.
+- Automatic payment ledger tidak boleh dibatalkan melalui manual cashflow; harus melalui payment/refund workflow yang sah.
+
+### Approval engine
+
+- Approval ditentukan berdasarkan transaction type, nominal, risiko, role, dan tenant policy.
+- Sistem harus mendukung approval bertingkat, misalnya Sales -> Manager, Finance -> Finance Manager, atau Finance -> Manager -> Owner.
+- Discount/price override, refund, manual journal, write-off, dan locked-period adjustment dapat memiliki threshold approval berbeda.
+- Approval tidak boleh dilakukan oleh user tanpa permission yang sesuai; keputusan approval wajib masuk audit trail.
+
+### Accounting period lock
+
+- Periode accounting yang sudah ditutup tidak boleh diedit secara diam-diam.
+- Backdated transaction ke periode terkunci harus ditolak atau diarahkan ke controlled adjustment sesuai policy.
+- Membuka kembali periode harus merupakan privileged action dengan alasan dan audit trail.
+
+### Bank reconciliation
+
+- Verified payment dan settlement pada rekening/bank merupakan dua fakta yang harus dapat direkonsiliasi.
+- Reconciliation minimal mengenali `MATCHED`, `UNMATCHED`, `PARTIAL_MATCH`, `DUPLICATE`, `OVERPAYMENT`, dan `NEEDS_REVIEW`.
+- Unmatched transaction tidak boleh disembunyikan hanya agar laporan terlihat seimbang.
+
+### Overpayment dan customer credit
+
+- Bila payment melebihi kewajiban invoice, kelebihan tidak boleh menaikkan nilai invoice.
+- Kelebihan dicatat sebagai unapplied amount/customer credit dengan lineage ke payment asal.
+- Customer credit dapat dialokasikan ke invoice/booking lain atau direfund hanya melalui workflow dan approval yang sah.
+
+### Payment allocation
+
+- Satu invoice dapat memiliki banyak payment allocation.
+- Satu payment dapat dialokasikan ke satu atau beberapa invoice bila diperlukan.
+- Total allocation tidak boleh melebihi available payment amount.
+- Paid dan outstanding invoice dihitung dari allocation/payment yang sah, bukan field manual.
+
+### Refund
+
+- Refund bukan delete atau edit payment asli.
+- Flow minimum: `REFUND_REQUESTED -> APPROVAL -> REFUND_EXECUTED/REJECTED`.
+- Refund yang dieksekusi menghasilkan financial outflow/ledger entry baru dengan lineage ke payment, invoice, booking, customer, dan approval terkait.
+- Cancellation/reschedule harus menghitung refund, credit, cancellation fee, tambahan harga, dan capacity effect sesuai policy.
+
+### Multi-currency
+
+- Sistem harus siap menyimpan transaction currency, transaction amount, exchange rate, base currency, dan base amount untuk transaksi multi-currency.
+- Exchange rate yang dipakai transaksi harus menjadi snapshot; perubahan kurs berikutnya tidak mengubah histori transaksi.
+- Kebijakan sumber kurs dan realized/unrealized FX treatment harus diputuskan sebelum fitur multi-currency diaktifkan penuh.
+
+### Receivable, payable, cost, dan margin
+
+- Customer receivable/cash inflow harus dibedakan dari vendor payable/cost outflow.
+- Hotel, ferry/boat, transport, attraction, guide, vendor, dan operational cost harus dapat ditelusuri ke booking/trip/departure yang relevan.
+- Profitability harus dapat dihitung per Booking, Trip, Departure, Package/Product, Sales Channel, Customer Segment, dan periode.
+- Gross profit dan margin tidak boleh hanya berasal dari angka manual dashboard.
+
+### Budget vs actual
+
+- Trip/departure dapat memiliki budget biaya sebelum operasional.
+- Actual cost berasal dari transaksi/vendor cost yang telah dicatat secara sah.
+- Variance material harus terlihat dan dapat menjadi exception untuk review.
+
+### Exception dan risk dashboard
+
+Owner/Finance membutuhkan exception view yang menonjolkan masalah, minimal:
+
+- payment terlalu lama pending verification;
+- overdue outstanding;
+- duplicate payment;
+- overpayment/customer credit belum terselesaikan;
+- unmatched bank transaction;
+- negative atau abnormal margin;
+- vendor cost melebihi budget;
+- manual adjustment/refund besar;
+- backdated/locked-period attempt;
+- abnormal discount/price override;
+- repeated reversal;
+- verified payment yang gagal memiliki canonical ledger entry;
+- ledger/payment/invoice lineage mismatch.
 
 ## Operations dan assignment
 
@@ -59,7 +154,7 @@
 
 ## Reporting
 
-Dashboard dan laporan harus dapat menurunkan metrik dari data transaksi kanonik, termasuk lead volume, lead source, follow-up due, conversion rate, quotation-to-booking, booking value, verified revenue, outstanding, occupancy, cost, gross margin, sales performance, repeat customer, dan product performance.
+Dashboard dan laporan harus dapat menurunkan metrik dari data transaksi kanonik, termasuk lead volume, lead source, follow-up due, conversion rate, quotation-to-booking, booking value, verified revenue, outstanding, occupancy, cost, gross margin, sales performance, repeat customer, product performance, customer credit, reconciliation exceptions, budget variance, dan adjustment/reversal activity.
 
 ## Aturan yang tercermin di schema/repository
 
@@ -71,14 +166,17 @@ Dashboard dan laporan harus dapat menurunkan metrik dari data transaksi kanonik,
 
 ## Aturan yang masih perlu keputusan bisnis eksplisit
 
-- Refund threshold dan four-eyes approval.
-- Cancellation dan reschedule eligibility, fee, dan kapasitas release.
+- Nilai threshold dan four-eyes approval untuk refund, adjustment, discount, write-off, dan journal.
+- Cancellation dan reschedule eligibility, fee, refund/credit, dan capacity release.
 - Invoice void/replacement policy.
-- Payment reversal authority.
+- Payment reversal/refund authority.
 - Payment reminder channel, provider, dan jadwal.
 - Alert ownership dan escalation path.
 - Package-specific DP/final payment exceptions.
 - Batas diskon/price override per role.
+- Accounting close schedule dan siapa yang dapat reopen period.
+- Sumber exchange rate dan kebijakan FX.
+- Customer credit expiry/refund/allocation policy.
 
 ## Dokumen lama yang tumpang tindih
 
