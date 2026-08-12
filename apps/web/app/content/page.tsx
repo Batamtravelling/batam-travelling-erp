@@ -1,0 +1,1 @@
+import{ContentWorkspace}from'../../components/admin-workspaces';export default ContentWorkspace;
