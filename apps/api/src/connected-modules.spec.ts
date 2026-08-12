@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { summarizeDepartureCapacity } from './connected-modules.module.js';
+import { summarizeDepartureCapacity } from './core/departure-capacity-summary.js';
 
 describe('open trip capacity summary', () => {
   it('counts passenger seats instead of booking rows', () => {
