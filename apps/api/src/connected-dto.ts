@@ -52,6 +52,10 @@ export class CreateCashflowDto {
   @IsOptional() @IsUUID() vendorId?: string;
 }
 
+export class ReverseFinancialEntryDto {
+  @IsString() @MaxLength(1000) reason!: string;
+}
+
 export class BusinessReportQueryDto extends PageQueryDto {
   @Type(() => Number) @IsInt() @Min(2000) @Max(2200) year!: number;
   @IsOptional() @Type(() => Number) @IsInt() @Min(1) @Max(12) month?: number;
