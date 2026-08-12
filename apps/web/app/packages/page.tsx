@@ -1,5 +1,6 @@
 "use client";
 
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { apiGet, apiPost } from '../../lib/api';
 
@@ -98,7 +99,7 @@ export default function PackagesPage() {
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <div style={{ fontWeight: 700 }}>Rp {Number(pkg.prices?.[0]?.sellingPrice ?? pkg.adultPrice ?? 0).toLocaleString('id-ID')}</div>
-                    <span style={{ padding: '6px 10px', borderRadius: '999px', background: pkg.status === 'ACTIVE' ? '#dcfce7' : pkg.status === 'ARCHIVED' ? '#fee2e2' : '#e0f2fe', color: pkg.status === 'ACTIVE' ? '#166534' : pkg.status === 'ARCHIVED' ? '#991b1b' : '#075985', fontWeight: 700 }}>{pkg.status}</span>
+                    <span style={{ padding: '6px 10px', borderRadius: '999px', background: pkg.status === 'ACTIVE' ? '#dcfce7' : pkg.status === 'ARCHIVED' ? '#fee2e2' : '#e0f2fe', color: pkg.status === 'ACTIVE' ? '#166534' : pkg.status === 'ARCHIVED' ? '#991b1b' : '#075985', fontWeight: 700 }}>{pkg.status}</span><Link href={`/packages/${pkg.id}/print`} target="_blank">Print Paket</Link>
                   </div>
                 </div>
               ))}
