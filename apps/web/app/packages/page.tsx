@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from 'react';
+import { apiGet, apiPost } from '../../lib/api';
 
 interface PackageRow {
   id: string;
@@ -8,7 +9,8 @@ interface PackageRow {
   name: string;
   destination: string;
   durationDays: number;
-  sellingPrice: number;
+  adultPrice?: number;
+  prices?: { sellingPrice: number }[];
   status: string;
 }
 
@@ -25,15 +27,14 @@ export default function PackagesPage() {
   const [packages, setPackages] = useState<PackageRow[]>([]);
   const [form, setForm] = useState(emptyForm);
   const [loading, setLoading] = useState(true);
+  const [message, setMessage] = useState('');
 
   const fetchPackages = async () => {
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:3000/packages');
-      if (response.ok) {
-        const data = await response.json();
-        setPackages(data);
-      }
+      setPackages(await apiGet<PackageRow[]>('/packages'));
+    } catch (error) {
+      setMessage((error as Error).message);
     } finally {
       setLoading(false);
     }
@@ -45,19 +46,16 @@ export default function PackagesPage() {
 
   const createPackage = async (event: React.FormEvent) => {
     event.preventDefault();
-    await fetch('http://localhost:3000/packages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+    await apiPost('/packages', {
         packageCode: form.packageCode,
         name: form.name,
         destination: form.destination,
         durationDays: Number(form.durationDays),
         sellingPrice: Number(form.sellingPrice),
         status: form.status,
-      }),
-    });
+      });
     setForm(emptyForm);
+    setMessage('Paket berhasil disimpan dan tersedia untuk modul booking.');
     void fetchPackages();
   };
 
@@ -89,6 +87,7 @@ export default function PackagesPage() {
         </div>
 
         <div style={{ background: 'white', borderRadius: '24px', padding: '24px', boxShadow: '0 16px 36px rgba(15, 23, 42, 0.08)' }}>
+          {message && <p className="moduleNotice">{message}</p>}
           {loading ? <div>Memuat paket...</div> : (
             <div style={{ display: 'grid', gap: '12px' }}>
               {packages.length === 0 ? <div style={{ color: '#64748b' }}>Belum ada paket.</div> : packages.map((pkg) => (
@@ -98,7 +97,7 @@ export default function PackagesPage() {
                     <div style={{ color: '#64748b', fontSize: '14px', marginTop: '4px' }}>{pkg.packageCode} • {pkg.destination} • {pkg.durationDays} hari</div>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div style={{ fontWeight: 700 }}>Rp {pkg.sellingPrice.toLocaleString('id-ID')}</div>
+                    <div style={{ fontWeight: 700 }}>Rp {Number(pkg.prices?.[0]?.sellingPrice ?? pkg.adultPrice ?? 0).toLocaleString('id-ID')}</div>
                     <span style={{ padding: '6px 10px', borderRadius: '999px', background: pkg.status === 'ACTIVE' ? '#dcfce7' : pkg.status === 'ARCHIVED' ? '#fee2e2' : '#e0f2fe', color: pkg.status === 'ACTIVE' ? '#166534' : pkg.status === 'ARCHIVED' ? '#991b1b' : '#075985', fontWeight: 700 }}>{pkg.status}</span>
                   </div>
                 </div>

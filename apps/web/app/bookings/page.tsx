@@ -6,7 +6,7 @@ import { apiGet, apiPost } from '../../lib/api';
 
 type C = { id: string; fullName: string };
 type P = { id: string; name: string; serviceLevel?: string; destination?: string; prices?: { sellingPrice: string }[]; minPax?: number; maxPax?: number };
-type PassengerLine = { serviceLevel: 'REGULAR' | 'PREMIUM' | 'PRIVATE'; passengerType: 'ADULT' | 'CHILD' | 'INFANT'; quantity: number; unitPrice: number; notes?: string };
+type PassengerLine = { serviceLevel: 'REGULAR' | 'PREMIUM'; passengerType: 'ADULT' | 'CHILD' | 'INFANT'; quantity: number; unitPrice: number; notes?: string };
 type B = {
   id: string;
   bookingCode: string;
@@ -26,7 +26,7 @@ const money = (n: number) => new Intl.NumberFormat('id-ID', { style: 'currency',
 const blankLine = (): PassengerLine => ({ serviceLevel: 'REGULAR', passengerType: 'ADULT', quantity: 1, unitPrice: 0, notes: '' });
 const priceFactor = (serviceLevel: PassengerLine['serviceLevel'], passengerType: PassengerLine['passengerType']) => {
   const typeFactor = passengerType === 'CHILD' ? 0.75 : passengerType === 'INFANT' ? 0.15 : 1;
-  const levelFactor = serviceLevel === 'PREMIUM' ? 1.2 : serviceLevel === 'PRIVATE' ? 1.35 : 1;
+  const levelFactor = serviceLevel === 'PREMIUM' ? 1.2 : 1;
   return typeFactor * levelFactor;
 };
 
@@ -48,11 +48,11 @@ export default function Page() {
     try {
       const [x, y, z] = await Promise.all([
         apiGet<PageResult<B>>(`/bookings?page=${page}&pageSize=${pageSize}&search=${encodeURIComponent(search)}&status=${encodeURIComponent(status)}`),
-        apiGet<C[]>('/customers'),
+        apiGet<PageResult<C>>('/customers?page=1&pageSize=100'),
         apiGet<P[]>('/packages'),
       ]);
       setB(x.items);
-      setC(y);
+      setC(y.items);
       setP(z);
       setMeta(x.meta);
       setPage(x.meta.page);
@@ -99,6 +99,7 @@ export default function Page() {
     const passengers = lines.filter((x) => x.quantity > 0 && x.unitPrice > 0).map((x) => ({ ...x, packageId }));
     try {
       await apiPost('/bookings', {
+        source: 'MANUAL',
         customerId: f.get('customerId'),
         packageId,
         packageName: packageName || selectedPackage?.name || 'Booking trip',
@@ -246,7 +247,6 @@ export default function Page() {
                 >
                   <option value="REGULAR">REGULAR</option>
                   <option value="PREMIUM">PREMIUM</option>
-                  <option value="PRIVATE">PRIVATE</option>
                 </select>
               </label>
               <label>
@@ -293,7 +293,7 @@ export default function Page() {
           <select name="type">
             <option value="">Tipe customer</option>
             <option>INDIVIDUAL</option>
-            <option>COMPANY</option>
+            <option>CORPORATE</option>
             <option>AGENT</option>
             <option>GROUP</option>
           </select>

@@ -9,19 +9,17 @@ type Lead = { id: string; leadCode: string; source: string; destination?: string
 
 type MetricCard = { label: string; value: string; hint: string };
 type ActivityItem = { title: string; detail: string; time: string };
+type PageResult<T> = { items: T[]; meta: { total: number } };
 
 const fallbackMetrics: MetricCard[] = [
-  { label: 'Leads aktif', value: '24', hint: 'Data contoh' },
-  { label: 'Quotation', value: '12', hint: 'Menunggu follow-up' },
-  { label: 'Booking', value: '7', hint: 'Siap depart' },
-  { label: 'Outstanding', value: 'Rp 48.2M', hint: 'Invoice belum lunas' },
+  { label: 'Leads aktif', value: '—', hint: 'Data belum tersedia' },
+  { label: 'Quotation', value: '—', hint: 'Data belum tersedia' },
+  { label: 'Booking', value: '—', hint: 'Data belum tersedia' },
+  { label: 'Outstanding', value: '—', hint: 'Data belum tersedia' },
 ];
 
-const fallbackActivities: ActivityItem[] = [
-  { title: 'Lead new inquiry', detail: 'Rina - Bintan family trip', time: '10 menit lalu' },
-  { title: 'Quotation sent', detail: 'Budi - Batam weekend escape', time: '1 jam lalu' },
-  { title: 'Booking confirmed', detail: 'Dewi - Harbour Bay city tour', time: '3 jam lalu' },
-];
+const fallbackActivities: ActivityItem[] = [];
+
 
 function formatCurrency(value: number) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(value);
@@ -40,7 +38,9 @@ export default function DashboardPage() {
       setLoading(true);
       setMessage('');
       try {
-        const [leads, customers] = await Promise.all([apiGet<Lead[]>('/leads'), apiGet<Customer[]>('/customers')]);
+        const [leadPage, customerPage] = await Promise.all([apiGet<PageResult<Lead>>('/leads?page=1&pageSize=100'), apiGet<PageResult<Customer>>('/customers?page=1&pageSize=100')]);
+        const leads = leadPage.items;
+        const customers = customerPage.items;
         if (!active) return;
 
         const activeLeads = leads.filter((lead) => !['LOST', 'WON'].includes(lead.status)).length;
@@ -93,7 +93,7 @@ export default function DashboardPage() {
               <Link href="/bookings" style={{ textDecoration: 'none', color: '#ea580c', background: '#fff7ed', padding: '10px 14px', borderRadius: '999px', fontWeight: 700 }}>🛳️ Bookings</Link>
             </div>
           </div>
-          {message ? <p style={{ margin: '12px 0 0', color: '#b45309', fontSize: '13px' }}>Data contoh ditampilkan karena API belum tersedia: {message}</p> : null}
+          {message ? <p style={{ margin: '12px 0 0', color: '#b45309', fontSize: '13px' }}>Data operasional belum dapat dimuat: {message}</p> : null}
         </section>
 
         <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
@@ -110,7 +110,7 @@ export default function DashboardPage() {
           <article style={{ background: 'white', borderRadius: '18px', padding: '20px', boxShadow: '0 10px 24px rgba(15, 23, 42, 0.06)' }}>
             <h3 style={{ marginTop: 0 }}>Aktivitas terbaru</h3>
             <div style={{ display: 'grid', gap: '10px' }}>
-              {recentActivities.map((activity) => (
+              {recentActivities.length === 0 ? <p style={{ color: '#64748b' }}>Belum ada aktivitas terbaru.</p> : recentActivities.map((activity) => (
                 <div key={activity.title + activity.detail} style={{ border: '1px solid #e2e8f0', borderRadius: '12px', padding: '12px 14px' }}>
                   <div style={{ fontWeight: 700 }}>{activity.title}</div>
                   <div style={{ fontSize: '14px', color: '#64748b', marginTop: '4px' }}>{activity.detail}</div>
