@@ -1,9 +1,9 @@
 ﻿'use client';
 
-import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 import { apiGet, apiPatch, apiPost } from '../../../lib/api';
 
-type Follow = { id: string; dueAt: string; channel: string; subject: string; status: string; notes?: string; nextAction?: string };
+type Follow = { id: string; dueAt: string; channel: string; subject: string; status: string; notes?: string; nextAction?: string; customer?: { id: string; customerCode: string; fullName: string; phone?: string; email?: string }; lead?: { id: string; leadCode: string; senderName?: string; status: string }; assignedUser?: { id: string; name: string } };
 type Lead = { id: string; leadCode: string; senderName?: string; phone?: string; email?: string; message?: string; source: string; estimatedValue?: string; priority: string; status: string; verifiedAt?: string; notes?: string; nextFollowUpAt?: string; updatedAt: string; customer?: { id: string; fullName: string }; followUps: Follow[] };
 type Customer = { id: string; customerCode: string; fullName: string; phone?: string; email?: string; type: string; status: string; leadSource?: string; notes?: string; leads: { id: string; leadCode: string; status: string; estimatedValue?: string }[]; bookings: { id: string; totalAmount: string; status: string }[]; followUps: Follow[] };
 type PageResult<T> = { items: T[]; meta: { page: number; pageSize: number; total: number; totalPages: number } };
@@ -26,8 +26,10 @@ export default function CrmCustomerPage() {
   const [leadPageSize, setLeadPageSize] = useState(6);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [leads, setLeads] = useState<Lead[]>([]);
+  const [followUps, setFollowUps] = useState<Follow[]>([]);
   const [customerMeta, setCustomerMeta] = useState({ page: 1, pageSize: 6, total: 0, totalPages: 1 });
   const [leadMeta, setLeadMeta] = useState({ page: 1, pageSize: 6, total: 0, totalPages: 1 });
+  const [followMeta, setFollowMeta] = useState({ page: 1, pageSize: 6, total: 0, totalPages: 1 });
   const [q, setQ] = useState('');
   const [source, setSource] = useState('');
   const [msg, setMsg] = useState('');
@@ -49,22 +51,25 @@ export default function CrmCustomerPage() {
     setLeads(res.items);
     setLeadMeta(res.meta);
     if (leadPage > res.meta.totalPages) setLeadPage(res.meta.totalPages);
+  };
+
+  const loadFollowUps = async () => {
+    const res = await apiGet<PageResult<Follow>>(`/leads/follow-ups?page=${followPage}&pageSize=${leadPageSize}&search=${encodeURIComponent(q)}`);
+    setFollowUps(res.items);
+    setFollowMeta(res.meta);
     if (followPage > res.meta.totalPages) setFollowPage(res.meta.totalPages);
   };
 
   const load = async () => {
     try {
-      await Promise.all([loadCustomers(), loadLeads()]);
+      await Promise.all([loadCustomers(), loadLeads(), loadFollowUps()]);
       setMsg('');
     } catch (e) {
       setMsg((e as Error).message);
     }
   };
 
-  useEffect(() => { load(); }, [customerPage, customerPageSize, leadPage, leadPageSize, q, source]);
-
-  const allFollowUps = useMemo(() => leads.flatMap((lead) => lead.followUps.map((f) => ({ ...f, lead } as const))).sort((a, b) => a.dueAt.localeCompare(b.dueAt)), [leads]);
-  const pagedFollowUps = allFollowUps.slice((followPage - 1) * leadPageSize, followPage * leadPageSize);
+  useEffect(() => { load(); }, [customerPage, customerPageSize, leadPage, leadPageSize, followPage, q, source]);
 
   const activePipeline = leads.filter((x) => x.status !== 'LOST').reduce((n, x) => n + Number(x.estimatedValue || 0), 0);
   const revenue = customers.reduce((n, c) => n + c.bookings.reduce((m, b) => m + Number(b.totalAmount), 0), 0);
@@ -281,10 +286,11 @@ export default function CrmCustomerPage() {
 
       {view === 'followups' && (
         <section className="followUpWorkspace">
-          <header><h2>Agenda Follow-up</h2><span>{allFollowUps.filter((x) => x.status !== 'COMPLETED' && x.status !== 'CANCELLED').length} aktivitas terbuka</span></header>
-          <div className="crmToolbar"><b>{allFollowUps.length} follow-up di halaman lead ini</b><select value={leadPageSize} onChange={(e) => setLeadPageSize(Number(e.target.value))}>{PAGE_SIZES.map((n) => <option key={n} value={n}>{n} / halaman lead</option>)}</select></div>
-          {pagedFollowUps.map((f) => <article key={f.id} className={new Date(f.dueAt) < new Date() && f.status !== 'COMPLETED' ? 'overdue' : ''}><time>{new Date(f.dueAt).toLocaleString('id-ID')}</time><div><b>{f.subject}</b><span>{f.lead.customer?.fullName || f.lead.senderName} · {f.channel}</span><small>{f.notes || f.nextAction || 'Tanpa catatan'}</small></div><select value={f.status} onChange={async (e) => { await apiPatch(`/leads/follow-ups/${f.id}`, { status: e.target.value }); await load(); }}><option>PENDING</option><option>IN_PROGRESS</option><option>COMPLETED</option><option>CANCELLED</option></select></article>)}
-          <PaginationBar page={followPage} totalPages={Math.max(1, Math.ceil(allFollowUps.length / leadPageSize))} onPage={setFollowPage} />
+          <header><h2>Agenda Follow-up</h2><span>{followMeta.total} aktivitas tenant</span></header>
+          <div className="crmToolbar"><input value={q} onChange={(e) => { setFollowPage(1); setQ(e.target.value); }} placeholder="Cari customer, subjek, atau tindakan..." /><b>{followMeta.total} follow-up</b><select value={leadPageSize} onChange={(e) => { setFollowPage(1); setLeadPageSize(Number(e.target.value)); }}>{PAGE_SIZES.map((n) => <option key={n} value={n}>{n} / halaman</option>)}</select></div>
+          {followUps.map((f) => <article key={f.id} className={new Date(f.dueAt) < new Date() && !['COMPLETED', 'CANCELLED'].includes(f.status) ? 'overdue' : ''}><time>{new Date(f.dueAt).toLocaleString('id-ID')}</time><div><b>{f.subject}</b><span>{f.customer?.fullName || f.lead?.senderName || 'Customer'} · {f.channel}{f.assignedUser ? ` · PIC ${f.assignedUser.name}` : ''}</span><small>{f.notes || f.nextAction || 'Tanpa catatan'}</small></div><select value={f.status} onChange={async (e) => { await apiPatch(`/leads/follow-ups/${f.id}`, { status: e.target.value }); await loadFollowUps(); }}><option>PENDING</option><option>IN_PROGRESS</option><option>COMPLETED</option><option>CANCELLED</option></select></article>)}
+          {!followUps.length && <p>Belum ada follow-up untuk pencarian ini.</p>}
+          <PaginationBar page={followMeta.page} totalPages={followMeta.totalPages} onPage={setFollowPage} />
         </section>
       )}
     </main>
