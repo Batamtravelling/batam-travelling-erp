@@ -27,7 +27,7 @@ export class PackagesService {
         id: true, packageCode: true, name: true, destination: true, durationDays: true,
         adultPrice: true, childPrice: true, infantPrice: true, serviceLevel: true, status: true, approvalStatus: true, minPax: true, maxPax: true,
         prices: { where: { active: true }, orderBy: { priority: 'desc' }, take: 1, select: { sellingPrice: true } },
-        departures: { where: { startsAt: { gte: new Date() } }, orderBy: { startsAt: 'asc' }, take: 12, select: { id:true,startsAt:true,endsAt:true,bookingCloseAt:true,minPax:true,maxPax:true,status:true,meetingPoint:true,surchargeLabel:true,surchargeAmount:true,surchargeBasis:true,bookings:{where:{status:{notIn:['CANCELLED','REFUNDED']}},select:{pax:true}} } },
+        departures: { where: { startsAt: { gte: new Date() } }, orderBy: { startsAt: 'asc' }, take: 12, select: { id:true,startsAt:true,endsAt:true,bookingCloseAt:true,minPax:true,maxPax:true,status:true,meetingPoint:true,surchargeLabel:true,surchargeAmount:true,surchargeBasis:true,bookings:{where:{tenantId:identity.tenantId,status:{notIn:['CANCELLED','REFUNDED']}},select:{pax:true}} } },
       },
       orderBy: [{ status: 'asc' }, { name: 'asc' }],
       skip:(page-1)*pageSize,take:pageSize,
