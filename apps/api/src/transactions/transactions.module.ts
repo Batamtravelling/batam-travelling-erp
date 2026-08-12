@@ -44,7 +44,7 @@ import { ConfirmBookingDto, CreateBookingDto, CreatePaymentDto, VerifyPaymentDto
   }
   async createBooking(i:RequestIdentity,d:CreateBookingDto){
     const customer=await this.prisma.customer.findFirst({where:{id:d.customerId,tenantId:i.tenantId}});if(!customer)throw new BadRequestException('Customer tidak valid');
-    const pkg=d.packageId?await this.prisma.travelPackage.findFirst({where:{id:d.packageId,tenantId:i.tenantId,archivedAt:null,status:{not:'ARCHIVED'}},include:{prices:{where:{active:true},orderBy:{priority:'desc'},take:1}}}):null;if(d.packageId&&!pkg)throw new BadRequestException('Package tidak valid');
+    const pkg=d.packageId?await this.prisma.travelPackage.findFirst({where:{id:d.packageId,tenantId:i.tenantId,archivedAt:null,status:'ACTIVE',approvalStatus:'APPROVED'},include:{prices:{where:{active:true},orderBy:{priority:'desc'},take:1}}}):null;if(d.packageId&&!pkg)throw new BadRequestException('Package belum aktif atau belum disetujui');
     if((d.passengers?.length??0)>0&&!d.packageId)throw new BadRequestException('Pilih paket utama sebelum menambahkan peserta');
     if(d.passengers?.some(x=>x.packageId&&x.packageId!==d.packageId))throw new BadRequestException('Booking hanya dapat memakai satu paket trip');
     if(d.passengers?.length&&d.passengers.reduce((sum,x)=>sum+x.quantity,0)!==d.pax)throw new BadRequestException('Jumlah kategori peserta harus sama dengan total pax');

@@ -41,7 +41,7 @@ export default function Page() {
   const itineraryText = useMemo(() => (p ? toPlainItinerary(p) : ''), [p]);
 
   useEffect(() => {
-    apiGet<P[]>('/public/packages').then((x) => setP(x.find((y) => y.id === id)));
+    apiGet<P>(`/public/packages/${id}`).then(setP);
   }, [id]);
 
   if (!p) return <main className="tripPublicPage"><p>Memuat detail paket...</p></main>;
