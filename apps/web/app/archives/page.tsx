@@ -1,0 +1,1 @@
+import{ArchiveWorkspace}from'../../components/admin-workspaces';export default ArchiveWorkspace;
