@@ -21,8 +21,6 @@ export class CustomersService {
   async create(identity: RequestIdentity, dto: CreateCustomerDto) {
     await this.assertUniqueContact(identity, dto);
     const { email, phone } = this.normalizedContact(dto);
-    const duplicate = null;
-    if (duplicate) throw new ConflictException('Customer dengan email atau nomor telepon tersebut sudah tersedia');
     const customer = await this.prisma.$transaction(async tx => { const customerCode = await this.codes.nextCustomer(tx, identity.tenantId); return tx.customer.create({ data: { tenantId: identity.tenantId, customerCode, fullName: dto.fullName.trim(), type: dto.type, phone, email, address: dto.address, city: dto.city, country: dto.country, leadSource: dto.leadSource, notes: dto.notes } }); });
     await this.audit.record(identity, 'customer.created', 'customer', customer.id);
     return customer;
