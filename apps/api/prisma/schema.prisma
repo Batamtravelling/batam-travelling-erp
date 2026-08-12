@@ -1255,7 +1255,7 @@ model Payment {
   id             String        @id @default(uuid()) @db.Uuid
   tenantId       String        @map("tenant_id") @db.Uuid
   paymentNumber  String        @map("payment_number")
-  receiptNumber  String?       @unique @map("receipt_number")
+  receiptNumber  String?       @map("receipt_number")
   invoiceId      String        @map("invoice_id") @db.Uuid
   customerId     String        @map("customer_id") @db.Uuid
   amount         Decimal       @db.Decimal(18,2)
@@ -1274,6 +1274,8 @@ model Payment {
   receivedBy     User?         @relation("PaymentReceiver",fields:[receivedById],references:[id],onDelete:SetNull)
   verifiedBy     User?         @relation("PaymentVerifier",fields:[verifiedById],references:[id],onDelete:SetNull)
   @@unique([tenantId,paymentNumber])
+  @@unique([tenantId,receiptNumber])
+  @@index([tenantId,invoiceId,status])
   @@index([tenantId,status,receivedAt])
   @@map("payments")
 }

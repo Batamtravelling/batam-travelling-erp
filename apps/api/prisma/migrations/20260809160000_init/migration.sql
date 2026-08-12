@@ -1263,13 +1263,16 @@ CREATE INDEX "invoices_tenant_id_status_due_date_idx" ON "invoices"("tenant_id",
 CREATE UNIQUE INDEX "invoices_tenant_id_invoice_number_key" ON "invoices"("tenant_id", "invoice_number");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "payments_receipt_number_key" ON "payments"("receipt_number");
+CREATE INDEX "payments_tenant_id_invoice_id_status_idx" ON "payments"("tenant_id", "invoice_id", "status");
 
 -- CreateIndex
 CREATE INDEX "payments_tenant_id_status_received_at_idx" ON "payments"("tenant_id", "status", "received_at");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "payments_tenant_id_payment_number_key" ON "payments"("tenant_id", "payment_number");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "payments_tenant_id_receipt_number_key" ON "payments"("tenant_id", "receipt_number");
 
 -- CreateIndex
 CREATE INDEX "leads_tenant_id_status_assigned_user_id_idx" ON "leads"("tenant_id", "status", "assigned_user_id");
