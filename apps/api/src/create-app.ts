@@ -3,6 +3,7 @@ import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
 import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
+import multipart from '@fastify/multipart';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module.js';
 
@@ -23,6 +24,7 @@ export async function createApp(): Promise<NestFastifyApplication> {
       message: `Terlalu banyak permintaan. Coba kembali dalam ${Math.ceil(context.ttl / 1000)} detik.`,
     }),
   });
+  await app.register(multipart, { limits: { files: 1, fileSize: 5 * 1024 * 1024, fields: 5 } });
   const allowedOrigins = (process.env.CORS_ORIGINS ?? process.env.NEXT_PUBLIC_SITE_URL ?? '')
     .split(',')
     .map((origin) => origin.trim().replace(/\/$/, ''))

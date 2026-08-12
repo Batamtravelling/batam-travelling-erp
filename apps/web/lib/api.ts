@@ -62,3 +62,4 @@ export async function apiGet<T>(path: string): Promise<T> { return request<T>(pa
 export async function apiPost<T>(path: string, body: unknown, headers?: HeadersInit): Promise<T> { return request<T>(path, { method: 'POST', headers: { 'content-type': 'application/json', ...Object.fromEntries(new Headers(headers).entries()) }, body: JSON.stringify(body) }); }
 export async function apiPatch<T>(path: string, body: unknown): Promise<T> { return request<T>(path, { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }); }
 export async function apiDelete<T>(path: string): Promise<T> { return request<T>(path, { method: 'DELETE' }); }
+export async function apiUpload<T>(path: string, body: FormData): Promise<T> { return request<T>(path, { method: 'POST', body }); }

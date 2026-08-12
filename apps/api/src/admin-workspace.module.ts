@@ -1,4 +1,5 @@
-import { Body, Controller, Get, Inject, Injectable, Module, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Inject, Injectable, Module, Param, Patch, Post, Req, UseGuards } from '@nestjs/common';
+import { randomUUID } from 'node:crypto';
 import { PrismaService } from './core/prisma.service.js';
 import { CurrentIdentity, IdentityGuard, PermissionGuard, Permissions, RequestIdentity } from './core/request-context.js';
 
@@ -29,6 +30,7 @@ class AdminWorkspaceService {
 
   media(i:RequestIdentity){return this.p.websiteMediaFile.findMany({where:{tenantId:i.tenantId},orderBy:{createdAt:'desc'}})}
   createMedia(i:RequestIdentity,d:any){return this.p.websiteMediaFile.create({data:{tenantId:i.tenantId,uploadedById:i.userId,originalName:String(d.originalName),storedName:String(d.storedName??d.originalName),mimeType:String(d.mimeType??'image/webp'),size:Number(d.size??0),url:String(d.url),altText:d.altText,category:d.category??'WEBSITE'}})}
+  async uploadMedia(i:RequestIdentity,request:any){const file=await request.file();if(!file)throw new BadRequestException('Pilih satu file');const allowed=new Set(['image/png','image/jpeg','image/webp']);if(!allowed.has(file.mimetype))throw new BadRequestException('Format harus PNG, JPEG, atau WEBP');const buffer=await file.toBuffer(),url=process.env.SUPABASE_URL?.replace(/\/$/,''),secret=process.env.SUPABASE_SECRET_KEY,bucket=process.env.SUPABASE_MEDIA_BUCKET??'erp-media';if(!url||!secret)throw new BadRequestException('Supabase Storage belum dikonfigurasi');const safe=file.filename.replace(/[^a-zA-Z0-9._-]/g,'_'),storedName=`${i.tenantId}/${randomUUID()}-${safe}`;const upload=await fetch(`${url}/storage/v1/object/${bucket}/${storedName}`,{method:'POST',headers:{authorization:`Bearer ${secret}`,apikey:secret,'content-type':file.mimetype,'x-upsert':'false'},body:buffer});if(!upload.ok)throw new BadRequestException('Upload media gagal');const publicUrl=`${url}/storage/v1/object/public/${bucket}/${storedName}`;return this.p.websiteMediaFile.create({data:{tenantId:i.tenantId,uploadedById:i.userId,originalName:file.filename,storedName,mimeType:file.mimetype,size:buffer.length,url:publicUrl,category:'WEBSITE'}})}
 
   assets(i:RequestIdentity){return this.p.teamAsset.findMany({where:{tenantId:i.tenantId},include:{assignedTo:{select:{name:true}}},orderBy:{updatedAt:'desc'}})}
   createAsset(i:RequestIdentity,d:any){return this.p.teamAsset.create({data:{tenantId:i.tenantId,assetCode:String(d.assetCode),name:String(d.name),category:String(d.category),brand:d.brand,serialNumber:d.serialNumber,status:d.status??'AVAILABLE',assignedToId:d.assignedToId,location:d.location,notes:d.notes}})}
@@ -48,6 +50,7 @@ class AdminWorkspaceService {
  @Patch('content/articles/:id') @Permissions('content.manage') updateArticle(@CurrentIdentity()i:RequestIdentity,@Param('id')id:string,@Body()d:any){return this.s.updateArticle(i,id,d)}
  @Get('media') @Permissions('content.read') media(@CurrentIdentity()i:RequestIdentity){return this.s.media(i)}
  @Post('media') @Permissions('content.manage') createMedia(@CurrentIdentity()i:RequestIdentity,@Body()d:any){return this.s.createMedia(i,d)}
+ @Post('media/upload') @Permissions('content.manage') uploadMedia(@CurrentIdentity()i:RequestIdentity,@Req()request:any){return this.s.uploadMedia(i,request)}
  @Get('assets') @Permissions('asset.read') assets(@CurrentIdentity()i:RequestIdentity){return this.s.assets(i)}
  @Post('assets') @Permissions('asset.manage') createAsset(@CurrentIdentity()i:RequestIdentity,@Body()d:any){return this.s.createAsset(i,d)}
  @Get('knowledge') @Permissions('knowledge.read') knowledge(@CurrentIdentity()i:RequestIdentity){return this.s.knowledge(i)}

@@ -71,7 +71,7 @@ class ConnectedModulesService {
 
   async profile(i: RequestIdentity) { return this.p.companyProfile.findUnique({ where: { tenantId: i.tenantId } }); }
   async updateProfile(i: RequestIdentity, d: any) {
-    const allowed = ['vision','mission','coreValues','customerTerms','privacyPolicy','cancellationPolicy','websiteLogoUrl','erpLogoUrl','documentLogoUrl','homepageSections','whatsappNumber','whatsappNumberSecondary','contactEmail','contactAddress','contactHours','instagramUrl','facebookUrl','tiktokUrl','youtubeUrl'];
+    const allowed = ['vision','mission','coreValues','customerTerms','privacyPolicy','cancellationPolicy','websiteLogoUrl','erpLogoUrl','documentLogoUrl','homepageSections','heroTitle','heroSubtitle','heroImageUrl','heroBadge','heroCtaPrimary','heroCtaSecondary','featureHeadline','featureText','howToBookTitle','howToBookText','aboutTitle','aboutText','whatsappNumber','whatsappNumberSecondary','contactEmail','contactAddress','contactHours','instagramUrl','facebookUrl','tiktokUrl','youtubeUrl'];
     const data = Object.fromEntries(allowed.filter(k => k in d).map(k => [k, d[k] || null]));
     return this.p.companyProfile.upsert({ where: { tenantId: i.tenantId }, update: { ...data, revisedById: i.userId }, create: { tenantId: i.tenantId, vision: d.vision || 'Menjadi partner perjalanan terpercaya dari Batam.', mission: d.mission || 'Memberikan perjalanan yang aman, transparan, dan berkesan.', ...data, revisedById: i.userId } });
   }
