@@ -5,13 +5,14 @@ const permissions = [
   'lead.create', 'lead.read', 'lead.update', 'lead.assign', 'lead.convert',
   'customer.create', 'customer.read', 'customer.update', 'audit.read',
   'employee.read', 'employee.manage', 'project.read', 'project.manage',
-  'task.read', 'task.manage', 'dashboard.owner',
+  'task.read', 'task.create', 'task.update', 'task.manage', 'dashboard.owner',
   'booking.read', 'booking.manage', 'invoice.read',
   'payment.read', 'payment.manage', 'payment.verify',
   'package.read', 'package.create', 'package.update',
   'trip.read', 'trip.manage', 'assignment.manage',
   'archive.read', 'archive.manage',
   'content.read', 'content.manage',
+  'media.read', 'media.manage', 'vendor.read',
   'asset.read', 'asset.manage', 'knowledge.read', 'knowledge.manage',
 ];
 

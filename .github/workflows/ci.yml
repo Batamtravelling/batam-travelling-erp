@@ -42,4 +42,6 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm db:generate
+      - run: pnpm --filter @batam/api prisma:validate
+      - run: pnpm --filter @batam/api exec prisma migrate deploy
       - run: pnpm check

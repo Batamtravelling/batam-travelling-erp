@@ -369,7 +369,38 @@ model Tenant {
   payments  Payment[]
   trips     Trip[]
   assignments TripAssignment[]
+  businessSequences BusinessSequence[]
+  idempotencyRecords IdempotencyRecord[]
   @@map("tenants")
+}
+
+model BusinessSequence {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  scope     String
+  value     Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  tenant    Tenant   @relation(fields:[tenantId],references:[id],onDelete:Restrict)
+  @@unique([tenantId,scope])
+  @@map("business_sequences")
+}
+
+model IdempotencyRecord {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  operation   String
+  key         String
+  requestHash String   @map("request_hash")
+  response    Json?
+  statusCode  Int?     @map("status_code")
+  expiresAt   DateTime @map("expires_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  tenant      Tenant   @relation(fields:[tenantId],references:[id],onDelete:Cascade)
+  @@unique([tenantId,operation,key])
+  @@index([expiresAt])
+  @@map("idempotency_records")
 }
 
 model TravelPackage {
@@ -430,6 +461,7 @@ model TravelPackage {
   bookingPassengers BookingPassenger[]
   @@unique([tenantId, packageCode])
   @@index([tenantId, status])
+  @@index([tenantId, status, approvalStatus, archivedAt])
   @@map("packages")
 }
 
@@ -721,6 +753,18 @@ model CompanyProfile {
   erpLogoUrl String? @map("erp_logo_url")
   documentLogoUrl String? @map("document_logo_url")
   homepageSections String? @map("homepage_sections")
+  heroTitle String? @map("hero_title")
+  heroSubtitle String? @map("hero_subtitle")
+  heroImageUrl String? @map("hero_image_url")
+  heroBadge String? @map("hero_badge")
+  heroCtaPrimary String? @map("hero_cta_primary")
+  heroCtaSecondary String? @map("hero_cta_secondary")
+  featureHeadline String? @map("feature_headline")
+  featureText String? @map("feature_text")
+  howToBookTitle String? @map("how_to_book_title")
+  howToBookText String? @map("how_to_book_text")
+  aboutTitle String? @map("about_title")
+  aboutText String? @map("about_text")
   whatsappNumber String? @map("whatsapp_number")
   whatsappNumberSecondary String? @map("whatsapp_number_secondary")
   contactEmail String? @map("contact_email")
@@ -1141,6 +1185,7 @@ model Booking {
   passengers      BookingPassenger[]
   @@unique([tenantId,bookingCode])
   @@index([tenantId,status,travelDate])
+  @@index([tenantId,departureId,status])
   @@map("bookings")
 }
 
@@ -1255,7 +1300,7 @@ model Payment {
   id             String        @id @default(uuid()) @db.Uuid
   tenantId       String        @map("tenant_id") @db.Uuid
   paymentNumber  String        @map("payment_number")
-  receiptNumber  String?       @unique @map("receipt_number")
+  receiptNumber  String?       @map("receipt_number")
   invoiceId      String        @map("invoice_id") @db.Uuid
   customerId     String        @map("customer_id") @db.Uuid
   amount         Decimal       @db.Decimal(18,2)
@@ -1274,6 +1319,8 @@ model Payment {
   receivedBy     User?         @relation("PaymentReceiver",fields:[receivedById],references:[id],onDelete:SetNull)
   verifiedBy     User?         @relation("PaymentVerifier",fields:[verifiedById],references:[id],onDelete:SetNull)
   @@unique([tenantId,paymentNumber])
+  @@unique([tenantId,receiptNumber])
+  @@index([tenantId,invoiceId,status])
   @@index([tenantId,status,receivedAt])
   @@map("payments")
 }

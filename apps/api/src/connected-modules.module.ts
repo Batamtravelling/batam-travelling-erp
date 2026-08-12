@@ -54,21 +54,24 @@ class ConnectedModulesService {
   async report(i: RequestIdentity, q: any) {
     const year = Number(q.year), month = q.month ? Number(q.month) : undefined;
     const from = new Date(Date.UTC(year, month ? month - 1 : 0, 1)), to = new Date(Date.UTC(month ? year : year + 1, month ?? 0, 1));
-    const [bookings, payments] = await Promise.all([
-      this.p.booking.findMany({ where: { tenantId: i.tenantId, createdAt: { gte: from, lt: to } }, include: { customer: true, trip: true }, orderBy: { createdAt: 'desc' } }),
-      this.p.payment.findMany({ where: { tenantId: i.tenantId, receivedAt: { gte: from, lt: to } }, include: { customer: true, invoice: true, receivedBy: true }, orderBy: { receivedAt: 'desc' } }),
+    const bp=Math.max(1,Number(q.bookingPage||1)),bps=Math.max(1,Math.min(100,Number(q.bookingPageSize||10))),pp=Math.max(1,Number(q.paymentPage||1)),pps=Math.max(1,Math.min(100,Number(q.paymentPageSize||10)));
+    const bookingWhere={tenantId:i.tenantId,createdAt:{gte:from,lt:to}},paymentWhere={tenantId:i.tenantId,receivedAt:{gte:from,lt:to}};
+    const [bookings,payments,bookingTotals,paymentCount,receivedTotals] = await Promise.all([
+      this.p.booking.findMany({where:bookingWhere,select:{createdAt:true,bookingCode:true,packageName:true,travelDate:true,pax:true,status:true,totalAmount:true,paidAmount:true,customer:{select:{fullName:true,phone:true}}},orderBy:{createdAt:'desc'},skip:(bp-1)*bps,take:bps}),
+      this.p.payment.findMany({where:paymentWhere,select:{receivedAt:true,paymentNumber:true,method:true,status:true,amount:true,customer:{select:{fullName:true}},invoice:{select:{invoiceNumber:true}},receivedBy:{select:{name:true}}},orderBy:{receivedAt:'desc'},skip:(pp-1)*pps,take:pps}),
+      this.p.booking.aggregate({where:bookingWhere,_count:{_all:true},_sum:{pax:true,totalAmount:true}}),
+      this.p.payment.count({where:paymentWhere}),
+      this.p.payment.aggregate({where:{...paymentWhere,status:'VERIFIED'},_sum:{amount:true}}),
     ]);
     const bs = bookings.map(x => ({ tanggal: x.createdAt, kode: x.bookingCode, pelanggan: x.customer.fullName, telepon: x.customer.phone, paket: x.packageName, tanggalTrip: x.travelDate, pax: x.pax, status: x.status, total: Number(x.totalAmount), dibayar: Number(x.paidAmount) }));
     const ps = payments.map(x => ({ tanggal: x.receivedAt, nomor: x.paymentNumber, invoice: x.invoice.invoiceNumber, pelanggan: x.customer.fullName, metode: x.method, status: x.status, jumlah: Number(x.amount), diterimaOleh: x.receivedBy?.name ?? '-' }));
-    const page = (rows:any[], n:number, size:number) => rows.slice((n-1)*size,n*size);
-    const bp=Number(q.bookingPage||1), bps=Number(q.bookingPageSize||10), pp=Number(q.paymentPage||1), pps=Number(q.paymentPageSize||10);
-    const invoiced=bookings.reduce((s,x)=>s+Number(x.totalAmount),0),received=payments.filter(x=>x.status==='VERIFIED').reduce((s,x)=>s+Number(x.amount),0);
-    return { period: month ? `${year}-${String(month).padStart(2,'0')}` : String(year), summary:{bookingCount:bookings.length,pax:bookings.reduce((s,x)=>s+x.pax,0),bookingValue:invoiced,invoiced,received,outstanding:Math.max(0,invoiced-received),paymentCount:payments.length},bookings:page(bs,bp,bps),payments:page(ps,pp,pps),bookingsMeta:{page:bp,pageSize:bps,total:bs.length,totalPages:Math.max(1,Math.ceil(bs.length/bps))},paymentsMeta:{page:pp,pageSize:pps,total:ps.length,totalPages:Math.max(1,Math.ceil(ps.length/pps))} };
+    const bookingCount=bookingTotals._count._all,invoiced=Number(bookingTotals._sum.totalAmount??0),received=Number(receivedTotals._sum.amount??0);
+    return { period: month ? `${year}-${String(month).padStart(2,'0')}` : String(year), summary:{bookingCount,pax:Number(bookingTotals._sum.pax??0),bookingValue:invoiced,invoiced,received,outstanding:Math.max(0,invoiced-received),paymentCount},bookings:bs,payments:ps,bookingsMeta:{page:bp,pageSize:bps,total:bookingCount,totalPages:Math.max(1,Math.ceil(bookingCount/bps))},paymentsMeta:{page:pp,pageSize:pps,total:paymentCount,totalPages:Math.max(1,Math.ceil(paymentCount/pps))} };
   }
 
   async profile(i: RequestIdentity) { return this.p.companyProfile.findUnique({ where: { tenantId: i.tenantId } }); }
   async updateProfile(i: RequestIdentity, d: any) {
-    const allowed = ['vision','mission','coreValues','customerTerms','privacyPolicy','cancellationPolicy','websiteLogoUrl','erpLogoUrl','documentLogoUrl','homepageSections','whatsappNumber','whatsappNumberSecondary','contactEmail','contactAddress','contactHours','instagramUrl','facebookUrl','tiktokUrl','youtubeUrl'];
+    const allowed = ['vision','mission','coreValues','customerTerms','privacyPolicy','cancellationPolicy','websiteLogoUrl','erpLogoUrl','documentLogoUrl','homepageSections','heroTitle','heroSubtitle','heroImageUrl','heroBadge','heroCtaPrimary','heroCtaSecondary','featureHeadline','featureText','howToBookTitle','howToBookText','aboutTitle','aboutText','whatsappNumber','whatsappNumberSecondary','contactEmail','contactAddress','contactHours','instagramUrl','facebookUrl','tiktokUrl','youtubeUrl'];
     const data = Object.fromEntries(allowed.filter(k => k in d).map(k => [k, d[k] || null]));
     return this.p.companyProfile.upsert({ where: { tenantId: i.tenantId }, update: { ...data, revisedById: i.userId }, create: { tenantId: i.tenantId, vision: d.vision || 'Menjadi partner perjalanan terpercaya dari Batam.', mission: d.mission || 'Memberikan perjalanan yang aman, transparan, dan berkesan.', ...data, revisedById: i.userId } });
   }

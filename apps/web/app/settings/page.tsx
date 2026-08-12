@@ -1,7 +1,7 @@
 'use client';
 
 import { FormEvent, useEffect, useState } from 'react';
-import { apiGet, apiPatch, apiPost } from '../../lib/api';
+import { apiGet, apiPatch, apiUpload } from '../../lib/api';
 
 type Profile = {
   vision: string;
@@ -43,13 +43,9 @@ const blank: Profile = {
 };
 
 async function upload(file: File) {
-  const base64 = await new Promise<string>((ok, no) => {
-    const r = new FileReader();
-    r.onload = () => ok(String(r.result));
-    r.onerror = () => no(r.error);
-    r.readAsDataURL(file);
-  });
-  return apiPost<{ url: string }>('/media', { fileName: file.name, mimeType: file.type, base64, altText: 'Logo Batam Travelling', category: 'LOGO' });
+  const form = new FormData();
+  form.set('file', file);
+  return apiUpload<{ url: string }>('/media/upload', form);
 }
 
 export default function SettingsPage() {
