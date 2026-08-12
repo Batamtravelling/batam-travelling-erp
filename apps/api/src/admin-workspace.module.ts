@@ -7,15 +7,16 @@ class AdminWorkspaceService {
   constructor(@Inject(PrismaService) private readonly p: PrismaService) {}
 
   async dashboard(i: RequestIdentity) {
+    const canViewCompanyMetrics = i.permissions.has('dashboard.owner');
     const [leads, customers, bookings, invoices, tasks, trips] = await Promise.all([
-      this.p.lead.count({ where: { tenantId: i.tenantId, status: { notIn: ['WON','LOST'] } } }),
-      this.p.customer.count({ where: { tenantId: i.tenantId, archivedAt: null } }),
-      this.p.booking.count({ where: { tenantId: i.tenantId, status: { notIn: ['CANCELLED','REFUNDED','COMPLETED'] } } }),
-      this.p.invoice.aggregate({ where: { tenantId: i.tenantId, status: { in: ['ISSUED','PARTIALLY_PAID','OVERDUE'] } }, _sum: { totalAmount: true, paidAmount: true } }),
+      canViewCompanyMetrics ? this.p.lead.count({ where: { tenantId: i.tenantId, status: { notIn: ['WON','LOST'] } } }) : Promise.resolve(null),
+      canViewCompanyMetrics ? this.p.customer.count({ where: { tenantId: i.tenantId, archivedAt: null } }) : Promise.resolve(null),
+      canViewCompanyMetrics ? this.p.booking.count({ where: { tenantId: i.tenantId, status: { notIn: ['CANCELLED','REFUNDED','COMPLETED'] } } }) : Promise.resolve(null),
+      canViewCompanyMetrics ? this.p.invoice.aggregate({ where: { tenantId: i.tenantId, status: { in: ['ISSUED','PARTIALLY_PAID','OVERDUE'] } }, _sum: { totalAmount: true, paidAmount: true } }) : Promise.resolve(null),
       this.p.task.findMany({ where: { tenantId: i.tenantId, OR: [{ assigneeId: i.userId }, { participants: { some: { userId: i.userId } } }], status: { notIn: ['DONE','CANCELLED'] } }, include: { project: { select: { name: true } } }, orderBy: { dueDate: 'asc' }, take: 8 }),
       this.p.trip.findMany({ where: { tenantId: i.tenantId, assignments: { some: { employeeId: i.userId } }, status: { notIn: ['COMPLETED','CANCELLED'] } }, orderBy: { startsAt: 'asc' }, take: 8 }),
     ]);
-    const outstanding = Number(invoices._sum.totalAmount ?? 0) - Number(invoices._sum.paidAmount ?? 0);
+    const outstanding = invoices ? Number(invoices._sum.totalAmount ?? 0) - Number(invoices._sum.paidAmount ?? 0) : null;
     return { leads, customers, bookings, outstanding, myTasks: tasks, myTrips: trips };
   }
 
