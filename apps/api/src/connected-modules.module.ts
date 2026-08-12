@@ -2,7 +2,7 @@ import { BadRequestException, Body, Controller, Get, Inject, Injectable, Module,
 import { PrismaService } from './core/prisma.service.js';
 import { BookingCodeService } from './core/booking-code.service.js';
 import { CurrentIdentity, IdentityGuard, PermissionGuard, Permissions, RequestIdentity } from './core/request-context.js';
-import { AssignTripDto, BusinessReportQueryDto, CashflowQueryDto, CreateCashflowDto, CreateEmployeeDto, CreateProjectDto, CreateTaskDto, CreateTripDto, CreateVendorDto, PageQueryDto, TaskCommentDto, TransitionTripDto, UpdateAssignmentDto, UpdateEmployeeDto, UpdateProfileDto, UpdateProjectDto, UpdateTaskDto, UpdateVendorDto } from './connected-dto.js';
+import { AssignTripDto, BusinessReportQueryDto, CashflowQueryDto, CreateCashflowDto, ReverseFinancialEntryDto, CreateEmployeeDto, CreateProjectDto, CreateTaskDto, CreateTripDto, CreateVendorDto, PageQueryDto, TaskCommentDto, TransitionTripDto, UpdateAssignmentDto, UpdateEmployeeDto, UpdateProfileDto, UpdateProjectDto, UpdateTaskDto, UpdateVendorDto } from './connected-dto.js';
 import { TripStatus } from '@prisma/client';
 import { summarizeDepartureCapacity } from './core/departure-capacity-summary.js';
 
@@ -76,6 +76,35 @@ class ConnectedModulesService {
 
   async createCashflow(i: RequestIdentity, d: CreateCashflowDto) { const refs=await Promise.all([d.projectId?this.p.project.findFirst({where:{id:d.projectId,tenantId:i.tenantId},select:{id:true}}):true,d.tripId?this.p.trip.findFirst({where:{id:d.tripId,tenantId:i.tenantId},select:{id:true}}):true,d.vendorId?this.p.vendor.findFirst({where:{id:d.vendorId,tenantId:i.tenantId},select:{id:true}}):true]);if(refs.some(x=>!x))throw new BadRequestException('Relasi proyek, trip, atau vendor tidak valid');return this.p.$transaction(async tx=>{const row=await tx.financialEntry.create({data:{tenantId:i.tenantId,recordedById:i.userId,origin:'MANUAL',status:'POSTED',direction:d.direction,costType:d.costType,category:d.category.trim(),description:d.description.trim(),amount:d.amount,transactionDate:new Date(d.transactionDate),reference:d.reference,fixedCost:d.fixedCost??false,notes:d.notes,projectId:d.projectId,tripId:d.tripId,vendorId:d.vendorId}});await tx.auditLog.create({data:{tenantId:i.tenantId,actorId:i.userId,action:'cashflow.created',resourceType:'FinancialEntry',resourceId:row.id,requestId:i.requestId,metadata:{direction:d.direction,amount:d.amount,costType:d.costType}}});return row}); }
 
+  async reverseCashflow(i: RequestIdentity, id: string, d: ReverseFinancialEntryDto) {
+    const reason=d.reason.trim();if(!reason)throw new BadRequestException('Alasan reversal wajib diisi');
+    return this.p.$transaction(async tx=>{
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`financial-entry:${id}`}))`;
+      const entry=await tx.financialEntry.findFirst({where:{id,tenantId:i.tenantId}});
+      if(!entry)throw new NotFoundException('Entri keuangan tidak ditemukan');
+      if(entry.origin==='PAYMENT')throw new BadRequestException('Penerimaan dari payment harus dibatalkan melalui alur refund/payment');
+      if(entry.reversalOfId)throw new BadRequestException('Entri reversal tidak dapat dibalik kembali');
+      if(entry.status!=='POSTED')throw new BadRequestException('Entri sudah direversal atau belum diposting');
+      const now=new Date();
+      const reversal=await tx.financialEntry.create({data:{tenantId:i.tenantId,recordedById:i.userId,reversalOfId:entry.id,reversalReason:reason,origin:'MANUAL',status:'POSTED',direction:entry.direction==='IN'?'OUT':'IN',costType:entry.costType,category:entry.category,description:`Reversal: ${entry.description}`,amount:entry.amount,transactionDate:now,reference:entry.reference,fixedCost:entry.fixedCost,notes:reason,projectId:entry.projectId,tripId:entry.tripId,vendorId:entry.vendorId}});
+      await tx.financialEntry.update({where:{id:entry.id},data:{status:'REVERSED',reversedById:i.userId,reversedAt:now}});
+      await tx.auditLog.create({data:{tenantId:i.tenantId,actorId:i.userId,action:'cashflow.reversed',resourceType:'FinancialEntry',resourceId:entry.id,requestId:i.requestId,metadata:{reversalEntryId:reversal.id,reason,amount:Number(entry.amount),originalDirection:entry.direction}}});
+      return{originalId:entry.id,reversal};
+    });
+  }
+
+  async reconcileCashflow(i: RequestIdentity, year: number, month: number) {
+    const from=new Date(Date.UTC(year,month-1,1)),to=new Date(Date.UTC(year,month,1));
+    const [payments,automaticEntries]=await Promise.all([
+      this.p.payment.findMany({where:{tenantId:i.tenantId,status:'VERIFIED',receivedAt:{gte:from,lt:to}},select:{id:true,paymentNumber:true,invoiceId:true,amount:true,financialEntry:{select:{id:true,paymentId:true,invoiceId:true,amount:true,direction:true,origin:true,status:true}}}}),
+      this.p.financialEntry.findMany({where:{tenantId:i.tenantId,origin:'PAYMENT',transactionDate:{gte:from,lt:to}},select:{id:true,paymentId:true,amount:true,payment:{select:{paymentNumber:true,status:true}}}})
+    ]);
+    const issues:Array<Record<string,unknown>>=[];
+    for(const payment of payments){const entry=payment.financialEntry;if(!entry){issues.push({type:'MISSING_LEDGER',paymentId:payment.id,paymentNumber:payment.paymentNumber});continue}if(entry.origin!=='PAYMENT'||entry.direction!=='IN'||entry.status!=='POSTED'||entry.paymentId!==payment.id||entry.invoiceId!==payment.invoiceId||Number(entry.amount)!==Number(payment.amount)){issues.push({type:'LEDGER_MISMATCH',paymentId:payment.id,paymentNumber:payment.paymentNumber,entryId:entry.id,paymentAmount:Number(payment.amount),ledgerAmount:Number(entry.amount),ledgerStatus:entry.status})}}
+    for(const entry of automaticEntries){if(!entry.payment||entry.payment.status!=='VERIFIED')issues.push({type:'ORPHAN_LEDGER',entryId:entry.id,paymentId:entry.paymentId,paymentNumber:entry.payment?.paymentNumber,paymentStatus:entry.payment?.status})}
+    return{period:`${year}-${String(month).padStart(2,'0')}`,ok:issues.length===0,summary:{verifiedPayments:payments.length,automaticEntries:automaticEntries.length,issues:issues.length},issues};
+  }
+
   async report(i: RequestIdentity, q: BusinessReportQueryDto) {
     const year = Number(q.year), month = q.month ? Number(q.month) : undefined;
     const from = new Date(Date.UTC(year, month ? month - 1 : 0, 1)), to = new Date(Date.UTC(month ? year : year + 1, month ?? 0, 1));
@@ -126,6 +155,8 @@ class ConnectedModulesService {
   @Post('tasks/:id/comments') @Permissions('task.update') comment(@CurrentIdentity()i:RequestIdentity,@Param('id')id:string,@Body()d:TaskCommentDto){return this.s.comment(i,id,d)}
   @Get('cashflow') @Permissions('payment.read') cashflow(@CurrentIdentity()i:RequestIdentity,@Query()q:CashflowQueryDto){return this.s.cashflow(i,q.year,q.month)}
   @Post('cashflow') @Permissions('payment.manage') createCashflow(@CurrentIdentity()i:RequestIdentity,@Body()d:CreateCashflowDto){return this.s.createCashflow(i,d)}
+  @Post('cashflow/:id/reverse') @Permissions('payment.manage') reverseCashflow(@CurrentIdentity()i:RequestIdentity,@Param('id')id:string,@Body()d:ReverseFinancialEntryDto){return this.s.reverseCashflow(i,id,d)}
+  @Get('cashflow/reconciliation') @Permissions('dashboard.owner') reconcileCashflow(@CurrentIdentity()i:RequestIdentity,@Query()q:CashflowQueryDto){return this.s.reconcileCashflow(i,q.year,q.month)}
   @Get('reports/business') @Permissions('dashboard.owner') report(@CurrentIdentity()i:RequestIdentity,@Query()q:BusinessReportQueryDto){return this.s.report(i,q)}
   @Get('asset-knowledge/profile') @Permissions('settings.read') profile(@CurrentIdentity()i:RequestIdentity){return this.s.profile(i)}
   @Patch('asset-knowledge/profile') @Permissions('settings.manage') updateProfile(@CurrentIdentity()i:RequestIdentity,@Body()d:UpdateProfileDto){return this.s.updateProfile(i,d)}
