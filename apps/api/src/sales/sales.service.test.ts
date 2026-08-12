@@ -1,6 +1,6 @@
 import { NotFoundException } from '@nestjs/common';
 import { describe, expect, it, vi } from 'vitest';
-import { SalesService } from './sales.service.js';
+import { quotationItemsRequireRepricing, SalesService } from './sales.service.js';
 
 const identity = { tenantId: 'tenant-a', userId: 'user-a', permissions: new Set<string>(), requestId: 'request-a' };
 
@@ -24,5 +24,26 @@ describe('SalesService quotation isolation', () => {
 
     await expect(service.find(identity, 'quotation-b')).rejects.toBeInstanceOf(NotFoundException);
     expect(findFirst).toHaveBeenCalledWith(expect.objectContaining({ where: { id: 'quotation-b', tenantId: 'tenant-a' } }));
+  });
+});
+
+
+describe('quotation item repricing', () => {
+  it('recalculates package items when pax changes', () => {
+    expect(quotationItemsRequireRepricing({
+      itemsProvided: false,
+      packageChanged: false,
+      paxChanged: true,
+      hasPackage: true,
+    })).toBe(true);
+  });
+
+  it('preserves custom item totals when only pax changes', () => {
+    expect(quotationItemsRequireRepricing({
+      itemsProvided: false,
+      packageChanged: false,
+      paxChanged: true,
+      hasPackage: false,
+    })).toBe(false);
   });
 });
