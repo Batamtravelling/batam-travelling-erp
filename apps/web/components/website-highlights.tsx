@@ -20,6 +20,9 @@ type Pack = {
     status: string;
     maxPax: number;
     reservedPax: number;
+    surchargeLabel?: string;
+    surchargeAmount: string;
+    surchargeBasis: 'PER_PAX' | 'PER_BOOKING';
   }[];
 };
 type Promo = {

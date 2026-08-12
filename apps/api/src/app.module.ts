@@ -10,10 +10,11 @@ import { PublicModule } from './public/public.module.js';
 import { TransactionsModule } from './transactions/transactions.module.js';
 import { ConnectedModulesModule } from './connected-modules.module.js';
 import { AdminWorkspaceModule } from './admin-workspace.module.js';
+import { HealthController } from './health.controller.js';
 
 @Module({
   imports: [CustomersModule, LeadsModule, PublicModule, TransactionsModule, ConnectedModulesModule, AdminWorkspaceModule],
-  controllers: [PackagesController, DevAuthController, SalesController],
+  controllers: [PackagesController, DevAuthController, SalesController, HealthController],
   providers: [PrismaService, PackagesService],
   exports: [PrismaService],
 })

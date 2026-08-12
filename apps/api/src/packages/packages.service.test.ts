@@ -18,6 +18,7 @@ describe('PackagesService', () => {
     const tx = {
       travelPackage: { create: vi.fn().mockResolvedValue({ id: 'package-a', packageCode: 'PKG-100' }) },
       packagePrice: { create: vi.fn().mockResolvedValue({ id: 'price-a' }) },
+      auditLog: { create: vi.fn().mockResolvedValue({ id: 'audit-a' }) },
     };
     const prisma = {
       travelPackage: { findFirst: vi.fn().mockResolvedValue(null) },
@@ -47,6 +48,7 @@ describe('PackagesService', () => {
         findFirst: vi.fn().mockResolvedValue({ id: 'package-a' }),
         update: vi.fn().mockResolvedValue({ id: 'package-a', status: 'ARCHIVED' }),
       },
+      auditLog: { create: vi.fn().mockResolvedValue({ id: 'audit-a' }) },
     } as any;
 
     await expect(new PackagesService(prisma).remove(identity, 'package-a')).resolves.toEqual({ deleted: true, id: 'package-a' });

@@ -6,17 +6,25 @@ import rateLimit from '@fastify/rate-limit';
 import multipart from '@fastify/multipart';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module.js';
+import Redis from 'ioredis';
 
 export async function createApp(): Promise<NestFastifyApplication> {
   const app = await NestFactory.create<NestFastifyApplication>(AppModule, new FastifyAdapter());
 
   await app.register(helmet);
+  const redis = process.env.REDIS_URL ? new Redis(process.env.REDIS_URL, { lazyConnect: true, maxRetriesPerRequest: 1 }) : undefined;
+  if (process.env.NODE_ENV === 'production' && !redis) throw new Error('REDIS_URL wajib dikonfigurasi untuk production');
+  if (redis) {
+    await redis.connect();
+    app.getHttpAdapter().getInstance().addHook('onClose', async () => { await redis.quit(); });
+  }
   await app.register(rateLimit, {
     global: true,
     max: Number(process.env.RATE_LIMIT_MAX ?? 300),
     timeWindow: process.env.RATE_LIMIT_WINDOW ?? '1 minute',
     ban: 3,
     cache: 20_000,
+    redis,
     allowList: (request) => request.method === 'OPTIONS',
     errorResponseBuilder: (_request, context) => ({
       statusCode: 429,
@@ -45,7 +53,9 @@ export async function createApp(): Promise<NestFastifyApplication> {
     .setVersion('1.0.0')
     .addBearerAuth()
     .build();
-  SwaggerModule.setup('docs', app, SwaggerModule.createDocument(app, config));
+  if (process.env.NODE_ENV !== 'production' || process.env.ENABLE_API_DOCS === 'true') {
+    SwaggerModule.setup('docs', app, SwaggerModule.createDocument(app, config));
+  }
 
   return app;
 }

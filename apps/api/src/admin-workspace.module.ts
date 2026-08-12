@@ -2,6 +2,27 @@ import { BadRequestException, Body, Controller, Get, Inject, Injectable, Module,
 import { randomUUID } from 'node:crypto';
 import { PrismaService } from './core/prisma.service.js';
 import { CurrentIdentity, IdentityGuard, PermissionGuard, Permissions, RequestIdentity } from './core/request-context.js';
+import { IsEnum, IsOptional, IsString, IsUrl, Matches, MaxLength } from 'class-validator';
+
+class PackageReviewDto {
+  @IsEnum(['SUBMIT','APPROVE','REJECT'] as const) action!: 'SUBMIT'|'APPROVE'|'REJECT';
+  @IsOptional() @IsString() @MaxLength(1000) note?: string;
+}
+class ArticleDto {
+  @IsString() @MaxLength(180) title!: string;
+  @IsString() @Matches(/^[a-z0-9]+(?:-[a-z0-9]+)*$/) slug!: string;
+  @IsOptional() @IsString() @MaxLength(500) excerpt?: string;
+  @IsString() @MaxLength(100000) content!: string;
+  @IsOptional() @IsUrl({require_tld:false}) coverImage?: string;
+  @IsOptional() @IsEnum(['DRAFT','PUBLISHED','ARCHIVED'] as const) status?: 'DRAFT'|'PUBLISHED'|'ARCHIVED';
+}
+class MediaDto {
+  @IsString() @MaxLength(255) originalName!: string;
+  @IsUrl({require_tld:false}) url!: string;
+  @IsOptional() @IsString() @MaxLength(100) mimeType?: string;
+  @IsOptional() @IsString() @MaxLength(300) altText?: string;
+  @IsOptional() @IsString() @MaxLength(60) category?: string;
+}
 
 @Injectable()
 class AdminWorkspaceService {
@@ -22,35 +43,35 @@ class AdminWorkspaceService {
   }
 
   packages(i:RequestIdentity){return this.p.travelPackage.findMany({where:{tenantId:i.tenantId,archivedAt:null},select:{id:true,packageCode:true,name:true,status:true,approvalStatus:true,submittedAt:true,reviewedAt:true,reviewNote:true,submittedBy:{select:{name:true}},reviewedBy:{select:{name:true}}},orderBy:{updatedAt:'desc'}})}
-  reviewPackage(i:RequestIdentity,id:string,d:any){return this.p.travelPackage.updateMany({where:{id,tenantId:i.tenantId},data:d.action==='SUBMIT'?{approvalStatus:'PENDING_REVIEW',submittedById:i.userId,submittedAt:new Date()}:{approvalStatus:d.action==='APPROVE'?'APPROVED':'REJECTED',reviewedById:i.userId,reviewedAt:new Date(),reviewNote:d.note,status:d.action==='APPROVE'?'ACTIVE':undefined}})}
+  reviewPackage(i:RequestIdentity,id:string,d:PackageReviewDto){return this.p.travelPackage.updateMany({where:{id,tenantId:i.tenantId},data:d.action==='SUBMIT'?{approvalStatus:'PENDING_REVIEW',submittedById:i.userId,submittedAt:new Date()}:{approvalStatus:d.action==='APPROVE'?'APPROVED':'REJECTED',reviewedById:i.userId,reviewedAt:new Date(),reviewNote:d.note,status:d.action==='APPROVE'?'ACTIVE':undefined}})}
 
-  articles(i:RequestIdentity){return this.p.article.findMany({where:{tenantId:i.tenantId},orderBy:{updatedAt:'desc'}})}
-  createArticle(i:RequestIdentity,d:any){return this.p.article.create({data:{tenantId:i.tenantId,authorId:i.userId,slug:String(d.slug),title:String(d.title),excerpt:d.excerpt,content:String(d.content),coverImage:d.coverImage,status:d.status??'DRAFT',publishedAt:d.status==='PUBLISHED'?new Date():undefined}})}
-  updateArticle(i:RequestIdentity,id:string,d:any){return this.p.article.updateMany({where:{id,tenantId:i.tenantId},data:{title:d.title,excerpt:d.excerpt,content:d.content,coverImage:d.coverImage,status:d.status,publishedAt:d.status==='PUBLISHED'?new Date():undefined}})}
+  articles(i:RequestIdentity){return this.p.article.findMany({where:{tenantId:i.tenantId},orderBy:{updatedAt:'desc'},take:100})}
+  createArticle(i:RequestIdentity,d:ArticleDto){return this.p.article.create({data:{tenantId:i.tenantId,authorId:i.userId,slug:d.slug,title:d.title,excerpt:d.excerpt,content:d.content,coverImage:d.coverImage,status:d.status??'DRAFT',publishedAt:d.status==='PUBLISHED'?new Date():undefined}})}
+  updateArticle(i:RequestIdentity,id:string,d:ArticleDto){return this.p.article.updateMany({where:{id,tenantId:i.tenantId},data:{title:d.title,excerpt:d.excerpt,content:d.content,coverImage:d.coverImage,status:d.status,publishedAt:d.status==='PUBLISHED'?new Date():undefined}})}
 
-  media(i:RequestIdentity){return this.p.websiteMediaFile.findMany({where:{tenantId:i.tenantId},orderBy:{createdAt:'desc'}})}
-  createMedia(i:RequestIdentity,d:any){return this.p.websiteMediaFile.create({data:{tenantId:i.tenantId,uploadedById:i.userId,originalName:String(d.originalName),storedName:String(d.storedName??d.originalName),mimeType:String(d.mimeType??'image/webp'),size:Number(d.size??0),url:String(d.url),altText:d.altText,category:d.category??'WEBSITE'}})}
+  media(i:RequestIdentity){return this.p.websiteMediaFile.findMany({where:{tenantId:i.tenantId},orderBy:{createdAt:'desc'},take:100})}
+  createMedia(i:RequestIdentity,d:MediaDto){return this.p.websiteMediaFile.create({data:{tenantId:i.tenantId,uploadedById:i.userId,originalName:d.originalName,storedName:d.originalName,mimeType:d.mimeType??'image/webp',size:0,url:d.url,altText:d.altText,category:d.category??'WEBSITE'}})}
   async uploadMedia(i:RequestIdentity,request:any){const file=await request.file();if(!file)throw new BadRequestException('Pilih satu file');const allowed=new Set(['image/png','image/jpeg','image/webp']);if(!allowed.has(file.mimetype))throw new BadRequestException('Format harus PNG, JPEG, atau WEBP');const buffer=await file.toBuffer(),url=process.env.SUPABASE_URL?.replace(/\/$/,''),secret=process.env.SUPABASE_SECRET_KEY,bucket=process.env.SUPABASE_MEDIA_BUCKET??'erp-media';if(!url||!secret)throw new BadRequestException('Supabase Storage belum dikonfigurasi');const safe=file.filename.replace(/[^a-zA-Z0-9._-]/g,'_'),storedName=`${i.tenantId}/${randomUUID()}-${safe}`;const upload=await fetch(`${url}/storage/v1/object/${bucket}/${storedName}`,{method:'POST',headers:{authorization:`Bearer ${secret}`,apikey:secret,'content-type':file.mimetype,'x-upsert':'false'},body:buffer});if(!upload.ok)throw new BadRequestException('Upload media gagal');const publicUrl=`${url}/storage/v1/object/public/${bucket}/${storedName}`;return this.p.websiteMediaFile.create({data:{tenantId:i.tenantId,uploadedById:i.userId,originalName:file.filename,storedName,mimeType:file.mimetype,size:buffer.length,url:publicUrl,category:'WEBSITE'}})}
 
-  assets(i:RequestIdentity){return this.p.teamAsset.findMany({where:{tenantId:i.tenantId},include:{assignedTo:{select:{name:true}}},orderBy:{updatedAt:'desc'}})}
+  assets(i:RequestIdentity){return this.p.teamAsset.findMany({where:{tenantId:i.tenantId},include:{assignedTo:{select:{name:true}}},orderBy:{updatedAt:'desc'},take:100})}
   createAsset(i:RequestIdentity,d:any){return this.p.teamAsset.create({data:{tenantId:i.tenantId,assetCode:String(d.assetCode),name:String(d.name),category:String(d.category),brand:d.brand,serialNumber:d.serialNumber,status:d.status??'AVAILABLE',assignedToId:d.assignedToId,location:d.location,notes:d.notes}})}
-  knowledge(i:RequestIdentity){return this.p.knowledgeDocument.findMany({where:{tenantId:i.tenantId},include:{owner:{select:{name:true}}},orderBy:{revisedAt:'desc'}})}
+  knowledge(i:RequestIdentity){return this.p.knowledgeDocument.findMany({where:{tenantId:i.tenantId},include:{owner:{select:{name:true}}},orderBy:{revisedAt:'desc'},take:100})}
   createKnowledge(i:RequestIdentity,d:any){return this.p.knowledgeDocument.create({data:{tenantId:i.tenantId,title:String(d.title),category:String(d.category),summary:d.summary,content:String(d.content),status:d.status??'DRAFT',ownerId:i.userId,lastRevisedById:i.userId}})}
 
-  archives(i:RequestIdentity){return this.p.fileArchive.findMany({where:{tenantId:i.tenantId},orderBy:{createdAt:'desc'}})}
+  archives(i:RequestIdentity){return this.p.fileArchive.findMany({where:{tenantId:i.tenantId},orderBy:{createdAt:'desc'},take:100})}
   createArchive(i:RequestIdentity,d:any){return this.p.fileArchive.create({data:{tenantId:i.tenantId,title:String(d.title),category:d.category,fileName:String(d.fileName),fileUrl:String(d.fileUrl),mimeType:d.mimeType,tags:d.tags,notes:d.notes,uploadedById:i.userId,documentDate:d.documentDate?new Date(d.documentDate):undefined,expiresAt:d.expiresAt?new Date(d.expiresAt):undefined}})}
 }
 @UseGuards(IdentityGuard,PermissionGuard) @Controller() class AdminWorkspaceController{
  constructor(@Inject(AdminWorkspaceService)private readonly s:AdminWorkspaceService){}
  @Get('dashboard/role') dashboard(@CurrentIdentity()i:RequestIdentity){return this.s.dashboard(i)}
  @Get('package-reviews') @Permissions('package.read') packages(@CurrentIdentity()i:RequestIdentity){return this.s.packages(i)}
- @Patch('package-reviews/:id') @Permissions('package.update') review(@CurrentIdentity()i:RequestIdentity,@Param('id')id:string,@Body()d:any){return this.s.reviewPackage(i,id,d)}
+ @Patch('package-reviews/:id') @Permissions('package.update') review(@CurrentIdentity()i:RequestIdentity,@Param('id')id:string,@Body()d:PackageReviewDto){return this.s.reviewPackage(i,id,d)}
  @Get('content/articles') @Permissions('content.read') articles(@CurrentIdentity()i:RequestIdentity){return this.s.articles(i)}
- @Post('content/articles') @Permissions('content.manage') createArticle(@CurrentIdentity()i:RequestIdentity,@Body()d:any){return this.s.createArticle(i,d)}
- @Patch('content/articles/:id') @Permissions('content.manage') updateArticle(@CurrentIdentity()i:RequestIdentity,@Param('id')id:string,@Body()d:any){return this.s.updateArticle(i,id,d)}
- @Get('media') @Permissions('content.read') media(@CurrentIdentity()i:RequestIdentity){return this.s.media(i)}
- @Post('media') @Permissions('content.manage') createMedia(@CurrentIdentity()i:RequestIdentity,@Body()d:any){return this.s.createMedia(i,d)}
- @Post('media/upload') @Permissions('content.manage') uploadMedia(@CurrentIdentity()i:RequestIdentity,@Req()request:any){return this.s.uploadMedia(i,request)}
+ @Post('content/articles') @Permissions('content.manage') createArticle(@CurrentIdentity()i:RequestIdentity,@Body()d:ArticleDto){return this.s.createArticle(i,d)}
+ @Patch('content/articles/:id') @Permissions('content.manage') updateArticle(@CurrentIdentity()i:RequestIdentity,@Param('id')id:string,@Body()d:ArticleDto){return this.s.updateArticle(i,id,d)}
+ @Get('media') @Permissions('media.read') media(@CurrentIdentity()i:RequestIdentity){return this.s.media(i)}
+ @Post('media') @Permissions('media.manage') createMedia(@CurrentIdentity()i:RequestIdentity,@Body()d:MediaDto){return this.s.createMedia(i,d)}
+ @Post('media/upload') @Permissions('media.manage') uploadMedia(@CurrentIdentity()i:RequestIdentity,@Req()request:any){return this.s.uploadMedia(i,request)}
  @Get('assets') @Permissions('asset.read') assets(@CurrentIdentity()i:RequestIdentity){return this.s.assets(i)}
  @Post('assets') @Permissions('asset.manage') createAsset(@CurrentIdentity()i:RequestIdentity,@Body()d:any){return this.s.createAsset(i,d)}
  @Get('knowledge') @Permissions('knowledge.read') knowledge(@CurrentIdentity()i:RequestIdentity){return this.s.knowledge(i)}

@@ -8,12 +8,12 @@ const taskInclude = { project: { include: { milestones: true } }, assignee: { se
 class ConnectedModulesService {
   constructor(@Inject(PrismaService) private readonly p: PrismaService) {}
 
-  employees(i: RequestIdentity) { return this.p.user.findMany({ where: { tenantId: i.tenantId, active: true }, select: { id: true, name: true, jobTitle: true }, orderBy: { name: 'asc' } }); }
-  projects(i: RequestIdentity) { return this.p.project.findMany({ where: { tenantId: i.tenantId }, include: { milestones: { orderBy: { dueDate: 'asc' } } }, orderBy: { updatedAt: 'desc' } }); }
-  trips(i: RequestIdentity) { return this.p.trip.findMany({ where: { tenantId: i.tenantId }, include: { booking: { select: { bookingCode: true, pax: true, customer: { select: { fullName: true } } } }, assignments: { include: { employee: { select: { name: true, jobTitle: true } } } } }, orderBy: { startsAt: 'asc' } }); }
-  vendors(i: RequestIdentity) { return this.p.vendor.findMany({ where: { tenantId: i.tenantId, status: 'ACTIVE' }, select: { id: true, name: true, category: true }, orderBy: { name: 'asc' } }); }
-  departures(i: RequestIdentity) { return this.p.packageDeparture.findMany({ where: { tenantId: i.tenantId }, include: { package: { select: { id: true, name: true } }, _count: { select: { bookings: true } } }, orderBy: { startsAt: 'asc' } }); }
-  tasks(i: RequestIdentity) { return this.p.task.findMany({ where: { tenantId: i.tenantId }, include: taskInclude, orderBy: { updatedAt: 'desc' } }); }
+  employees(i: RequestIdentity) { return this.p.user.findMany({ where: { tenantId: i.tenantId, active: true }, select: { id: true, name: true, jobTitle: true }, orderBy: { name: 'asc' },take:100 }); }
+  projects(i: RequestIdentity) { return this.p.project.findMany({ where: { tenantId: i.tenantId }, include: { milestones: { orderBy: { dueDate: 'asc' } } }, orderBy: { updatedAt: 'desc' },take:100 }); }
+  trips(i: RequestIdentity) { return this.p.trip.findMany({ where: { tenantId: i.tenantId }, include: { booking: { select: { bookingCode: true, pax: true, customer: { select: { fullName: true } } } }, assignments: { include: { employee: { select: { name: true, jobTitle: true } } } } }, orderBy: { startsAt: 'asc' },take:100 }); }
+  vendors(i: RequestIdentity) { return this.p.vendor.findMany({ where: { tenantId: i.tenantId, status: 'ACTIVE' }, select: { id: true, name: true, category: true }, orderBy: { name: 'asc' },take:100 }); }
+  departures(i: RequestIdentity) { return this.p.packageDeparture.findMany({ where: { tenantId: i.tenantId }, include: { package: { select: { id: true, name: true } }, _count: { select: { bookings: true } } }, orderBy: { startsAt: 'asc' },take:100 }); }
+  tasks(i: RequestIdentity) { return this.p.task.findMany({ where: { tenantId: i.tenantId }, include: taskInclude, orderBy: { updatedAt: 'desc' },take:100 }); }
 
   async createTask(i: RequestIdentity, d: any) {
     const project = await this.p.project.findFirst({ where: { id: d.projectId, tenantId: i.tenantId }, select: { id: true } });

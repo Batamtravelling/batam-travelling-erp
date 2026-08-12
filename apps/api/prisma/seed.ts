@@ -17,6 +17,9 @@ const permissions = [
 ];
 
 async function main() {
+  const ownerEmail = process.env.ERP_OWNER_EMAIL?.trim().toLowerCase() || (process.env.NODE_ENV === 'production' ? '' : 'owner@batamtravelling.local');
+  const ownerName = process.env.ERP_OWNER_NAME?.trim() || 'Tenant Owner';
+  if (!ownerEmail) throw new Error('ERP_OWNER_EMAIL wajib diisi untuk bootstrap production');
   const tenant = await prisma.tenant.upsert({
     where: { slug: 'batam-travelling' },
     update: {},
@@ -35,8 +38,8 @@ async function main() {
     });
   }
   const user = await prisma.user.upsert({
-    where: { tenantId_email: { tenantId: tenant.id, email: 'owner@batamtravelling.local' } },
-    update: {}, create: { tenantId: tenant.id, email: 'owner@batamtravelling.local', name: 'Tenant Owner' },
+    where: { tenantId_email: { tenantId: tenant.id, email: ownerEmail } },
+    update: { name: ownerName }, create: { tenantId: tenant.id, email: ownerEmail, name: ownerName },
   });
   await prisma.userRole.upsert({ where: { userId_roleId: { userId: user.id, roleId: role.id } }, update: {}, create: { userId: user.id, roleId: role.id } });
 

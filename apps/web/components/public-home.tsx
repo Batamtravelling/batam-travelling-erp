@@ -55,6 +55,9 @@ type Departure = {
   meetingPoint?: string;
   notes?: string;
   reservedPax: number;
+  surchargeLabel?: string;
+  surchargeAmount: string;
+  surchargeBasis: 'PER_PAX' | 'PER_BOOKING';
 };
 type Pack = {
   id: string;
@@ -482,7 +485,7 @@ export function PublicHome() {
                             {new Date(d.startsAt).toLocaleString("id-ID")} ·
                             sisa{" "}
                             {Math.max(0, d.maxPax - d.reservedPax)}{" "}
-                            kursi
+                            kursi{Number(d.surchargeAmount)>0 ? ` · ${d.surchargeLabel||'Surcharge'} ${money(d.surchargeAmount)} ${d.surchargeBasis==='PER_PAX'?'/ pax':'/ booking'}` : ''}
                           </option>
                         ))}
                       </select>
@@ -635,6 +638,7 @@ export function PublicHome() {
                               )}{" "}
                               dari {d.maxPax} kursi
                             </small>
+                            {Number(d.surchargeAmount)>0&&<small>{d.surchargeLabel||'Surcharge jadwal'}: {money(d.surchargeAmount)} {d.surchargeBasis==='PER_PAX'?'/ peserta':'/ booking'}</small>}
                           </article>
                         ))}
                       </div>
