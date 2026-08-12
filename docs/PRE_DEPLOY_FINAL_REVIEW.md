@@ -19,6 +19,8 @@ Deployment is prohibited until every required item below is evidenced and approv
 5. Run `NODE_ENV=production pnpm db:seed` once.
 6. Confirm `_prisma_migrations`, `tenants`, the owner user, roles, and permissions.
 7. Run Supabase security and performance advisors.
+8. Create a private `erp-private` Storage bucket and verify public access is disabled.
+9. Verify payment-proof signed URLs expire and cannot be opened anonymously.
 
 ## Release gates
 
@@ -29,6 +31,8 @@ Deployment is prohibited until every required item below is evidenced and approv
 - [ ] Backup and restore rehearsal passes on an isolated database.
 - [ ] K6 staging thresholds pass.
 - [ ] Android and desktop screenshots are reviewed.
+- [ ] Package/itinerary print and Save-as-PDF are reviewed on Android Chrome and desktop Chrome.
+- [ ] Private payment-proof upload, MIME validation, signed access, verification, and audit trail pass.
 - [ ] No example phone, local URL, development header, or secret appears in production.
 - [ ] Owner gives explicit deploy approval after final review.
 
@@ -37,3 +41,4 @@ Deployment is prohibited until every required item below is evidenced and approv
 - Preserve the previous application image and database backup.
 - Stop rollout when readiness fails or error/latency thresholds regress.
 - Roll back the application first; database rollback requires an approved forward-fix or tested restore plan.
+- Run `scripts/backup-restore-rehearsal.sh` only with `ALLOW_RESTORE_REHEARSAL=true` and a non-production `RESTORE_DATABASE_LABEL`.

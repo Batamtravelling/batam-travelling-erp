@@ -25,6 +25,7 @@ type T = {
   participants?: Participant[];
   comments?: Comment[];
 };
+type PageResult<T> = { items: T[] };
 
 const statuses = ['TODO', 'IN_PROGRESS', 'BLOCKED', 'DONE'] as const;
 const labels: Record<string, string> = { TODO: 'To Do', IN_PROGRESS: 'In Progress', BLOCKED: 'Blocked', DONE: 'Done' };
@@ -74,10 +75,10 @@ export default function TasksPage() {
 
   const load = async () => {
     try {
-      const [t, p, e] = await Promise.all([apiGet<T[]>('/tasks'), apiGet<P[]>('/projects'), apiGet<E[]>('/employees')]);
-      setTasks(t);
-      setProjects(p);
-      setEmployees(e);
+      const [t, p, e] = await Promise.all([apiGet<PageResult<T>>('/tasks?page=1&pageSize=100'), apiGet<PageResult<P>>('/projects?page=1&pageSize=100'), apiGet<PageResult<E>>('/employees?page=1&pageSize=100')]);
+      setTasks(t.items);
+      setProjects(p.items);
+      setEmployees(e.items);
     } catch (x) {
       setMsg((x as Error).message);
     }

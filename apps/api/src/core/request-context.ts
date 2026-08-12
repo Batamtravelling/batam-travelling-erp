@@ -34,18 +34,22 @@ export class IdentityGuard implements CanActivate {
     if (!authUser.sub || !authUser.email || authUser.role !== 'authenticated' || authUser.is_anonymous || !authUser.session_id) throw new UnauthorizedException('Akun Supabase tidak valid');
 
     let user = await this.prisma.user.findFirst({
-      where: {
-        active: true,
-        OR: [
-          { cognitoId: authUser.sub },
-          { email: { equals: authUser.email, mode: 'insensitive' } },
-        ],
-      },
+      where: { active: true, cognitoId: authUser.sub },
       include: { roles: { include: { role: { include: { permissions: { include: { permission: true } } } } } } },
     });
-    if (!user) throw new UnauthorizedException('Akun belum terdaftar sebagai karyawan ERP');
+    if (!user) {
+      const candidates = await this.prisma.user.findMany({
+        where: { active: true, email: { equals: authUser.email, mode: 'insensitive' } },
+        include: { roles: { include: { role: { include: { permissions: { include: { permission: true } } } } } } },
+        take: 2,
+      });
+      if (candidates.length === 0) throw new UnauthorizedException('Akun belum terdaftar sebagai karyawan ERP');
+      if (candidates.length > 1) throw new UnauthorizedException('Email terdaftar pada lebih dari satu tenant; administrator harus menghubungkan Auth ID secara eksplisit');
+      user = candidates[0];
+    }
 
     if (!user.cognitoId) {
+      if (process.env.NODE_ENV === 'production' && process.env.ALLOW_AUTH_EMAIL_LINK !== 'true') throw new UnauthorizedException('Akun ERP belum dihubungkan ke Supabase Auth ID');
       user = await this.prisma.user.update({
         where: { id: user.id },
         data: { cognitoId: authUser.sub },

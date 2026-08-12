@@ -26,6 +26,7 @@ type Pack = {
     description?: string;
   }[];
 };
+type Brand = { documentLogoUrl?: string; contactEmail?: string; whatsappNumber?: string };
 const money = (v?: string) =>
   v
     ? new Intl.NumberFormat("id-ID", {
@@ -38,12 +39,12 @@ const lines = (v?: string) => v?.split(/\r?\n/).filter(Boolean) || [];
 export default function PrintPackage() {
   const { id } = useParams<{ id: string }>(),
     [p, setP] = useState<Pack>(),
-    [brand, setBrand] = useState<any>({}),
+    [brand, setBrand] = useState<Brand>({}),
     [error, setError] = useState("");
   useEffect(() => {
     Promise.all([
       apiGet<Pack>(`/public/packages/${id}`),
-      apiGet<any>("/public/company-profile"),
+      apiGet<Brand>("/public/company-profile"),
     ])
       .then(([found, b]) => {
         setP(found);
@@ -161,8 +162,7 @@ export default function PrintPackage() {
       <section className="printImportant">
         <h2>Informasi penting</h2>
         <p>
-          {p.importantInfo ||
-            "Pastikan data peserta sesuai dokumen perjalanan dan konfirmasi ulang sebelum keberangkatan."}
+          {p.importantInfo || "Belum ada informasi tambahan dari tim."}
         </p>
       </section>
       <footer>

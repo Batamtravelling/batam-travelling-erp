@@ -5,7 +5,7 @@ import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { apiGet, apiPost } from '../../lib/api';
 
 type C = { id: string; fullName: string };
-type P = { id: string; name: string; serviceLevel?: string; destination?: string; prices?: { sellingPrice: string }[]; minPax?: number; maxPax?: number };
+type P = { id: string; name: string; status: string; approvalStatus: string; serviceLevel?: 'REGULAR' | 'PREMIUM'; destination?: string; adultPrice?: string; childPrice?: string; infantPrice?: string; prices?: { sellingPrice: string }[]; minPax?: number; maxPax?: number };
 type PassengerLine = { serviceLevel: 'REGULAR' | 'PREMIUM'; passengerType: 'ADULT' | 'CHILD' | 'INFANT'; quantity: number; unitPrice: number; notes?: string };
 type B = {
   id: string;
@@ -24,11 +24,7 @@ type PageResult<T> = { items: T[]; meta: { page: number; pageSize: number; total
 
 const money = (n: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(n);
 const blankLine = (): PassengerLine => ({ serviceLevel: 'REGULAR', passengerType: 'ADULT', quantity: 1, unitPrice: 0, notes: '' });
-const priceFactor = (serviceLevel: PassengerLine['serviceLevel'], passengerType: PassengerLine['passengerType']) => {
-  const typeFactor = passengerType === 'CHILD' ? 0.75 : passengerType === 'INFANT' ? 0.15 : 1;
-  const levelFactor = serviceLevel === 'PREMIUM' ? 1.2 : 1;
-  return typeFactor * levelFactor;
-};
+const packagePrice = (pkg: P | undefined, passengerType: PassengerLine['passengerType']) => Number(passengerType === 'CHILD' ? pkg?.childPrice ?? pkg?.adultPrice ?? pkg?.prices?.[0]?.sellingPrice ?? 0 : passengerType === 'INFANT' ? pkg?.infantPrice ?? pkg?.adultPrice ?? pkg?.prices?.[0]?.sellingPrice ?? 0 : pkg?.adultPrice ?? pkg?.prices?.[0]?.sellingPrice ?? 0);
 
 export default function Page() {
   const [b, setB] = useState<B[]>([]);
@@ -46,14 +42,16 @@ export default function Page() {
 
   const load = async () => {
     try {
+      const bookingQuery = new URLSearchParams({ page: String(page), pageSize: String(pageSize), search });
+      if (status) bookingQuery.set('status', status);
       const [x, y, z] = await Promise.all([
-        apiGet<PageResult<B>>(`/bookings?page=${page}&pageSize=${pageSize}&search=${encodeURIComponent(search)}&status=${encodeURIComponent(status)}`),
+        apiGet<PageResult<B>>(`/bookings?${bookingQuery}`),
         apiGet<PageResult<C>>('/customers?page=1&pageSize=100'),
-        apiGet<P[]>('/packages'),
+        apiGet<PageResult<P>>('/packages?page=1&pageSize=100'),
       ]);
       setB(x.items);
       setC(y.items);
-      setP(z);
+      setP(z.items.filter((item) => item.status === 'ACTIVE' && item.approvalStatus === 'APPROVED'));
       setMeta(x.meta);
       setPage(x.meta.page);
     } catch (e) {
@@ -66,7 +64,7 @@ export default function Page() {
   }, [page, pageSize, search, status]);
 
   const selectedPackage = useMemo(() => p.find((x) => x.id === selectedPackageId), [p, selectedPackageId]);
-  const basePrice = Number(selectedPackage?.prices?.[0]?.sellingPrice || 0);
+  const basePrice = packagePrice(selectedPackage, 'ADULT');
 
   const summary = useMemo(() => {
     const pax = lines.reduce((sum, line) => sum + (line.quantity || 0), 0);
@@ -80,10 +78,11 @@ export default function Page() {
 
   const syncLinePrices = (pkgId: string) => {
     const pkg = p.find((x) => x.id === pkgId);
-    const base = Number(pkg?.prices?.[0]?.sellingPrice || 0);
+    const serviceLevel = pkg?.serviceLevel ?? 'REGULAR';
     setLines((prev) => prev.map((line) => ({
       ...line,
-      unitPrice: Math.round(base * priceFactor(line.serviceLevel, line.passengerType)),
+      serviceLevel,
+      unitPrice: packagePrice(pkg, line.passengerType),
     })));
   };
 
@@ -120,7 +119,7 @@ export default function Page() {
     }
   }
 
-  const addLine = () => setLines((prev) => [...prev, { ...blankLine(), unitPrice: basePrice }]);
+  const addLine = () => setLines((prev) => [...prev, { ...blankLine(), serviceLevel: selectedPackage?.serviceLevel ?? 'REGULAR', unitPrice: basePrice }]);
   const removeLine = (index: number) => setLines((prev) => (prev.length === 1 ? prev : prev.filter((_, i) => i !== index)));
   const visibleBookings = b;
 
@@ -235,27 +234,14 @@ export default function Page() {
           {!selectedPackageId && <p className="errorText">Pilih paket utama dulu agar harga peserta bisa dihitung otomatis.</p>}
           {lines.map((line, index) => (
             <div className="passengerRow" key={index}>
-              <label>
-                Level layanan
-                <select
-                  value={line.serviceLevel}
-                  onChange={(e) => {
-                    const serviceLevel = e.target.value as PassengerLine['serviceLevel'];
-                    const unitPrice = Math.round(basePrice * priceFactor(serviceLevel, line.passengerType));
-                    updateLine(index, { serviceLevel, unitPrice });
-                  }}
-                >
-                  <option value="REGULAR">REGULAR</option>
-                  <option value="PREMIUM">PREMIUM</option>
-                </select>
-              </label>
+              <label>Level layanan<input value={line.serviceLevel} readOnly aria-label="Level layanan mengikuti paket" /></label>
               <label>
                 Jenis peserta
                 <select
                   value={line.passengerType}
                   onChange={(e) => {
                     const passengerType = e.target.value as PassengerLine['passengerType'];
-                    const unitPrice = Math.round(basePrice * priceFactor(line.serviceLevel, passengerType));
+                    const unitPrice = packagePrice(selectedPackage, passengerType);
                     updateLine(index, { passengerType, unitPrice });
                   }}
                 >

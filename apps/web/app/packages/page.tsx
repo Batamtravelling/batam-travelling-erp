@@ -15,6 +15,7 @@ interface PackageRow {
   status: string;
   departures?: {id:string;startsAt:string;maxPax:number;status:string;surchargeLabel?:string;surchargeAmount:number;surchargeBasis:string}[];
 }
+type PageResult<T>={items:T[];meta:{page:number;pageSize:number;total:number;totalPages:number}};
 
 const emptyForm = {
   packageCode: '',
@@ -35,7 +36,7 @@ export default function PackagesPage() {
   const fetchPackages = async () => {
     setLoading(true);
     try {
-      setPackages(await apiGet<PackageRow[]>('/packages'));
+      setPackages((await apiGet<PageResult<PackageRow>>('/packages?page=1&pageSize=100')).items);
     } catch (error) {
       setMessage((error as Error).message);
     } finally {

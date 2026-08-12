@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { QuotationsClient } from '../../../components/data-shell';
+import { QuotationWorkspace } from '../../../components/quotation-workspace';
 
 export default function QuotationsPage() {
   return (
@@ -12,7 +12,7 @@ export default function QuotationsPage() {
           </div>
           <Link href="/dashboard" style={{ color: '#0f766e', textDecoration: 'none', fontWeight: 600 }}>Kembali</Link>
         </div>
-        <QuotationsClient />
+        <QuotationWorkspace />
       </div>
     </main>
   );

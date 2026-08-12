@@ -86,7 +86,7 @@ class ProductOrderDto {
   @IsOptional() @IsString() notes?: string;
 }
 @Injectable()
-class PublicService {
+export class PublicService {
   constructor(
     @Inject(PrismaService) private readonly p: PrismaService,
     @Inject(BookingCodeService) private readonly codes: BookingCodeService,
@@ -418,6 +418,7 @@ class PublicService {
   ) {
     const phone = normalizePhone(d.phone);
     const email = normalizeEmail(d.email);
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`${t.id}:customer:${phone}`}, 0))`;
     const c = await tx.customer.findFirst({
       where: {
         tenantId: t.id,
@@ -570,6 +571,8 @@ class PublicService {
           invoiceNumber: inv.invoiceNumber,
           totalAmount: b.totalAmount,
         };
+      await tx.auditLog.create({ data: { tenantId: t.id, actorId: null, action: 'booking.created.public', resourceType: 'Booking', resourceId: b.id, metadata: { source: 'WEBSITE', leadId: lead.id, invoiceId: inv.id, packageId: pack.id, departureId: departure?.id ?? null, totalAmount: total, pax: d.pax } } });
+      await tx.outboxEvent.create({ data: { tenantId: t.id, eventType: 'public_order.created', aggregateType: 'booking', aggregateId: b.id, payload: { event_id: crypto.randomUUID(), event_type: 'public_order.created', tenant_id: t.id, actor_id: null, aggregate_type: 'booking', aggregate_id: b.id, schema_version: 1, lead_id: lead.id, invoice_id: inv.id } } });
       return this.remember(tx, t.id, "package-order", key, d, response);
     });
   }
@@ -676,6 +679,8 @@ class PublicService {
           invoiceNumber: inv.invoiceNumber,
           totalAmount: b.totalAmount,
         };
+      await tx.auditLog.create({ data: { tenantId: t.id, actorId: null, action: 'booking.created.public', resourceType: 'Booking', resourceId: b.id, metadata: { source: 'WEBSITE_PRODUCT', leadId: lead.id, invoiceId: inv.id, totalAmount: total, pax } } });
+      await tx.outboxEvent.create({ data: { tenantId: t.id, eventType: 'public_order.created', aggregateType: 'booking', aggregateId: b.id, payload: { event_id: crypto.randomUUID(), event_type: 'public_order.created', tenant_id: t.id, actor_id: null, aggregate_type: 'booking', aggregate_id: b.id, schema_version: 1, lead_id: lead.id, invoice_id: inv.id } } });
       return this.remember(tx, t.id, "product-order", key, d, response);
     });
   }
@@ -747,12 +752,25 @@ class PublicService {
         "Kode booking atau nomor telepon tidak cocok",
       );
     return {
-      ...b,
+      id: b.id,
+      bookingCode: b.bookingCode,
+      status: b.status,
+      packageName: b.packageName,
+      travelDate: b.travelDate,
+      returnDate: b.returnDate,
+      pax: b.pax,
+      totalAmount: b.totalAmount,
+      paidAmount: b.paidAmount,
       customer: {
-        ...b.customer,
+        fullName: b.customer.fullName,
         phone: maskPhone(b.customer.phone),
         email: maskEmail(b.customer.email),
       },
+      package: b.package,
+      items: b.items.map((item) => ({ id: item.id, name: item.name, category: item.category, quantity: item.quantity, unit: item.unit, unitPrice: item.unitPrice, totalPrice: item.totalPrice, serviceDate: item.serviceDate })),
+      departure: b.departure,
+      invoice: b.invoice ? { invoiceNumber: b.invoice.invoiceNumber, status: b.invoice.status, issuedAt: b.invoice.issuedAt, dueDate: b.invoice.dueDate, totalAmount: b.invoice.totalAmount, paidAmount: b.invoice.paidAmount, payments: b.invoice.payments } : null,
+      trip: b.trip ? { id: b.trip.id, tripCode: b.trip.tripCode, title: b.trip.title, status: b.trip.status, startsAt: b.trip.startsAt, endsAt: b.trip.endsAt, meetingPoint: b.trip.meetingPoint, vehicle: b.trip.vehicle, itinerary: b.trip.itinerary, assignments: b.trip.assignments.map((assignment)=>({role:assignment.role,status:assignment.status,employee:assignment.employee})) } : null,
     };
   }
 
@@ -771,7 +789,9 @@ class PublicService {
         await tx.publicAccessAttempt.update({ where: { id: existing.id }, data: { attemptCount: { increment: 1 } } });
       }
     });
-    return this.booking(d);
+    const result=await this.booking(d);
+    await this.p.publicAccessAttempt.deleteMany({where:{tenantId:t.id,fingerprint}});
+    return result;
   }
 }
 @Controller("public")

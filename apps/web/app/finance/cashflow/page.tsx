@@ -20,6 +20,7 @@ type Project = { id: string; name: string };
 type Trip = { id: string; title: string };
 type Vendor = { id: string; name: string };
 type D = { entries: Item[]; summary: { incoming: number; outgoing: number; balance: number; operational: number; fixed: number } };
+type PageResult<T> = { items: T[] };
 
 const m = (v: number | string) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(Number(v));
 
@@ -34,14 +35,14 @@ export default function Page() {
   const load = async () => {
     const [cash, projectRows, tripRows, vendorRows] = await Promise.all([
       apiGet<D>(`/cashflow?year=${year}&month=${month}`),
-      apiGet<Project[]>('/projects'),
-      apiGet<Trip[]>('/open-trips'),
-      apiGet<Vendor[]>('/vendors'),
+      apiGet<PageResult<Project>>('/projects?page=1&pageSize=100'),
+      apiGet<PageResult<Trip>>('/trips?page=1&pageSize=100'),
+      apiGet<PageResult<Vendor>>('/vendors?page=1&pageSize=100'),
     ]);
     setD(cash);
-    setProjects(projectRows);
-    setTrips(tripRows as unknown as Trip[]);
-    setVendors(vendorRows as unknown as Vendor[]);
+    setProjects(projectRows.items);
+    setTrips(tripRows.items);
+    setVendors(vendorRows.items);
   };
 
   useEffect(() => {

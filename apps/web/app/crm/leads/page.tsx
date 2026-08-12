@@ -1,2 +1,3 @@
-import { CrmPage } from '../../../components/crm-page';
-export default function LeadsPage(){return <CrmPage kind="leads"/>}
+import { redirect } from 'next/navigation';
+
+export default function LeadsPage(){redirect('/crm/customers?view=pipeline')}

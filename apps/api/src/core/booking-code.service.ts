@@ -46,4 +46,22 @@ export class BookingCodeService {
     const prefix = 'PAY-';
     return this.nextSequence(tx, tenantId, 'payment', prefix, 6);
   }
+
+  async nextQuotation(tx: Prisma.TransactionClient, tenantId: string) {
+    const prefix = 'QT-';
+    return this.nextSequence(tx, tenantId, 'quotation', prefix, 6);
+  }
+
+  async nextTrip(tx: Prisma.TransactionClient, tenantId: string) {
+    const prefix = 'TRIP-';
+    return this.nextSequence(tx, tenantId, 'trip', prefix, 6);
+  }
+
+  async nextEmployee(tx: Prisma.TransactionClient, tenantId: string) {
+    return this.nextSequence(tx, tenantId, 'employee', 'EMP-', 6);
+  }
+
+  async nextVendor(tx: Prisma.TransactionClient, tenantId: string) {
+    return this.nextSequence(tx, tenantId, 'vendor', 'VND-', 6);
+  }
 }

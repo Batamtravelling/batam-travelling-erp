@@ -37,10 +37,7 @@ type Profile = {
   youtubeUrl?: string;
 };
 
-const blank: Profile = {
-  vision: 'Menjadi partner perjalanan terpercaya dari Batam.',
-  mission: 'Memberikan perjalanan yang aman, transparan, dan berkesan.',
-};
+const blank: Profile = { vision: '', mission: '' };
 
 async function upload(file: File) {
   const form = new FormData();
@@ -68,7 +65,7 @@ export default function SettingsPage() {
         next[`${key}Url` as keyof Profile] = media.url;
       }
     }
-    for (const key of ['homepageSections', 'heroTitle', 'heroSubtitle', 'heroImageUrl', 'heroBadge', 'heroCtaPrimary', 'heroCtaSecondary', 'featureHeadline', 'featureText', 'howToBookTitle', 'howToBookText', 'aboutTitle', 'aboutText', 'whatsappNumber', 'whatsappNumberSecondary', 'contactEmail', 'contactAddress', 'contactHours', 'instagramUrl', 'facebookUrl', 'tiktokUrl', 'youtubeUrl'] as const) {
+    for (const key of ['vision', 'mission', 'homepageSections', 'heroTitle', 'heroSubtitle', 'heroImageUrl', 'heroBadge', 'heroCtaPrimary', 'heroCtaSecondary', 'featureHeadline', 'featureText', 'howToBookTitle', 'howToBookText', 'aboutTitle', 'aboutText', 'whatsappNumber', 'whatsappNumberSecondary', 'contactEmail', 'contactAddress', 'contactHours', 'instagramUrl', 'facebookUrl', 'tiktokUrl', 'youtubeUrl'] as const) {
       next[key] = String(f.get(key) || '');
     }
     await apiPatch('/asset-knowledge/profile', next);
@@ -87,9 +84,11 @@ export default function SettingsPage() {
         <section>
           <h2>Konten halaman Index</h2>
           <div className="contactSettings">
+            <label className="full">Visi perusahaan<textarea name="vision" defaultValue={p.vision} required /></label>
+            <label className="full">Misi perusahaan<textarea name="mission" defaultValue={p.mission} required /></label>
             <label className="full">
               Section aktif
-              <input name="homepageSections" defaultValue={p.homepageSections} placeholder="hero,highlights,tickets,trips,demo,how-to-book,about" />
+              <input name="homepageSections" defaultValue={p.homepageSections} placeholder="hero,highlights,tickets,trips,how-to-book,about" />
               <small>Pisahkan dengan koma. Kosongkan untuk memakai default.</small>
             </label>
             <label className="full">

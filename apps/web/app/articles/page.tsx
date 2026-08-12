@@ -1,20 +1,11 @@
 import Link from 'next/link';
+import { publicApiErrorMessage, publicApiGet } from '../../lib/public-api';
 
 type A = { slug: string; title: string; excerpt?: string; coverImage?: string; publishedAt: string; author?: { name?: string }; packages: { package: { name: string } }[] };
 
-async function loadArticles(): Promise<A[]> {
-  const api = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api/v1';
-  try {
-    const res = await fetch(`${api}/public/articles`, { next: { revalidate: 120 } });
-    if (!res.ok) return [];
-    return (await res.json()) as A[];
-  } catch {
-    return [];
-  }
-}
-
 export default async function Page() {
-  const articles = await loadArticles();
+  const result = await publicApiGet<A[]>('/public/articles');
+  const articles = result.ok ? result.data : [];
 
   return (
     <main className="hub">
@@ -25,7 +16,7 @@ export default async function Page() {
       </section>
 
       <div className="hubGrid">
-        {articles.length ? (
+        {!result.ok ? <article className="hubCard publicError" role="alert"><h2>Artikel belum dapat dimuat</h2><p>{publicApiErrorMessage(result)}</p><Link className="hubBtn blue" href="/articles">Coba lagi</Link></article> : articles.length ? (
           articles.map((a) => (
             <article className="hubCard" key={a.slug}>
               {a.coverImage && <img src={a.coverImage} alt={a.title} />}

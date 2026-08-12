@@ -1,6 +1,16 @@
-import { BookingSource, PackageServiceLevel, PassengerType, PaymentMethod, PaymentStatus } from '@prisma/client';
+import { BookingSource, BookingStatus, PackageServiceLevel, PassengerType, PaymentMethod, PaymentStatus } from '@prisma/client';
 import { Type } from 'class-transformer';
-import { IsArray, IsDateString, IsEnum, IsInt, IsNumber, IsOptional, IsString, IsUUID, Min, ValidateNested } from 'class-validator';
+import { IsArray, IsDateString, IsEnum, IsInt, IsNumber, IsOptional, IsString, IsUUID, Max, MaxLength, Min, MinLength, ValidateNested } from 'class-validator';
+
+export class PageQueryDto {
+  @IsOptional() @Type(() => Number) @IsInt() @Min(1) page?: number;
+  @IsOptional() @Type(() => Number) @IsInt() @Min(1) @Max(100) pageSize?: number;
+  @IsOptional() @IsString() @MaxLength(180) search?: string;
+}
+export class BookingQueryDto extends PageQueryDto { @IsOptional() @IsEnum(BookingStatus) status?: BookingStatus; }
+export class PaymentQueryDto extends PageQueryDto { @IsOptional() @IsEnum(PaymentStatus) status?: PaymentStatus; }
+export enum InvoiceSortDto { LATEST='LATEST', OLDEST='OLDEST', VALUE_DESC='VALUE_DESC' }
+export class InvoiceQueryDto extends PageQueryDto { @IsOptional() @IsEnum(InvoiceSortDto) sort?: InvoiceSortDto; @IsOptional() @IsDateString() from?:string; @IsOptional() @IsDateString() to?:string; }
 
 export class BookingPassengerDto {
   @IsOptional() @IsUUID() packageId?: string;
@@ -28,7 +38,7 @@ export class CreateBookingDto {
 }
 
 export class ConfirmBookingDto {
-  @IsOptional() @IsString() reason?: string;
+  @IsString() @MinLength(3) @MaxLength(1000) reason!: string;
 }
 
 export class CreatePaymentDto {

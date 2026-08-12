@@ -17,17 +17,21 @@ export type DepartureInput = { startsAt:string; endsAt?:string; bookingCloseAt?:
 export class PackagesService {
   constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
-  list(identity: RequestIdentity) {
-    return this.prisma.travelPackage.findMany({
-      where: { tenantId: identity.tenantId, archivedAt: null },
+  async list(identity: RequestIdentity,query:{page?:number;pageSize?:number;search?:string}={}) {
+    const page=Math.max(1,query.page??1),pageSize=Math.max(1,Math.min(100,query.pageSize??20)),search=query.search?.trim();
+    const where={tenantId:identity.tenantId,archivedAt:null,...(search?{OR:[{packageCode:{contains:search,mode:'insensitive' as const}},{name:{contains:search,mode:'insensitive' as const}},{destination:{contains:search,mode:'insensitive' as const}}]}:{})};
+    const [total,items]=await Promise.all([this.prisma.travelPackage.count({where}),this.prisma.travelPackage.findMany({
+      where,
       select: {
         id: true, packageCode: true, name: true, destination: true, durationDays: true,
-        adultPrice: true, serviceLevel: true, status: true, minPax: true, maxPax: true,
+        adultPrice: true, childPrice: true, infantPrice: true, serviceLevel: true, status: true, approvalStatus: true, minPax: true, maxPax: true,
         prices: { where: { active: true }, orderBy: { priority: 'desc' }, take: 1, select: { sellingPrice: true } },
         departures: { where: { startsAt: { gte: new Date() } }, orderBy: { startsAt: 'asc' }, take: 12, select: { id:true,startsAt:true,endsAt:true,bookingCloseAt:true,minPax:true,maxPax:true,status:true,meetingPoint:true,surchargeLabel:true,surchargeAmount:true,surchargeBasis:true } },
       },
       orderBy: [{ status: 'asc' }, { name: 'asc' }],
-    });
+      skip:(page-1)*pageSize,take:pageSize,
+    })]);
+    return{items,meta:{page,pageSize,total,totalPages:Math.max(1,Math.ceil(total/pageSize))}};
   }
 
   async create(identity: RequestIdentity, input: PackageInput) {
@@ -66,6 +70,7 @@ export class PackagesService {
 
   async update(identity: RequestIdentity, id: string, updates: Partial<PackageInput>) {
     await this.assertOwned(identity, id);
+    if(updates.packageCode&&await this.prisma.travelPackage.findFirst({where:{tenantId:identity.tenantId,packageCode:updates.packageCode,id:{not:id},archivedAt:null},select:{id:true}}))throw new ConflictException('Kode paket sudah digunakan');
     const { sellingPrice, ...packageData } = updates;
     return this.prisma.$transaction(async (tx) => {
       const travelPackage = await tx.travelPackage.update({
@@ -91,7 +96,10 @@ export class PackagesService {
   async createDeparture(identity:RequestIdentity,packageId:string,input:DepartureInput){
     await this.assertOwned(identity,packageId);
     if(input.maxPax<input.minPax)throw new ConflictException('Kapasitas maksimal tidak boleh lebih kecil dari minimal pax');
-    return this.prisma.$transaction(async tx=>{const departure=await tx.packageDeparture.create({data:{tenantId:identity.tenantId,packageId,startsAt:new Date(input.startsAt),endsAt:input.endsAt?new Date(input.endsAt):undefined,bookingCloseAt:input.bookingCloseAt?new Date(input.bookingCloseAt):undefined,minPax:input.minPax,maxPax:input.maxPax,meetingPoint:input.meetingPoint,notes:input.notes,status:input.status??'OPEN',surchargeLabel:input.surchargeLabel,surchargeAmount:input.surchargeAmount??0,surchargeBasis:input.surchargeBasis??'PER_PAX'}});await tx.auditLog.create({data:{tenantId:identity.tenantId,actorId:identity.userId,action:'departure.created',resourceType:'PackageDeparture',resourceId:departure.id,requestId:identity.requestId,metadata:{packageId,surchargeAmount:input.surchargeAmount??0,surchargeBasis:input.surchargeBasis??'PER_PAX'}}});return departure});
+    const startsAt=new Date(input.startsAt),endsAt=input.endsAt?new Date(input.endsAt):undefined,bookingCloseAt=input.bookingCloseAt?new Date(input.bookingCloseAt):undefined;
+    if(endsAt&&endsAt<=startsAt)throw new ConflictException('Waktu selesai harus setelah waktu mulai');
+    if(bookingCloseAt&&bookingCloseAt>=startsAt)throw new ConflictException('Penutupan booking harus sebelum keberangkatan');
+    return this.prisma.$transaction(async tx=>{const departure=await tx.packageDeparture.create({data:{tenantId:identity.tenantId,packageId,startsAt,endsAt,bookingCloseAt,minPax:input.minPax,maxPax:input.maxPax,meetingPoint:input.meetingPoint,notes:input.notes,status:input.status??'OPEN',surchargeLabel:input.surchargeLabel,surchargeAmount:input.surchargeAmount??0,surchargeBasis:input.surchargeBasis??'PER_PAX'}});await tx.auditLog.create({data:{tenantId:identity.tenantId,actorId:identity.userId,action:'departure.created',resourceType:'PackageDeparture',resourceId:departure.id,requestId:identity.requestId,metadata:{packageId,surchargeAmount:input.surchargeAmount??0,surchargeBasis:input.surchargeBasis??'PER_PAX'}}});return departure});
   }
 
   private async assertOwned(identity: RequestIdentity, id: string) {
