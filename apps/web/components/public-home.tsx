@@ -15,29 +15,6 @@ type OrderResult = { customerCode: string; leadCode: string; bookingCode: string
 const money = (n?: string) => (n ? new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(Number(n)) : 'Hubungi kami');
 const lines = (v?: string) => v?.split(/\r?\n|\s[·•]\s/).map((x) => x.trim()).filter(Boolean) || [];
 
-const DEMO_PACKS: Pack[] = [{
-  id: 'demo-singapore',
-  packageCode: 'PKG-DEMO-001',
-  name: 'Singapore One Day Trip',
-  destination: 'Singapore',
-  durationDays: 1,
-  description: 'Preview paket untuk melihat tampilan katalog saat data production belum lengkap.',
-  publicDescription: 'City tour, ferry, dokumentasi, dan pengalaman perjalanan singkat.',
-  importantInfo: 'Demo preview: data ini tampil jika API belum mengirim paket aktif.',
-  customizable: true,
-  minPax: 4,
-  maxPax: 25,
-  prices: [{ sellingPrice: '1250000' }],
-  departures: [],
-  gallery: [],
-  components: [],
-  itineraries: [],
-  included: 'Ferry pulang pergi\nGuide\nDokumentasi',
-  excluded: 'Makan siang\nPengeluaran pribadi',
-  kind: 'OPEN_TRIP',
-  visitedDestinations: 'Batam · Singapore',
-}];
-
 export function PublicHome() {
   const [packs, setPacks] = useState<Pack[]>([]);
   const [brand, setBrand] = useState<BrandProfile>({});
@@ -45,15 +22,16 @@ export function PublicHome() {
   const [booking, setBooking] = useState(false);
   const [result, setResult] = useState<OrderResult>();
   const [error, setError] = useState('');
+  const [loadError, setLoadError] = useState('');
 
   useEffect(() => {
-    apiGet<Pack[]>('/public/packages').then(setPacks).catch(() => setPacks([]));
+    apiGet<Pack[]>('/public/packages').then((items) => { setPacks(items); setLoadError(''); }).catch(() => { setPacks([]); setLoadError('Paket belum dapat dimuat. Silakan coba kembali beberapa saat lagi.'); });
     apiGet<BrandProfile>('/public/company-profile').then(setBrand).catch(() => undefined);
   }, []);
 
-  const shown = packs.length ? packs.slice(0, 12) : DEMO_PACKS;
+  const shown = packs.slice(0, 12);
   const heroLines = (brand.heroTitle || 'Liburan terbaik\ndimulai dari Batam.').split(/\r?\n/);
-  const activeSections = new Set((brand.homepageSections || 'hero,highlights,tickets,trips,demo,how-to-book,about').split(',').map((x) => x.trim()).filter(Boolean));
+  const activeSections = new Set((brand.homepageSections || 'hero,highlights,tickets,trips,how-to-book,about').split(',').map((x) => x.trim()).filter(Boolean));
   const destinations = useMemo(() => {
     if (!selected) return [];
     const explicit = lines(selected.visitedDestinations);
@@ -115,12 +93,9 @@ export function PublicHome() {
 
       {activeSections.has('trips') && <section className="publicTrips" id="trips">
         <header><div><p>CURATED JOURNEYS</p><h2>Pilih perjalananmu</h2></div><span>Bandingkan destinasi, itinerary, dan harga dengan tampilan yang mudah dibaca.</span></header>
+        {loadError && <p className="orderError" role="alert">{loadError}</p>}
+        {!loadError && shown.length === 0 && <p className="detailEmpty">Belum ada paket aktif yang tersedia.</p>}
         <div>{shown.map((p, i) => <article key={`${p.id}-${i}`}><div className={`tripVisual visual${i % 3 + 1}`} style={p.gallery[0] ? { backgroundImage: `linear-gradient(#001b3f55,#001b3faa),url(${p.gallery[0].imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}><small>{p.destination}</small><b>{p.durationDays}D{p.durationDays > 1 ? `${p.durationDays - 1}N` : ''}</b></div><section><span>{p.departures.length ? 'OPEN TRIP' : p.kind || 'PRIVATE / CUSTOM'}</span><h3>{p.name}</h3><p>{p.publicDescription || p.description}</p><div><b>{money(p.prices[0]?.sellingPrice)}</b><small>{p.minPax}—{p.maxPax || '∞'} peserta</small></div><button disabled={!p.id} onClick={() => open(p)}>{p.id ? 'Lihat detail paket →' : 'Segera tersedia'}</button></section></article>)}</div>
-      </section>}
-
-      {activeSections.has('demo') && <section className="publicTrips" id="demo-preview">
-        <header><div><p>DEMO PREVIEW</p><h2>{brand.featureHeadline || 'Template preview nyata'}</h2></div><span>{brand.featureText || 'Contoh tampilan siap pakai saat data backend belum lengkap.'}</span></header>
-        <div>{DEMO_PACKS.map((p, i) => <article key={p.id}><div className={`tripVisual visual${i + 1}`}><small>{p.destination}</small><b>{p.durationDays}D</b></div><section><span>PREVIEW TEMPLATE</span><h3>{p.name}</h3><p>{p.publicDescription}</p><div><b>{money(p.prices[0]?.sellingPrice)}</b><small>{p.minPax}—{p.maxPax} peserta</small></div><button onClick={() => open(p)}>Buka Preview</button></section></article>)}</div>
       </section>}
 
       {activeSections.has('how-to-book') && <section className="publicServices" id="how-to-book">
