@@ -1,4 +1,4 @@
-type VerifiedPaymentLedgerSource = {
+type VerifiedPaymentLedgerSource<TAmount> = {
   tenantId: string;
   recordedById: string;
   paymentId: string;
@@ -6,12 +6,12 @@ type VerifiedPaymentLedgerSource = {
   invoiceId: string;
   invoiceNumber: string;
   bookingId: string;
-  amount: unknown;
+  amount: TAmount;
   receivedAt: Date;
   reference?: string | null;
 };
 
-export function buildVerifiedPaymentLedgerEntry(source: VerifiedPaymentLedgerSource) {
+export function buildVerifiedPaymentLedgerEntry<TAmount>(source: VerifiedPaymentLedgerSource<TAmount>) {
   return {
     tenantId: source.tenantId,
     recordedById: source.recordedById,
