@@ -4,7 +4,7 @@ import { AuditService } from '../core/audit.service.js';
 import { PrismaService } from '../core/prisma.service.js';
 import { BookingCodeService } from '../core/booking-code.service.js';
 import { RequestIdentity } from '../core/request-context.js';
-import { CreateFollowUpDto, CreateLeadDto, TransitionLeadDto, UpdateFollowUpDto, UpdateLeadDto, VerifyLeadDto } from './dto.js';
+import { CreateFollowUpDto, CreateLeadDto, FollowUpQueryDto, TransitionLeadDto, UpdateFollowUpDto, UpdateLeadDto, VerifyLeadDto } from './dto.js';
 
 export const transitions: Record<LeadStatus, readonly LeadStatus[]> = {
   NEW: ['CONTACTED', 'LOST'], CONTACTED: ['QUALIFIED', 'LOST'], QUALIFIED: ['QUOTATION', 'LOST'],
@@ -69,6 +69,37 @@ export class LeadsService {
     const [total, items] = await Promise.all([
       this.prisma.lead.count({ where }),
       this.prisma.lead.findMany({ where, include: { customer: true, followUps: { orderBy: { dueAt: 'desc' } } }, orderBy: { createdAt: 'desc' }, skip: (page - 1) * pageSize, take: pageSize }),
+    ]);
+    return { items, meta: { page, pageSize, total, totalPages: Math.max(1, Math.ceil(total / pageSize)) } };
+  }
+  async listFollowUps(identity: RequestIdentity, query: FollowUpQueryDto = {}) {
+    const page = Math.max(1, Number(query.page || 1));
+    const pageSize = Math.max(1, Math.min(100, Number(query.pageSize || 12)));
+    const search = String(query.search || '').trim();
+    const where = {
+      tenantId: identity.tenantId,
+      ...(query.status ? { status: query.status } : {}),
+      ...(search ? { OR: [
+        { subject: { contains: search, mode: 'insensitive' as const } },
+        { notes: { contains: search, mode: 'insensitive' as const } },
+        { nextAction: { contains: search, mode: 'insensitive' as const } },
+        { customer: { fullName: { contains: search, mode: 'insensitive' as const } } },
+        { lead: { senderName: { contains: search, mode: 'insensitive' as const } } },
+      ] } : {}),
+    };
+    const [total, items] = await Promise.all([
+      this.prisma.followUp.count({ where }),
+      this.prisma.followUp.findMany({
+        where,
+        include: {
+          customer: { select: { id: true, customerCode: true, fullName: true, phone: true, email: true } },
+          lead: { select: { id: true, leadCode: true, senderName: true, status: true } },
+          assignedUser: { select: { id: true, name: true } },
+        },
+        orderBy: [{ dueAt: 'asc' }, { createdAt: 'desc' }],
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
     ]);
     return { items, meta: { page, pageSize, total, totalPages: Math.max(1, Math.ceil(total / pageSize)) } };
   }
