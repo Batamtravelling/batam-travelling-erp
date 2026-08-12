@@ -461,6 +461,7 @@ model TravelPackage {
   bookingPassengers BookingPassenger[]
   @@unique([tenantId, packageCode])
   @@index([tenantId, status])
+  @@index([tenantId, status, approvalStatus, archivedAt])
   @@map("packages")
 }
 
@@ -1184,6 +1185,7 @@ model Booking {
   passengers      BookingPassenger[]
   @@unique([tenantId,bookingCode])
   @@index([tenantId,status,travelDate])
+  @@index([tenantId,departureId,status])
   @@map("bookings")
 }
 
