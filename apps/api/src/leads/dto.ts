@@ -1,7 +1,7 @@
 import { FollowUpStatus, LeadPriority, LeadStatus } from '@prisma/client';
 import { PartialType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsDateString, IsEmail, IsEnum, IsInt, IsOptional, IsString, IsUUID, Min } from 'class-validator';
+import { IsDateString, IsEmail, IsEnum, IsInt, IsOptional, IsString, IsUUID, Max, MaxLength, Min } from 'class-validator';
 
 export class CreateLeadDto {
   @IsOptional() @IsUUID() customerId?: string;
@@ -52,4 +52,12 @@ export class UpdateFollowUpDto {
   @IsOptional() @IsString() result?: string;
   @IsOptional() @IsString() nextAction?: string;
   @IsOptional() @IsDateString() nextFollowUpAt?: string;
+}
+
+
+export class FollowUpQueryDto {
+  @IsOptional() @Type(() => Number) @IsInt() @Min(1) page?: number;
+  @IsOptional() @Type(() => Number) @IsInt() @Min(1) @Max(100) pageSize?: number;
+  @IsOptional() @IsString() @MaxLength(180) search?: string;
+  @IsOptional() @IsEnum(FollowUpStatus) status?: FollowUpStatus;
 }

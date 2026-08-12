@@ -4,7 +4,7 @@ import { AuditService } from '../core/audit.service.js';
 import { PrismaService } from '../core/prisma.service.js';
 import { BookingCodeService } from '../core/booking-code.service.js';
 import { RequestIdentity } from '../core/request-context.js';
-import { CreateFollowUpDto, CreateLeadDto, TransitionLeadDto, UpdateFollowUpDto, UpdateLeadDto, VerifyLeadDto } from './dto.js';
+import { CreateFollowUpDto, CreateLeadDto, FollowUpQueryDto, TransitionLeadDto, UpdateFollowUpDto, UpdateLeadDto, VerifyLeadDto } from './dto.js';
 
 export const transitions: Record<LeadStatus, readonly LeadStatus[]> = {
   NEW: ['CONTACTED', 'LOST'], CONTACTED: ['QUALIFIED', 'LOST'], QUALIFIED: ['QUOTATION', 'LOST'],
@@ -28,8 +28,16 @@ export function validateLeadTransition(from: LeadStatus, to: LeadStatus, reason?
 @Injectable()
 export class LeadsService {
   constructor(@Inject(PrismaService) private readonly prisma: PrismaService, @Inject(AuditService) private readonly audit: AuditService, @Inject(BookingCodeService) private readonly codes: BookingCodeService) {}
+  private async validateReferences(identity: RequestIdentity, input: { customerId?: string; assignedUserId?: string }) {
+    if (input.customerId && !await this.prisma.customer.findFirst({ where: { id: input.customerId, tenantId: identity.tenantId, archivedAt: null }, select: { id: true } })) {
+      throw new NotFoundException('Customer tidak ditemukan pada perusahaan ini');
+    }
+    if (input.assignedUserId && !await this.prisma.user.findFirst({ where: { id: input.assignedUserId, tenantId: identity.tenantId, active: true }, select: { id: true } })) {
+      throw new BadRequestException('Petugas lead tidak valid atau tidak aktif');
+    }
+  }
   async create(identity: RequestIdentity, dto: CreateLeadDto) {
-    if (dto.customerId && !await this.prisma.customer.findFirst({ where: { id: dto.customerId, tenantId: identity.tenantId, archivedAt: null } })) throw new NotFoundException('Customer not found');
+    await this.validateReferences(identity, dto);
     if (!dto.customerId && !dto.phone && !dto.email) throw new BadRequestException('Pesan masuk memerlukan nomor telepon atau email');
     const lead = await this.prisma.$transaction(async (tx) => {
       const leadCode = await this.codes.nextLead(tx, identity.tenantId);
@@ -64,8 +72,39 @@ export class LeadsService {
     ]);
     return { items, meta: { page, pageSize, total, totalPages: Math.max(1, Math.ceil(total / pageSize)) } };
   }
+  async listFollowUps(identity: RequestIdentity, query: FollowUpQueryDto = {}) {
+    const page = Math.max(1, Number(query.page || 1));
+    const pageSize = Math.max(1, Math.min(100, Number(query.pageSize || 12)));
+    const search = String(query.search || '').trim();
+    const where = {
+      tenantId: identity.tenantId,
+      ...(query.status ? { status: query.status } : {}),
+      ...(search ? { OR: [
+        { subject: { contains: search, mode: 'insensitive' as const } },
+        { notes: { contains: search, mode: 'insensitive' as const } },
+        { nextAction: { contains: search, mode: 'insensitive' as const } },
+        { customer: { fullName: { contains: search, mode: 'insensitive' as const } } },
+        { lead: { senderName: { contains: search, mode: 'insensitive' as const } } },
+      ] } : {}),
+    };
+    const [total, items] = await Promise.all([
+      this.prisma.followUp.count({ where }),
+      this.prisma.followUp.findMany({
+        where,
+        include: {
+          customer: { select: { id: true, customerCode: true, fullName: true, phone: true, email: true } },
+          lead: { select: { id: true, leadCode: true, senderName: true, status: true } },
+          assignedUser: { select: { id: true, name: true } },
+        },
+        orderBy: [{ dueAt: 'asc' }, { createdAt: 'desc' }],
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+    ]);
+    return { items, meta: { page, pageSize, total, totalPages: Math.max(1, Math.ceil(total / pageSize)) } };
+  }
   async find(identity: RequestIdentity, id: string) { const lead = await this.prisma.lead.findFirst({ where: { id, tenantId: identity.tenantId }, include: { customer: true,followUps:{orderBy:{dueAt:'desc'}} } }); if (!lead) throw new NotFoundException('Lead not found'); return lead; }
-  async update(identity: RequestIdentity, id: string, dto: UpdateLeadDto) { await this.find(identity, id); const lead = await this.prisma.lead.update({ where: { id }, data: { ...dto, travelDate: dto.travelDate ? new Date(dto.travelDate) : undefined, returnDate: dto.returnDate ? new Date(dto.returnDate) : undefined,nextFollowUpAt:dto.nextFollowUpAt?new Date(dto.nextFollowUpAt):undefined } }); await this.audit.record(identity, 'lead.updated', 'lead', id); return lead; }
+  async update(identity: RequestIdentity, id: string, dto: UpdateLeadDto) { await this.find(identity, id); await this.validateReferences(identity, dto); const lead = await this.prisma.lead.update({ where: { id }, data: { ...dto, travelDate: dto.travelDate ? new Date(dto.travelDate) : undefined, returnDate: dto.returnDate ? new Date(dto.returnDate) : undefined,nextFollowUpAt:dto.nextFollowUpAt?new Date(dto.nextFollowUpAt):undefined } }); await this.audit.record(identity, 'lead.updated', 'lead', id); return lead; }
   async verify(identity:RequestIdentity,id:string,dto:VerifyLeadDto){const lead=await this.find(identity,id);if(lead.customerId&&lead.verifiedAt)return lead;const phone=dto.phone??lead.phone,email=dto.email??lead.email,name=dto.fullName??lead.senderName;if(!name||(!phone&&!email))throw new BadRequestException('Nama dan kontak diperlukan untuk verifikasi');let customer=await this.prisma.customer.findFirst({where:{tenantId:identity.tenantId,archivedAt:null,OR:[phone?{phone}:undefined,email?{email}:undefined].filter(Boolean) as any}});if(!customer){customer=await this.prisma.$transaction(async tx=>{const customerCode=await this.codes.nextCustomer(tx,identity.tenantId);return tx.customer.create({data:{tenantId:identity.tenantId,customerCode,fullName:name,phone,email,leadSource:lead.source,notes:dto.notes??`Dibuat dari ${lead.leadCode}`}})})}const updated=await this.prisma.lead.update({where:{id},data:{customerId:customer.id,verifiedAt:new Date()}});await this.audit.record(identity,'lead.verified','lead',id,{customerId:customer.id});return updated}
   async addFollowUp(identity:RequestIdentity,id:string,dto:CreateFollowUpDto){const lead=await this.find(identity,id);if(!lead.customerId)throw new BadRequestException('Lead harus diverifikasi sebelum membuat follow-up');const item=await this.prisma.followUp.create({data:{tenantId:identity.tenantId,customerId:lead.customerId,leadId:id,assignedUserId:identity.userId,dueAt:new Date(dto.dueAt),channel:dto.channel,subject:dto.subject,notes:dto.notes,nextAction:dto.nextAction,nextFollowUpAt:dto.nextFollowUpAt?new Date(dto.nextFollowUpAt):undefined}});await this.prisma.lead.update({where:{id},data:{nextFollowUpAt:item.nextFollowUpAt??item.dueAt}});return item}
   async updateFollowUp(identity:RequestIdentity,id:string,dto:UpdateFollowUpDto){const item=await this.prisma.followUp.findFirst({where:{id,tenantId:identity.tenantId}});if(!item)throw new NotFoundException('Follow-up tidak ditemukan');return this.prisma.followUp.update({where:{id},data:{status:dto.status,result:dto.result,nextAction:dto.nextAction,nextFollowUpAt:dto.nextFollowUpAt?new Date(dto.nextFollowUpAt):undefined,completedAt:dto.status==='COMPLETED'?new Date():undefined}})}
