@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { apiGet, apiPost } from '../lib/api';
 import { WebsiteHighlights } from './website-highlights';
 type BrandProfile = { homepageSections?: string; heroTitle?: string; heroSubtitle?: string; heroImageUrl?: string; heroBadge?: string; heroCtaPrimary?: string; heroCtaSecondary?: string; featureHeadline?: string; featureText?: string; howToBookTitle?: string; howToBookText?: string; aboutTitle?: string; aboutText?: string; whatsappNumber?: string; whatsappNumberSecondary?: string; instagramUrl?: string; facebookUrl?: string; tiktokUrl?: string; youtubeUrl?: string };
@@ -23,6 +23,7 @@ export function PublicHome() {
   const [result, setResult] = useState<OrderResult>();
   const [error, setError] = useState('');
   const [loadError, setLoadError] = useState('');
+  const orderKey = useRef<string | undefined>(undefined);
 
   useEffect(() => {
     apiGet<Pack[]>('/public/packages').then((items) => { setPacks(items); setLoadError(''); }).catch(() => { setPacks([]); setLoadError('Paket belum dapat dimuat. Silakan coba kembali beberapa saat lagi.'); });
@@ -45,7 +46,7 @@ export function PublicHome() {
     const f = new FormData(e.currentTarget);
     const addons = Array.from(e.currentTarget.querySelectorAll<HTMLInputElement>('input[name="addon-product"]:checked')).map((x) => ({ productId: x.value, quantity: Number(f.get(`addon-qty-${x.value}`) || 1) }));
     try {
-      setResult(await apiPost<OrderResult>('/public/orders', {
+      const payload = {
         packageId: selected.id,
         departureId: f.get('departureId') || undefined,
         fullName: f.get('fullName'),
@@ -55,7 +56,9 @@ export function PublicHome() {
         pax: Number(f.get('pax')),
         notes: f.get('notes') || undefined,
         addons,
-      }));
+      };
+      orderKey.current ||= crypto.randomUUID();
+      setResult(await apiPost<OrderResult>('/public/orders', payload, { 'idempotency-key': orderKey.current }));
       setError('');
     } catch (x) {
       setError((x as Error).message);
@@ -63,6 +66,7 @@ export function PublicHome() {
   }
 
   const open = (p: Pack) => {
+    orderKey.current = undefined;
     setSelected(p);
     setBooking(false);
     setResult(undefined);

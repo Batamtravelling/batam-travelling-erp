@@ -6,24 +6,25 @@ describe('BookingCodeService', () => {
   it('uses the travel month and starts at 0001', async () => {
     const tx = {
       $executeRaw: vi.fn().mockResolvedValue(1),
-      booking: { findFirst: vi.fn().mockResolvedValue(null) },
+      businessSequence: { upsert: vi.fn().mockResolvedValue({ value: 1 }) },
     } as any;
 
     const code = await new BookingCodeService().next(tx, 'tenant-a', new Date('2026-12-22'));
 
     expect(code).toBe('BTV-202612-0001');
     expect(tx.$executeRaw).toHaveBeenCalledOnce();
-    expect(tx.booking.findFirst).toHaveBeenCalledWith({
-      where: { tenantId: 'tenant-a', bookingCode: { startsWith: 'BTV-202612-' } },
-      orderBy: { bookingCode: 'desc' },
-      select: { bookingCode: true },
+    expect(tx.businessSequence.upsert).toHaveBeenCalledWith({
+      where: { tenantId_scope: { tenantId: 'tenant-a', scope: 'booking:202612' } },
+      create: { tenantId: 'tenant-a', scope: 'booking:202612', value: 1 },
+      update: { value: { increment: 1 } },
+      select: { value: true },
     });
   });
 
   it('increments the latest code within the same tenant and travel month', async () => {
     const tx = {
       $executeRaw: vi.fn().mockResolvedValue(1),
-      booking: { findFirst: vi.fn().mockResolvedValue({ bookingCode: 'BTV-202612-0041' }) },
+      businessSequence: { upsert: vi.fn().mockResolvedValue({ value: 42 }) },
     } as any;
 
     await expect(new BookingCodeService().next(tx, 'tenant-a', new Date('2026-12-31'))).resolves.toBe('BTV-202612-0042');
@@ -32,7 +33,7 @@ describe('BookingCodeService', () => {
   it('rejects a month whose four-digit sequence is exhausted', async () => {
     const tx = {
       $executeRaw: vi.fn().mockResolvedValue(1),
-      booking: { findFirst: vi.fn().mockResolvedValue({ bookingCode: 'BTV-202612-9999' }) },
+      businessSequence: { upsert: vi.fn().mockResolvedValue({ value: 10000 }) },
     } as any;
 
     await expect(new BookingCodeService().next(tx, 'tenant-a', new Date('2026-12-01'))).rejects.toBeInstanceOf(ConflictException);

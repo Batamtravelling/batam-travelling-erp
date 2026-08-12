@@ -59,6 +59,6 @@ async function request<T>(path: string, init?: RequestInit, retry = true): Promi
 }
 
 export async function apiGet<T>(path: string): Promise<T> { return request<T>(path, { method: 'GET' }); }
-export async function apiPost<T>(path: string, body: unknown): Promise<T> { return request<T>(path, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }); }
+export async function apiPost<T>(path: string, body: unknown, headers?: HeadersInit): Promise<T> { return request<T>(path, { method: 'POST', headers: { 'content-type': 'application/json', ...Object.fromEntries(new Headers(headers).entries()) }, body: JSON.stringify(body) }); }
 export async function apiPatch<T>(path: string, body: unknown): Promise<T> { return request<T>(path, { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }); }
 export async function apiDelete<T>(path: string): Promise<T> { return request<T>(path, { method: 'DELETE' }); }

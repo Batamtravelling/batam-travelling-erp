@@ -142,6 +142,34 @@ CREATE TABLE "tenants" (
 );
 
 -- CreateTable
+CREATE TABLE "business_sequences" (
+    "id" UUID NOT NULL,
+    "tenant_id" UUID NOT NULL,
+    "scope" TEXT NOT NULL,
+    "value" INTEGER NOT NULL DEFAULT 0,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "business_sequences_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "idempotency_records" (
+    "id" UUID NOT NULL,
+    "tenant_id" UUID NOT NULL,
+    "operation" TEXT NOT NULL,
+    "key" TEXT NOT NULL,
+    "request_hash" TEXT NOT NULL,
+    "response" JSONB,
+    "status_code" INTEGER,
+    "expires_at" TIMESTAMP(3) NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "idempotency_records_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "packages" (
     "id" UUID NOT NULL,
     "tenant_id" UUID NOT NULL,
@@ -1089,6 +1117,15 @@ CREATE TABLE "customer_sessions" (
 CREATE UNIQUE INDEX "tenants_slug_key" ON "tenants"("slug");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "business_sequences_tenant_id_scope_key" ON "business_sequences"("tenant_id", "scope");
+
+-- CreateIndex
+CREATE INDEX "idempotency_records_expires_at_idx" ON "idempotency_records"("expires_at");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "idempotency_records_tenant_id_operation_key_key" ON "idempotency_records"("tenant_id", "operation", "key");
+
+-- CreateIndex
 CREATE INDEX "packages_tenant_id_status_idx" ON "packages"("tenant_id", "status");
 
 -- CreateIndex
@@ -1321,6 +1358,12 @@ CREATE UNIQUE INDEX "customer_sessions_token_hash_key" ON "customer_sessions"("t
 
 -- CreateIndex
 CREATE INDEX "customer_sessions_account_id_expires_at_idx" ON "customer_sessions"("account_id", "expires_at");
+
+-- AddForeignKey
+ALTER TABLE "business_sequences" ADD CONSTRAINT "business_sequences_tenant_id_fkey" FOREIGN KEY ("tenant_id") REFERENCES "tenants"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "idempotency_records" ADD CONSTRAINT "idempotency_records_tenant_id_fkey" FOREIGN KEY ("tenant_id") REFERENCES "tenants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "packages" ADD CONSTRAINT "packages_tenant_id_fkey" FOREIGN KEY ("tenant_id") REFERENCES "tenants"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
