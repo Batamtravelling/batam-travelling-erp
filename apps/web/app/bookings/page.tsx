@@ -99,7 +99,7 @@ export default function Page() {
       return;
     }
     const packageName = String(f.get('packageName') || selectedPackage?.name || '');
-    const passengers = lines.filter((x) => x.quantity > 0 && x.unitPrice > 0).map((x) => ({ ...x, packageId }));
+    const passengers = lines.filter((x) => x.quantity > 0).map((x) => ({ ...x, packageId }));
     try {
       await apiPost('/bookings', {
         source: 'MANUAL',
@@ -229,7 +229,7 @@ export default function Page() {
           <input name="travelDate" type="date" required={!selectedDepartureId} disabled={Boolean(selectedDepartureId)} />
         </label>
         {selectedDeparture && <div className={selectedDeparture.occupancyPercent >= 80 ? 'moduleNotice warning' : 'moduleNotice'} style={{ gridColumn: '1 / -1' }}>
-          <strong>{selectedDeparture.occupancyPercent >= 80 ? '⚠ Kursi hampir penuh' : 'Ketersediaan jadwal'}</strong>
+          <strong>{selectedDeparture.occupancyPercent >= 80 ? 'Kursi hampir penuh' : 'Ketersediaan jadwal'}</strong>
           <span>{selectedDeparture.reservedPax}/{selectedDeparture.maxPax} pax terisi · {selectedDeparture.remainingPax} kursi tersisa · surcharge {money(Number(selectedDeparture.surchargeAmount))} {selectedDeparture.surchargeBasis === 'PER_PAX' ? '/ pax' : '/ booking'}</span>
           {summary.pax > selectedDeparture.remainingPax && <b>Jumlah peserta melebihi sisa kursi.</b>}
         </div>}
