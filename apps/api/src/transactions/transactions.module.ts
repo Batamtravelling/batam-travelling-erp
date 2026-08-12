@@ -1,5 +1,5 @@
 import { BadRequestException, Body, Controller, Get, Inject, Injectable, Module, NotFoundException, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
-import { PackageServiceLevel } from '@prisma/client';
+import { PackageServiceLevel, PassengerType } from '@prisma/client';
 import { createHash, randomUUID } from 'node:crypto';
 import { PrismaService } from '../core/prisma.service.js';
 import { BookingCodeService } from '../core/booking-code.service.js';
@@ -7,6 +7,29 @@ import { DepartureCapacityService } from '../core/departure-capacity.service.js'
 import { CurrentIdentity, IdentityGuard, PermissionGuard, Permissions, RequestIdentity } from '../core/request-context.js';
 import { BookingQueryDto, ConfirmBookingDto, CreateBookingDto, CreatePaymentDto, InvoiceQueryDto, PaymentQueryDto, VerifyPaymentDto } from './dto.js';
 import { calculateDepartureSurcharge } from '../core/surcharge.js';
+
+export type CanonicalPassengerInput = {
+  packageId?: string;
+  serviceLevel: PackageServiceLevel;
+  passengerType: PassengerType;
+  quantity: number;
+  unitPrice: number;
+  notes?: string;
+};
+
+export function canonicalizePackagePassengers(
+  passengers: CanonicalPassengerInput[],
+  packageId: string,
+  serviceLevel: PackageServiceLevel,
+  priceFor: (type: PassengerType) => number,
+): CanonicalPassengerInput[] {
+  return passengers.map((passenger) => ({
+    ...passenger,
+    packageId,
+    serviceLevel,
+    unitPrice: priceFor(passenger.passengerType),
+  }));
+}
 @Injectable() class TransactionsService {
   constructor(@Inject(PrismaService) private readonly prisma:PrismaService,@Inject(BookingCodeService) private readonly codes:BookingCodeService,@Inject(DepartureCapacityService) private readonly capacity:DepartureCapacityService){}
   async listBookings(i:RequestIdentity, query: { page?: number; pageSize?: number; search?: string; status?: string } = {}) {
@@ -45,14 +68,14 @@ import { calculateDepartureSurcharge } from '../core/surcharge.js';
     return { items, meta: { page, pageSize, total, totalPages: Math.max(1, Math.ceil(total / pageSize)) } };
   }
   async createBooking(i:RequestIdentity,d:CreateBookingDto){
-    const customer=await this.prisma.customer.findFirst({where:{id:d.customerId,tenantId:i.tenantId}});if(!customer)throw new BadRequestException('Customer tidak valid');
+    const customer=await this.prisma.customer.findFirst({where:{id:d.customerId,tenantId:i.tenantId,archivedAt:null,status:'ACTIVE'}});if(!customer)throw new BadRequestException('Customer tidak valid atau tidak aktif');
     const pkg=d.packageId?await this.prisma.travelPackage.findFirst({where:{id:d.packageId,tenantId:i.tenantId,archivedAt:null,status:'ACTIVE',approvalStatus:'APPROVED'},include:{prices:{where:{active:true},orderBy:{priority:'desc'},take:1}}}):null;if(d.packageId&&!pkg)throw new BadRequestException('Package belum aktif atau belum disetujui');
     if((d.passengers?.length??0)>0&&!d.packageId)throw new BadRequestException('Pilih paket utama sebelum menambahkan peserta');
     if(d.passengers?.some(x=>x.packageId&&x.packageId!==d.packageId))throw new BadRequestException('Booking hanya dapat memakai satu paket trip');
     if(d.passengers?.length&&d.passengers.reduce((sum,x)=>sum+x.quantity,0)!==d.pax)throw new BadRequestException('Jumlah kategori peserta harus sama dengan total pax');
     const fallbackPrice=pkg?Number(pkg.prices[0]?.sellingPrice??0):0;
     const priceFor=(type:'ADULT'|'CHILD'|'INFANT')=>Number(type==='ADULT'?pkg?.adultPrice??fallbackPrice:type==='CHILD'?pkg?.childPrice??pkg?.adultPrice??fallbackPrice:pkg?.infantPrice??pkg?.adultPrice??fallbackPrice);
-    const canonicalPassengers=pkg?(d.passengers?.length?d.passengers.map(x=>({...x,unitPrice:priceFor(x.passengerType)})):[{packageId:d.packageId,serviceLevel:pkg.serviceLevel as PackageServiceLevel,passengerType:'ADULT' as const,quantity:d.pax,unitPrice:priceFor('ADULT'),notes:undefined}]):d.passengers;
+    const canonicalPassengers=pkg?(d.passengers?.length?canonicalizePackagePassengers(d.passengers,d.packageId!,pkg.serviceLevel as PackageServiceLevel,priceFor):[{packageId:d.packageId,serviceLevel:pkg.serviceLevel as PackageServiceLevel,passengerType:'ADULT' as const,quantity:d.pax,unitPrice:priceFor('ADULT'),notes:undefined}]):d.passengers;
     const canonicalBase=pkg?canonicalPassengers!.reduce((sum,x)=>sum+x.unitPrice*x.quantity,0):d.totalAmount;
     if(pkg&&canonicalBase<=0)throw new BadRequestException('Harga paket belum dikonfigurasi');
     const departure=d.departureId?await this.prisma.packageDeparture.findFirst({where:{id:d.departureId,tenantId:i.tenantId},include:{bookings:{where:{status:{notIn:['CANCELLED','REFUNDED']}},select:{pax:true}}}}):null;
@@ -64,12 +87,14 @@ import { calculateDepartureSurcharge } from '../core/surcharge.js';
       const reserved=departure.bookings.reduce((sum,x)=>sum+x.pax,0);if(reserved+d.pax>departure.maxPax)throw new BadRequestException(`Sisa kursi hanya ${Math.max(0,departure.maxPax-reserved)} pax`);
     }
     const surcharge=departure?calculateDepartureSurcharge(Number(departure.surchargeAmount),departure.surchargeBasis,d.pax):0;
+    const bookingDate=departure?.startsAt??new Date(d.travelDate);
+    const returnDate=d.returnDate?new Date(d.returnDate):undefined;
+    if(returnDate&&returnDate<bookingDate)throw new BadRequestException('Tanggal kembali tidak boleh sebelum tanggal perjalanan');
     const canonicalTotal=canonicalBase+surcharge;
     return this.prisma.$transaction(async tx=>{
-      const bookingDate = departure?.startsAt ?? new Date(d.travelDate);
       if(departure)await this.capacity.assertAvailable(tx,i.tenantId,departure.id,d.pax);
       const bookingCode=await this.codes.next(tx,i.tenantId,bookingDate);
-      const booking=await tx.booking.create({data:{tenantId:i.tenantId,bookingCode,customerId:d.customerId,source:d.source,packageId:d.packageId,departureId:d.departureId,packageName:pkg?.name??d.packageName,travelDate:bookingDate,returnDate:d.returnDate?new Date(d.returnDate):undefined,pax:d.pax,totalAmount:canonicalTotal,status:'PENDING_PAYMENT',notes:d.notes}});
+      const booking=await tx.booking.create({data:{tenantId:i.tenantId,bookingCode,customerId:d.customerId,source:d.source,packageId:d.packageId,departureId:d.departureId,packageName:pkg?.name??d.packageName,travelDate:bookingDate,returnDate,pax:d.pax,totalAmount:canonicalTotal,status:'PENDING_PAYMENT',notes:d.notes}});
       if(canonicalPassengers?.length){await tx.bookingPassenger.createMany({data:canonicalPassengers.map(x=>({tenantId:i.tenantId,bookingId:booking.id,packageId:x.packageId??d.packageId,serviceLevel:x.serviceLevel,passengerType:x.passengerType,quantity:x.quantity,unitPrice:x.unitPrice,totalPrice:Number(x.unitPrice)*x.quantity,notes:x.notes}))})}
       const invoiceNumber=await this.codes.nextInvoice(tx,i.tenantId);await tx.invoice.create({data:{tenantId:i.tenantId,invoiceNumber,bookingId:booking.id,customerId:d.customerId,totalAmount:canonicalTotal,dueDate:d.dueDate?new Date(d.dueDate):undefined}});
       await tx.auditLog.create({data:{tenantId:i.tenantId,actorId:i.userId,action:'booking.created',resourceType:'Booking',resourceId:booking.id,requestId:i.requestId,metadata:{source:d.source,packageId:d.packageId,totalAmount:canonicalTotal,baseAmount:canonicalBase,surcharge,pax:d.pax}}});

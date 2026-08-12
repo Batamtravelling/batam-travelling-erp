@@ -1,6 +1,6 @@
 import { BookingSource, BookingStatus, PackageServiceLevel, PassengerType, PaymentMethod, PaymentStatus } from '@prisma/client';
 import { Type } from 'class-transformer';
-import { IsArray, IsDateString, IsEnum, IsInt, IsNumber, IsOptional, IsString, IsUUID, Max, MaxLength, Min, MinLength, ValidateNested } from 'class-validator';
+import { ArrayMaxSize, ArrayMinSize, IsArray, IsDateString, IsEnum, IsInt, IsNumber, IsOptional, IsString, IsUUID, Max, MaxLength, Min, MinLength, ValidateNested } from 'class-validator';
 
 export class PageQueryDto {
   @IsOptional() @Type(() => Number) @IsInt() @Min(1) page?: number;
@@ -16,9 +16,9 @@ export class BookingPassengerDto {
   @IsOptional() @IsUUID() packageId?: string;
   @IsEnum(PackageServiceLevel) serviceLevel!: PackageServiceLevel;
   @IsEnum(PassengerType) passengerType!: PassengerType;
-  @Type(() => Number) @IsInt() @Min(1) quantity!: number;
-  @Type(() => Number) @IsNumber() @Min(0) unitPrice!: number;
-  @IsOptional() @IsString() notes?: string;
+  @Type(() => Number) @IsInt() @Min(1) @Max(100_000) quantity!: number;
+  @Type(() => Number) @IsNumber({ maxDecimalPlaces: 2 }) @Min(0) @Max(1_000_000_000_000) unitPrice!: number;
+  @IsOptional() @IsString() @MaxLength(2000) notes?: string;
 }
 
 export class CreateBookingDto {
@@ -26,14 +26,14 @@ export class CreateBookingDto {
   @IsEnum(BookingSource) source!: BookingSource;
   @IsOptional() @IsUUID() packageId?: string;
   @IsOptional() @IsUUID() departureId?: string;
-  @IsString() packageName!: string;
+  @IsString() @MaxLength(300) packageName!: string;
   @IsDateString() travelDate!: string;
   @IsOptional() @IsDateString() returnDate?: string;
-  @Type(() => Number) @IsInt() @Min(1) pax!: number;
-  @Type(() => Number) @IsNumber() @Min(0) totalAmount!: number;
+  @Type(() => Number) @IsInt() @Min(1) @Max(100_000) pax!: number;
+  @Type(() => Number) @IsNumber({ maxDecimalPlaces: 2 }) @Min(0) @Max(1_000_000_000_000) totalAmount!: number;
   @IsOptional() @IsDateString() dueDate?: string;
-  @IsOptional() @IsString() notes?: string;
-  @IsOptional() @IsArray() @ValidateNested({ each: true }) @Type(() => BookingPassengerDto)
+  @IsOptional() @IsString() @MaxLength(2000) notes?: string;
+  @IsOptional() @IsArray() @ArrayMinSize(1) @ArrayMaxSize(100) @ValidateNested({ each: true }) @Type(() => BookingPassengerDto)
   passengers?: BookingPassengerDto[];
 }
 
@@ -43,10 +43,10 @@ export class ConfirmBookingDto {
 
 export class CreatePaymentDto {
   @IsUUID() invoiceId!: string;
-  @Type(() => Number) @IsNumber() @Min(0.01) amount!: number;
+  @Type(() => Number) @IsNumber({ maxDecimalPlaces: 2 }) @Min(0.01) @Max(1_000_000_000_000) amount!: number;
   @IsEnum(PaymentMethod) method!: PaymentMethod;
-  @IsOptional() @IsString() reference?: string;
-  @IsOptional() @IsString() notes?: string;
+  @IsOptional() @IsString() @MaxLength(300) reference?: string;
+  @IsOptional() @IsString() @MaxLength(2000) notes?: string;
 }
 
 export class VerifyPaymentDto {
