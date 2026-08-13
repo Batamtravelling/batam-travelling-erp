@@ -15,9 +15,10 @@ import { AdminWorkspaceModule } from './admin-workspace.module.js';
 import { HealthController } from './health.controller.js';
 import { HousekeepingService } from './core/housekeeping.service.js';
 import { EmployeeAccessInterceptor } from './core/employee-access.interceptor.js';
+import { CustomerAuthModule } from './customer-auth/customer-auth.module.js';
 
 @Module({
-  imports: [CustomersModule, LeadsModule, SalesModule, PublicModule, TransactionsModule, RefundsModule, ConnectedModulesModule, AdminWorkspaceModule],
+  imports: [CustomersModule, LeadsModule, SalesModule, PublicModule, CustomerAuthModule, TransactionsModule, RefundsModule, ConnectedModulesModule, AdminWorkspaceModule],
   controllers: [PackagesController, DevAuthController, HealthController],
   providers: [
     PrismaService,

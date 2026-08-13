@@ -1,0 +1,1 @@
+import{PublicState}from'../components/public-ui';export default function Loading(){return <main className="publicPage"><PublicState kind="loading" title="Memuat halaman" description="Menyiapkan informasi perjalanan untuk Anda."/></main>}

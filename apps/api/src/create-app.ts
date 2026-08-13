@@ -57,8 +57,8 @@ export async function createApp(): Promise<NestFastifyApplication> {
     throw new Error('CORS_ORIGINS wajib dikonfigurasi untuk production');
   }
   app.enableCors({
-    origin: allowedOrigins.length ? allowedOrigins : [/^http:\/\/localhost:\\d+$/],
-    credentials: false,
+    origin: allowedOrigins.length ? allowedOrigins : [/^http:\/\/localhost:\d+$/],
+    credentials: true,
     methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
   });
   app.setGlobalPrefix('api/v1');

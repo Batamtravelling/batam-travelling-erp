@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { apiGet, apiPost } from "../lib/api";
+import { demoProfile, demoTrips, publicDemoEnabled } from "../lib/public-demo-data";
 import { WebsiteHighlights } from "./website-highlights";
 type BrandProfile = {
   homepageSections?: string;
@@ -115,6 +116,12 @@ export function PublicHome() {
   const orderKey = useRef<string | undefined>(undefined);
 
   useEffect(() => {
+    if (publicDemoEnabled) {
+      setPacks(demoTrips as unknown as Pack[]);
+      setBrand(demoProfile);
+      setLoadError("");
+      return;
+    }
     apiGet<Pack[]>("/public/packages")
       .then((items) => {
         setPacks(items);
@@ -174,6 +181,7 @@ export function PublicHome() {
         email: f.get("email") || undefined,
         travelDate: f.get("travelDate"),
         pax: Number(f.get("pax")),
+        acceptedTerms: f.get("acceptedTerms") === "on",
         notes: f.get("notes") || undefined,
         addons,
       };
@@ -511,7 +519,7 @@ export function PublicHome() {
                   />
                   <textarea name="notes" placeholder="Permintaan khusus" />
                   <label className="bookingTermsCheck">
-                    <input type="checkbox" required />
+                    <input name="acceptedTerms" type="checkbox" required />
                     <span>
                       Saya sudah membaca detail paket dan menyetujui{" "}
                       <Link href="/terms" target="_blank">

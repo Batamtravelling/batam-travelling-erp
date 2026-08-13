@@ -43,7 +43,7 @@ async function request<T>(path: string, init?: RequestInit, retry = true): Promi
     if (userId) headers.set('x-dev-user-id', userId);
   }
 
-  const response = await fetch(`${resolveApiUrl()}${path}`, { ...init, headers, cache: 'no-store' });
+  const response = await fetch(`${resolveApiUrl()}${path}`, { ...init, headers, cache: 'no-store', credentials: 'include' });
   if (response.status === 401 && retry && typeof window !== 'undefined') {
     const token = await refreshAccessToken();
     if (token) return request<T>(path, init, false);

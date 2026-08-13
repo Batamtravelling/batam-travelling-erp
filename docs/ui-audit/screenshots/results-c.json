@@ -1,0 +1,62 @@
+[
+  {
+    "route": "/sales/quotations",
+    "desktopOverflow": false,
+    "mobileOverflow": false,
+    "errors": []
+  },
+  {
+    "route": "/service-products",
+    "desktopOverflow": false,
+    "mobileOverflow": false,
+    "errors": []
+  },
+  {
+    "route": "/settings",
+    "desktopOverflow": false,
+    "mobileOverflow": true,
+    "errors": []
+  },
+  {
+    "route": "/sign-in",
+    "desktopOverflow": false,
+    "mobileOverflow": false,
+    "errors": []
+  },
+  {
+    "route": "/sign-up",
+    "desktopOverflow": false,
+    "mobileOverflow": false,
+    "errors": []
+  },
+  {
+    "route": "/tasks",
+    "desktopOverflow": false,
+    "mobileOverflow": false,
+    "errors": []
+  },
+  {
+    "route": "/terms",
+    "desktopOverflow": false,
+    "mobileOverflow": false,
+    "errors": []
+  },
+  {
+    "route": "/tickets",
+    "desktopOverflow": false,
+    "mobileOverflow": false,
+    "errors": []
+  },
+  {
+    "route": "/transportation",
+    "desktopOverflow": false,
+    "mobileOverflow": false,
+    "errors": []
+  },
+  {
+    "route": "/vendors",
+    "desktopOverflow": false,
+    "mobileOverflow": false,
+    "errors": []
+  }
+]

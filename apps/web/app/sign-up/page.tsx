@@ -1,1 +1,1 @@
-import {redirect} from 'next/navigation';export default function Page(){redirect('/my-trip')}
+import type{Metadata}from'next';import{CustomerAuthPreview}from'../../components/customer-auth-preview';import{publicDemoEnabled}from'../../lib/public-demo-data';export const metadata:Metadata={title:'Daftar Pelanggan'};export default function Page(){return <CustomerAuthPreview mode="sign-up" demo={publicDemoEnabled}/>}
