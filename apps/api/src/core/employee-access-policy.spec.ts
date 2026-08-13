@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest';
 import { BadRequestException } from '@nestjs/common';
 import { assertPrivilegedOperatorRemains, assertSafeEmployeeSelfChange } from './employee-access-policy.js';
 
