@@ -132,7 +132,7 @@ export class RefundsService {
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`refund-request:${id}`}))`;
       const refund = await tx.paymentRefund.findFirst({ where: { id, tenantId: i.tenantId } });
       if (!refund) throw new NotFoundException('Refund request tidak ditemukan');
-      if (!['REQUESTED', 'MANAGER_APPROVED', 'OWNER_APPROVED'].includes(refund.status)) throw new ConflictException('Refund tidak dapat ditolak dari status saat ini');
+      if (refund.status !== 'REQUESTED') throw new ConflictException('Hanya refund berstatus REQUESTED yang dapat ditolak');
       const updated = await tx.paymentRefund.update({ where: { id }, data: { status: 'REJECTED', rejectedById: i.userId, rejectedAt: new Date(), rejectionReason: reason } });
       await tx.auditLog.create({ data: { tenantId: i.tenantId, actorId: i.userId, action: 'refund.rejected', resourceType: 'PaymentRefund', resourceId: id, requestId: i.requestId, metadata: { fromStatus: refund.status, toStatus: updated.status, reason } } });
       return updated;
@@ -179,7 +179,7 @@ export class RefundsService {
       const updated = await tx.paymentRefund.update({ where: { id }, data: { status: 'EXECUTED', processedById: i.userId, refundedAt, executionReference: reference, proofUrl, executionIdempotencyKey: key } });
       const response: RefundExecutionResult = { id: updated.id, refundNumber: updated.refundNumber, paymentId: updated.paymentId, amount: Number(updated.amount), method: updated.method, status: 'EXECUTED', refundedAt: refundedAt.toISOString(), reference, proofUrl, remainingRefundable: lifecycle.remainingAfter, invoice: { id: refund.payment.invoiceId, paidAmount: lifecycle.netPaid, status: lifecycle.invoiceStatus } };
       await tx.auditLog.create({ data: { tenantId: i.tenantId, actorId: i.userId, action: 'refund.executed', resourceType: 'PaymentRefund', resourceId: id, requestId: i.requestId, metadata: { paymentId: refund.paymentId, refundNumber: refund.refundNumber, amount: Number(refund.amount), method: refund.method, requesterId: refund.requesterId, managerApprovedById: refund.managerApprovedById, ownerApprovedById: refund.ownerApprovedById, executorId: i.userId, reference, proofUrl, idempotencyKey: key, netPaid: lifecycle.netPaid } } });
-      await tx.outboxEvent.create({ data: { tenantId: i.tenantId, eventType: 'refund.executed', aggregateType: 'refund', aggregateId: id, payload: { event_id: randomUUID(), event_type: 'refund.executed', tenant_id: i.tenantId, actor_id: i.userId, aggregate_type: 'refund', aggregate_id: id, schema_version: 1, payment_id: refund.paymentId, refund_number: refund.refundNumber, amount: Number(refund.amount) } } });
+      await tx.outboxEvent.create({ data: { tenantId: i.tenantId, eventType: 'refund.executed', aggregateType: 'refund', aggregateId: id, payload: { event_id: randomUUID(), event_type: 'refund.executed', occurred_at: refundedAt.toISOString(), tenant_id: i.tenantId, actor_id: i.userId, aggregate_type: 'refund', aggregate_id: id, schema_version: 1, payment_id: refund.paymentId, refund_number: refund.refundNumber, amount: Number(refund.amount) } } });
       await tx.idempotencyRecord.create({ data: { tenantId: i.tenantId, operation, key, requestHash, response, statusCode: 200, expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) } });
       return response;
     });

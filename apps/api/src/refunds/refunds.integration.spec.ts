@@ -62,11 +62,12 @@ integration('RefundsService governed lifecycle', () => {
     await prisma.$disconnect();
   });
 
-  it('rejects unauthorized request, approval, and execution', async () => {
+  it('rejects unauthorized request, approval, rejection, and execution', async () => {
     const payment = await createPayment();
     const none = identity(ids.tenantA, ids.requesterA);
     await expect(service.request(none, payment.id, { amount: 100, reason: 'No permission' })).rejects.toThrow('Permission denied');
     await expect(service.approveManager(none, randomUUID(), { reason: 'No permission' })).rejects.toThrow('Permission denied');
+    await expect(service.reject(none, randomUUID(), { reason: 'No permission' })).rejects.toThrow('Permission denied');
     await expect(service.execute(none, randomUUID(), { reference: 'REF', proofUrl: 'proof' }, 'unauth-key')).rejects.toThrow('Permission denied');
   });
 
@@ -106,6 +107,15 @@ integration('RefundsService governed lifecycle', () => {
     expect(result.status).toBe('EXECUTED');
   });
 
+  it('requires Manager but not Owner approval at exactly Rp5,000,000', async () => {
+    const payment = await createPayment(5_000_000);
+    const refund = await service.request(requester(), payment.id, { amount: 5_000_000, reason: 'Exact policy threshold' });
+    expect(refund.requiresOwnerApproval).toBe(false);
+    await service.approveManager(manager(), refund.id, { reason: 'Manager approved threshold' });
+    await expect(service.approveOwner(owner(), refund.id, { reason: 'Owner not required' })).rejects.toThrow('tidak memerlukan');
+    expect((await service.execute(processor(), refund.id, { reference: 'THRESHOLD', proofUrl: 'proof://threshold' }, 'exact-threshold-key')).status).toBe('EXECUTED');
+  });
+
   it('requires Manager then Owner for policy exceptions even below threshold', async () => {
     const payment = await createPayment(1_000_000);
     const refund = await service.request(requester(), payment.id, { amount: 100_000, reason: 'Exception', isException: true, exceptionReason: 'Policy override' });
@@ -120,6 +130,7 @@ integration('RefundsService governed lifecycle', () => {
     await expect(service.request(requester(), payment.id, { amount: 100_000, method: 'CASH', reason: 'Alternate method' })).rejects.toThrow('Alasan perubahan metode');
     const refund = await service.request(requester(), payment.id, { amount: 100_000, method: 'CASH', reason: 'Alternate method', methodChangeReason: 'Bank account closed' });
     expect(refund.method).toBe('CASH');
+    await expect(service.execute(processor(), refund.id, { reference: 'EARLY-CASH', proofUrl: 'proof://early-cash' }, 'alternate-before-approval')).rejects.toThrow('persetujuan');
     await service.approveManager(manager(), refund.id, { reason: 'Approve alternate method' });
     const result = await service.execute(processor(), refund.id, { reference: 'CASH-REF', proofUrl: 'proof://cash' }, 'alternate-method-key');
     expect(result.method).toBe('CASH');
@@ -139,6 +150,8 @@ integration('RefundsService governed lifecycle', () => {
     expect(await prisma.financialEntry.count({ where: { tenantId: ids.tenantA, refundId: refund.id } })).toBe(1);
     expect(await prisma.auditLog.count({ where: { tenantId: ids.tenantA, resourceId: refund.id, action: 'refund.executed' } })).toBe(1);
     expect(await prisma.outboxEvent.count({ where: { tenantId: ids.tenantA, aggregateId: refund.id, eventType: 'refund.executed' } })).toBe(1);
+    const event = await prisma.outboxEvent.findFirstOrThrow({ where: { tenantId: ids.tenantA, aggregateId: refund.id, eventType: 'refund.executed' } });
+    expect(event.payload).toMatchObject({ occurred_at: first.refundedAt });
   });
 
   it('serializes two parallel executions into one refund and one OUT ledger', async () => {
@@ -165,10 +178,35 @@ integration('RefundsService governed lifecycle', () => {
     const executed = await service.request(requester(), payment.id, { amount: 100_000, reason: 'Execute immutable' });
     await service.approveManager(manager(), executed.id, { reason: 'Approved' });
     await service.execute(processor(), executed.id, { reference: 'IMMUTABLE', proofUrl: 'proof://immutable' }, 'immutable-execution');
-    await expect(service.reject(manager(), executed.id, { reason: 'Too late' })).rejects.toThrow('tidak dapat ditolak');
+    await expect(service.reject(manager(), executed.id, { reason: 'Too late' })).rejects.toThrow('REQUESTED');
     await expect(service.approveManager(manager(), executed.id, { reason: 'Too late' })).rejects.toThrow('tidak menunggu');
     const rejected = await service.request(requester(), payment.id, { amount: 50_000, reason: 'Reject immutable' });
     await service.reject(manager(), rejected.id, { reason: 'Rejected' });
     await expect(service.execute(processor(), rejected.id, { reference: 'NO', proofUrl: 'proof' }, 'rejected-execution')).rejects.toThrow('persetujuan');
+  });
+
+  it('only allows rejection from REQUESTED and records rejection audit', async () => {
+    const payment = await createPayment(1_000_000);
+    const requested = await service.request(requester(), payment.id, { amount: 100_000, reason: 'Reject requested' });
+    const rejected = await service.reject(manager(), requested.id, { reason: 'Invalid supporting evidence' });
+    expect(rejected.status).toBe('REJECTED');
+    expect(await prisma.financialEntry.count({ where: { tenantId: ids.tenantA, refundId: requested.id } })).toBe(0);
+    expect(await prisma.auditLog.findFirstOrThrow({ where: { tenantId: ids.tenantA, resourceId: requested.id, action: 'refund.rejected' } })).toMatchObject({ actorId: ids.managerA });
+
+    const approved = await service.request(requester(), payment.id, { amount: 100_000, reason: 'Approved cannot reject' });
+    await service.approveManager(manager(), approved.id, { reason: 'Approved' });
+    await expect(service.reject(manager(), approved.id, { reason: 'Illegal late rejection' })).rejects.toThrow('REQUESTED');
+  });
+
+  it('persists invoice and booking net-paid balances after execution', async () => {
+    const payment = await createPayment(1_000_000);
+    const refund = await service.request(requester(), payment.id, { amount: 250_000, reason: 'Balance check' });
+    await service.approveManager(manager(), refund.id, { reason: 'Approved' });
+    await service.execute(processor(), refund.id, { reference: 'BALANCE', proofUrl: 'proof://balance' }, 'balance-check-key');
+    const storedPayment = await prisma.payment.findFirstOrThrow({ where: { id: payment.id, tenantId: ids.tenantA }, include: { invoice: { include: { booking: true } } } });
+    expect(Number(storedPayment.invoice.paidAmount)).toBe(750_000);
+    expect(storedPayment.invoice.status).toBe('PARTIALLY_PAID');
+    expect(Number(storedPayment.invoice.booking.paidAmount)).toBe(750_000);
+    expect(storedPayment.invoice.booking.status).toBe('PARTIALLY_PAID');
   });
 });

@@ -24,7 +24,7 @@ All refund operations are authenticated and tenant-scoped. Authorization uses se
 | `GET` | `/refund-requests/{refundId}` | `refund.view` | Read one refund request |
 | `POST` | `/refund-requests/{refundId}/manager-approval` | `refund.approve.manager` | Record Finance Manager approval |
 | `POST` | `/refund-requests/{refundId}/owner-approval` | `refund.approve.owner` | Record Owner approval after Manager approval |
-| `POST` | `/refund-requests/{refundId}/reject` | `refund.reject` | Reject a non-executed request |
+| `POST` | `/refund-requests/{refundId}/reject` | `refund.reject` | Reject a request while it is still `REQUESTED` |
 | `POST` | `/refund-requests/{refundId}/execute` | `refund.process` | Execute an approved refund and post one ledger `OUT` entry |
 
 Execution requires an `Idempotency-Key` header plus proof and transaction reference. Reusing the same key with the same request returns the original result without duplicate refund, ledger, audit, or outbox records. A different key cannot execute an already executed request.
