@@ -23,6 +23,7 @@ const navItems = [
     { href: '/finance/cashflow', label: 'Arus Kas & Biaya', icon: 'CF' },
     { href: '/reports', label: 'Reports & Backup', icon: '📈' },
     { href: '/content', label: 'Content Studio', icon: 'C' },
+    { href: '/promotion-management', label: 'Promotion Management', icon: 'P' },
     { href: '/media-library', label: 'Media Library', icon: 'M' },
     { href: '/asset-knowledge', label: 'Asset & Knowledge', icon: 'AK' },
     { href: '/archives', label: 'Arsip', icon: 'A' },
@@ -34,7 +35,7 @@ const navGroups = [
     { label: 'Produk & Operasi', paths: ['/packages', '/package-reviews', '/service-products', '/operations/open-trips', '/operations/trips'] },
     { label: 'Tim & Mitra', paths: ['/projects', '/tasks', '/employees', '/vendors'] },
     { label: 'Finance & Insight', paths: ['/finance/invoices', '/finance/cashflow', '/reports'] },
-    { label: 'Konten & Sistem', paths: ['/content', '/media-library', '/asset-knowledge', '/archives', '/settings'] },
+    { label: 'Konten & Sistem', paths: ['/content', '/promotion-management', '/media-library', '/asset-knowledge', '/archives', '/settings'] },
 ];
 export function AppShell({ children }: {
     children: React.ReactNode;
@@ -81,7 +82,7 @@ export function AppShell({ children }: {
     }
     else if (tries > 20)
         clearInterval(timer); }, 150); }).catch(() => undefined); }, [pathname]);
-    const required: Record<string, string> = { '/pos': 'booking.manage', '/employees': 'employee.read', '/projects': 'project.read', '/tasks': 'task.read', '/crm/customers': 'customer.read', '/packages': 'package.read', '/service-products': 'package.read', '/package-reviews': 'package.read', '/asset-knowledge': 'knowledge.read', '/media-library': 'media.read', '/vendors': 'vendor.read', '/finance/cashflow': 'payment.read', '/sales/quotations': 'quotation.view', '/bookings': 'booking.read', '/operations/trips': 'trip.read', '/operations/open-trips': 'trip.read', '/finance/invoices': 'invoice.read', '/reports': 'dashboard.owner', '/archives': 'archive.read', '/content': 'content.read', '/settings': 'settings.read' };
+    const required: Record<string, string> = { '/pos': 'booking.manage', '/employees': 'employee.read', '/projects': 'project.read', '/tasks': 'task.read', '/crm/customers': 'customer.read', '/packages': 'package.read', '/service-products': 'package.read', '/package-reviews': 'package.read', '/asset-knowledge': 'knowledge.read', '/media-library': 'media.read', '/vendors': 'vendor.read', '/finance/cashflow': 'payment.read', '/sales/quotations': 'quotation.view', '/bookings': 'booking.read', '/operations/trips': 'trip.read', '/operations/open-trips': 'trip.read', '/finance/invoices': 'invoice.read', '/reports': 'dashboard.owner', '/archives': 'archive.read', '/content': 'content.read', '/promotion-management': 'content.read', '/settings': 'settings.read' };
     const permissionReady = accessState === 'authenticated';
     const menuItems = permissionReady
         ? navItems.filter(item => !required[item.href] || access.permissions.includes(required[item.href]))

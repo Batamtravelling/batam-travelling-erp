@@ -10,7 +10,7 @@ export function PublicState({kind,title,description,actionHref='/trips',actionLa
 }
 export function TripCard({trip}:{trip:any}){
   const price=trip.prices?.find((x:any)=>x.category==='ADULT')?.sellingPrice??trip.prices?.[0]?.sellingPrice??0;
-  const seats=trip.departures?.[0]?Math.max(0,trip.departures[0].maxPax-trip.departures[0].reservedPax):null;
+  const seats=trip.departures?.[0]?.remainingPax??null;
   return <article className="publicProductCard"><div className="publicProductVisual"><span>{trip.departures?.length?'Open Trip':'Private Trip'}</span><b>{trip.destination}</b><small>{trip.durationDays} hari</small></div><div className="publicProductBody"><h2>{trip.name}</h2><p>{trip.publicDescription||trip.description}</p><div className="publicProductMeta"><span>Mulai <b>{money(price)}</b></span><span>{seats===null?'Tanggal fleksibel':`${seats} kursi tersisa`}</span></div><Link className="publicButton" href={`/trips/${trip.id}`}>Lanjut booking</Link></div></article>;
 }
 export function ServiceCard({item}:{item:any}){return <article className="publicServiceCard"><span>{item.category}</span><h2>{item.name}</h2><p>{item.description}</p><div><b>{money(item.price)}</b><small> / {item.unit}</small></div><Link className="publicButton secondary" href="/contact">Tanyakan ketersediaan</Link></article>}

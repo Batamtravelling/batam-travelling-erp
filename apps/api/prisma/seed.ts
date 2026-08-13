@@ -13,7 +13,7 @@ const permissions = [
   'package.approve',
   'trip.read', 'trip.manage', 'assignment.manage',
   'archive.read', 'archive.manage',
-  'content.read', 'content.manage',
+  'content.read', 'content.manage', 'content.approve',
   'media.read', 'media.manage', 'vendor.read', 'vendor.manage',
   'asset.read', 'asset.manage', 'knowledge.read', 'knowledge.manage',
   'settings.read', 'settings.manage',
