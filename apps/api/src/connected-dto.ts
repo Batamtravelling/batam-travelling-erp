@@ -10,7 +10,8 @@ export class PageQueryDto {
 }
 
 export class CreateTaskDto {
-  @IsUUID() projectId!: string;
+  @IsOptional() @IsUUID() projectId?: string;
+  @IsOptional() @IsUUID() tripId?: string;
   @IsString() @MaxLength(240) title!: string;
   @IsOptional() @IsString() @MaxLength(10000) description?: string;
   @IsOptional() @IsUUID() assigneeId?: string;

@@ -1,11 +1,11 @@
-import { BadRequestException, Body, Controller, Get, Inject, Injectable, Module, NotFoundException, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
-import { PackageServiceLevel, PassengerType } from '@prisma/client';
+import { BadRequestException, Body, Controller, ForbiddenException, Get, Headers, Inject, Injectable, Module, NotFoundException, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { PackageServiceLevel, PassengerType, Prisma } from '@prisma/client';
 import { createHash, randomUUID } from 'node:crypto';
 import { PrismaService } from '../core/prisma.service.js';
 import { BookingCodeService } from '../core/booking-code.service.js';
 import { DepartureCapacityService } from '../core/departure-capacity.service.js';
 import { CurrentIdentity, IdentityGuard, PermissionGuard, Permissions, RequestIdentity } from '../core/request-context.js';
-import { BookingQueryDto, ConfirmBookingDto, CreateBookingDto, CreatePaymentDto, InvoiceQueryDto, PaymentQueryDto, VerifyPaymentDto } from './dto.js';
+import { BookingQueryDto, ConfirmBookingDto, CreateBookingDto, CreatePaymentDto, CreatePosTransactionDto, InvoiceQueryDto, PaymentQueryDto, VerifyPaymentDto } from './dto.js';
 import { calculateDepartureSurcharge } from '../core/surcharge.js';
 import { buildVerifiedPaymentLedgerEntry } from '../core/financial-ledger.js';
 
@@ -30,6 +30,13 @@ export function canonicalizePackagePassengers(
     serviceLevel,
     unitPrice: priceFor(passenger.passengerType),
   }));
+}
+
+export function bookingConfirmationPolicy(totalAmount:number,paidAmount:number,dpPercentage:number,overrideRequested:boolean,permissions:Set<string>){
+  const requiredDp=totalAmount*dpPercentage/100,usesOverride=paidAmount<requiredDp;
+  if(usesOverride&&!overrideRequested)throw new BadRequestException(`Pembayaran terverifikasi belum mencapai DP ${dpPercentage}%`);
+  if(usesOverride&&!permissions.has('booking.confirm.override'))throw new ForbiddenException('Permission booking.confirm.override diperlukan');
+  return{requiredDp,usesOverride};
 }
 @Injectable() class TransactionsService {
   constructor(@Inject(PrismaService) private readonly prisma:PrismaService,@Inject(BookingCodeService) private readonly codes:BookingCodeService,@Inject(DepartureCapacityService) private readonly capacity:DepartureCapacityService){}
@@ -68,8 +75,11 @@ export function canonicalizePackagePassengers(
     ]);
     return { items, meta: { page, pageSize, total, totalPages: Math.max(1, Math.ceil(total / pageSize)) } };
   }
-  async createBooking(i:RequestIdentity,d:CreateBookingDto){
+  async createBooking(i:RequestIdentity,d:CreateBookingDto,outerTx?:Prisma.TransactionClient){
     const customer=await this.prisma.customer.findFirst({where:{id:d.customerId,tenantId:i.tenantId,archivedAt:null,status:'ACTIVE'}});if(!customer)throw new BadRequestException('Customer tidak valid atau tidak aktif');
+    const lead=d.leadId?await this.prisma.lead.findFirst({where:{id:d.leadId,tenantId:i.tenantId},select:{id:true,customerId:true,status:true}}):null;
+    if(d.leadId&&!lead)throw new BadRequestException('Lead tidak valid');
+    if(lead?.customerId&&lead.customerId!==d.customerId)throw new BadRequestException('Lead tidak terkait dengan customer booking');
     const pkg=d.packageId?await this.prisma.travelPackage.findFirst({where:{id:d.packageId,tenantId:i.tenantId,archivedAt:null,status:'ACTIVE',approvalStatus:'APPROVED'},include:{prices:{where:{active:true},orderBy:{priority:'desc'},take:1}}}):null;if(d.packageId&&!pkg)throw new BadRequestException('Package belum aktif atau belum disetujui');
     if((d.passengers?.length??0)>0&&!d.packageId)throw new BadRequestException('Pilih paket utama sebelum menambahkan peserta');
     if(d.passengers?.some(x=>x.packageId&&x.packageId!==d.packageId))throw new BadRequestException('Booking hanya dapat memakai satu paket trip');
@@ -92,17 +102,42 @@ export function canonicalizePackagePassengers(
     const returnDate=d.returnDate?new Date(d.returnDate):undefined;
     if(returnDate&&returnDate<bookingDate)throw new BadRequestException('Tanggal kembali tidak boleh sebelum tanggal perjalanan');
     const canonicalTotal=canonicalBase+surcharge;
-    return this.prisma.$transaction(async tx=>{
+    const create=async (tx:Prisma.TransactionClient)=>{
       if(departure)await this.capacity.assertAvailable(tx,i.tenantId,departure.id,d.pax);
       const bookingCode=await this.codes.next(tx,i.tenantId,bookingDate);
-      const booking=await tx.booking.create({data:{tenantId:i.tenantId,bookingCode,customerId:d.customerId,source:d.source,packageId:d.packageId,departureId:d.departureId,packageName:pkg?.name??d.packageName,travelDate:bookingDate,returnDate,pax:d.pax,totalAmount:canonicalTotal,status:'PENDING_PAYMENT',notes:d.notes}});
+      const booking=await tx.booking.create({data:{tenantId:i.tenantId,bookingCode,customerId:d.customerId,leadId:d.leadId,source:d.source,packageId:d.packageId,departureId:d.departureId,packageName:pkg?.name??d.packageName,travelDate:bookingDate,returnDate,pax:d.pax,totalAmount:canonicalTotal,status:'PENDING_PAYMENT',notes:d.notes}});
+      if(lead){await tx.lead.update({where:{id:lead.id},data:{customerId:d.customerId,status:'WON'}});await tx.auditLog.create({data:{tenantId:i.tenantId,actorId:i.userId,action:'lead.won.booking_created',resourceType:'Lead',resourceId:lead.id,requestId:i.requestId,metadata:{bookingId:booking.id,bookingCode}}})}
       if(canonicalPassengers?.length){await tx.bookingPassenger.createMany({data:canonicalPassengers.map(x=>({tenantId:i.tenantId,bookingId:booking.id,packageId:x.packageId??d.packageId,serviceLevel:x.serviceLevel,passengerType:x.passengerType,quantity:x.quantity,unitPrice:x.unitPrice,totalPrice:Number(x.unitPrice)*x.quantity,notes:x.notes}))})}
       const invoiceNumber=await this.codes.nextInvoice(tx,i.tenantId);await tx.invoice.create({data:{tenantId:i.tenantId,invoiceNumber,bookingId:booking.id,customerId:d.customerId,totalAmount:canonicalTotal,dueDate:d.dueDate?new Date(d.dueDate):undefined}});
-      await tx.auditLog.create({data:{tenantId:i.tenantId,actorId:i.userId,action:'booking.created',resourceType:'Booking',resourceId:booking.id,requestId:i.requestId,metadata:{source:d.source,packageId:d.packageId,totalAmount:canonicalTotal,baseAmount:canonicalBase,surcharge,pax:d.pax}}});
+      await tx.auditLog.create({data:{tenantId:i.tenantId,actorId:i.userId,action:'booking.created',resourceType:'Booking',resourceId:booking.id,requestId:i.requestId,metadata:{source:d.source,packageId:d.packageId,leadId:d.leadId??null,totalAmount:canonicalTotal,baseAmount:canonicalBase,surcharge,pax:d.pax}}});
       if(departure){const reserved=await tx.booking.aggregate({_sum:{pax:true},where:{tenantId:i.tenantId,departureId:departure.id,status:{notIn:['CANCELLED','REFUNDED']}}});if(Number(reserved._sum.pax??0)>=departure.maxPax)await tx.packageDeparture.update({where:{id:departure.id},data:{status:'FULL'}})}
       return tx.booking.findUniqueOrThrow({where:{id:booking.id},include:{customer:true,invoice:true,departure:true}})
+    };
+    return outerTx?create(outerTx):this.prisma.$transaction(create)
+  }
+  async createPosTransaction(i:RequestIdentity,d:CreatePosTransactionDto,key:string){
+    if(!key||key.length<16||key.length>128)throw new BadRequestException('Idempotency-Key wajib diisi (16-128 karakter)');
+    if(d.booking.source!=='POS')throw new BadRequestException('Source transaksi POS wajib POS');
+    const requestHash=createHash('sha256').update(JSON.stringify(d)).digest('hex');
+    return this.prisma.$transaction(async tx=>{
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`pos:${i.tenantId}:${key}`}))`;
+      const replay=await tx.idempotencyRecord.findUnique({where:{tenantId_operation_key:{tenantId:i.tenantId,operation:'pos-transaction',key}}});
+      if(replay&&replay.expiresAt>new Date()){if(replay.requestHash!==requestHash)throw new BadRequestException('Idempotency-Key sudah digunakan untuk payload berbeda');return replay.response as Record<string,unknown>}
+      if(replay)await tx.idempotencyRecord.delete({where:{id:replay.id}});
+      const booking=await this.createBooking(i,d.booking,tx);
+      let payment=null;
+      if(d.payment){
+        if(d.payment.amount>Number(booking.invoice?.totalAmount??0))throw new BadRequestException('Pembayaran melebihi total invoice');
+        const paymentNumber=await this.codes.nextPayment(tx,i.tenantId);
+        payment=await tx.payment.create({data:{tenantId:i.tenantId,paymentNumber,invoiceId:booking.invoice!.id,customerId:d.booking.customerId,amount:d.payment.amount,method:d.payment.method,reference:d.payment.reference,notes:d.payment.notes,receivedById:i.userId}});
+        await tx.auditLog.create({data:{tenantId:i.tenantId,actorId:i.userId,action:'payment.created',resourceType:'Payment',resourceId:payment.id,requestId:i.requestId,metadata:{invoiceId:booking.invoice!.id,amount:d.payment.amount,method:d.payment.method,source:'POS'}}});
+      }
+      const response={booking,payment};
+      await tx.idempotencyRecord.create({data:{tenantId:i.tenantId,operation:'pos-transaction',key,requestHash,response:response as unknown as Prisma.InputJsonValue,expiresAt:new Date(Date.now()+24*60*60*1000)}});
+      return response;
     })
   }
+
   async listInvoices(i:RequestIdentity, query: { page?: number; pageSize?: number; search?: string; sort?: string; from?: string; to?: string } = {}) {
     const page = Math.max(1, Number(query.page || 1));
     const pageSize = Math.max(1, Math.min(100, Number(query.pageSize || 12)));
@@ -126,7 +161,7 @@ export function canonicalizePackagePassengers(
     ]);
     return { items, meta: { page, pageSize, total, totalPages: Math.max(1, Math.ceil(total / pageSize)) } };
   }
-  async confirmBooking(i:RequestIdentity,id:string,d:ConfirmBookingDto){const booking=await this.prisma.booking.findFirst({where:{id,tenantId:i.tenantId},include:{trip:true}});if(!booking)throw new NotFoundException('Booking tidak ditemukan');if(booking.status==='CONFIRMED')return booking;if(booking.trip)throw new BadRequestException('Booking sudah memiliki Trip');if(!['PENDING_PAYMENT','PARTIALLY_PAID'].includes(booking.status))throw new BadRequestException('Booking tidak dapat dikonfirmasi dari status saat ini');return this.prisma.$transaction(async tx=>{const updated=await tx.booking.update({where:{id},data:{status:'CONFIRMED',notes:[booking.notes,`Konfirmasi manual: ${d.reason.trim()}`].filter(Boolean).join('\n')}});await tx.auditLog.create({data:{tenantId:i.tenantId,actorId:i.userId,action:'booking.confirmed.manual',resourceType:'Booking',resourceId:id,requestId:i.requestId,metadata:{fromStatus:booking.status,paidAmount:Number(booking.paidAmount),totalAmount:Number(booking.totalAmount),reason:d.reason.trim()}}});await tx.outboxEvent.create({data:{tenantId:i.tenantId,eventType:'booking.confirmed',aggregateType:'booking',aggregateId:id,payload:{event_id:crypto.randomUUID(),event_type:'booking.confirmed',tenant_id:i.tenantId,actor_id:i.userId,aggregate_type:'booking',aggregate_id:id,schema_version:1}}});return updated})}
+  async confirmBooking(i:RequestIdentity,id:string,d:ConfirmBookingDto){const booking=await this.prisma.booking.findFirst({where:{id,tenantId:i.tenantId},include:{trip:true}});if(!booking)throw new NotFoundException('Booking tidak ditemukan');if(booking.status==='CONFIRMED')return booking;if(booking.trip)throw new BadRequestException('Booking sudah memiliki Trip');if(!['PENDING_PAYMENT','PARTIALLY_PAID'].includes(booking.status))throw new BadRequestException('Booking tidak dapat dikonfirmasi dari status saat ini');const paid=Number(booking.paidAmount),{requiredDp,usesOverride}=bookingConfirmationPolicy(Number(booking.totalAmount),paid,Number(booking.dpPercentage),d.overrideDp??false,i.permissions);return this.prisma.$transaction(async tx=>{const updated=await tx.booking.update({where:{id},data:{status:'CONFIRMED',notes:[booking.notes,`${usesOverride?'Override Owner':'Konfirmasi manual'}: ${d.reason.trim()}`].filter(Boolean).join('\n')}});await tx.auditLog.create({data:{tenantId:i.tenantId,actorId:i.userId,action:usesOverride?'booking.confirmed.override':'booking.confirmed.manual',resourceType:'Booking',resourceId:id,requestId:i.requestId,metadata:{fromStatus:booking.status,paidAmount:paid,totalAmount:Number(booking.totalAmount),requiredDp,dpPercentage:Number(booking.dpPercentage),overrideDp:usesOverride,reason:d.reason.trim()}}});await tx.outboxEvent.create({data:{tenantId:i.tenantId,eventType:'booking.confirmed',aggregateType:'booking',aggregateId:id,payload:{event_id:crypto.randomUUID(),event_type:'booking.confirmed',tenant_id:i.tenantId,actor_id:i.userId,aggregate_type:'booking',aggregate_id:id,schema_version:1,override_dp:usesOverride}}});return updated})}
   async listPayments(i:RequestIdentity, query: { page?: number; pageSize?: number; search?: string; status?: string } = {}) {
     const page = Math.max(1, Number(query.page || 1));
     const pageSize = Math.max(1, Math.min(100, Number(query.pageSize || 12)));
@@ -167,6 +202,7 @@ export function canonicalizePackagePassengers(
   async paymentProofUrl(i:RequestIdentity,paymentId:string,proofId:string){const proof=await (this.prisma as any).paymentProof.findFirst({where:{id:proofId,paymentId,tenantId:i.tenantId},select:{storagePath:true,originalName:true}});if(!proof)throw new NotFoundException('Bukti pembayaran tidak ditemukan');const url=process.env.SUPABASE_URL?.replace(/\/$/,''),secret=process.env.SUPABASE_SECRET_KEY,bucket=process.env.SUPABASE_PRIVATE_BUCKET;if(!url||!secret||!bucket)throw new BadRequestException('Private storage belum dikonfigurasi');const response=await fetch(`${url}/storage/v1/object/sign/${bucket}/${proof.storagePath}`,{method:'POST',headers:{authorization:`Bearer ${secret}`,apikey:secret,'content-type':'application/json'},body:JSON.stringify({expiresIn:300})});if(!response.ok)throw new BadRequestException('Tautan bukti pembayaran gagal dibuat');const body=await response.json() as {signedURL?:string};if(!body.signedURL)throw new BadRequestException('Storage tidak mengembalikan tautan bukti');await this.prisma.auditLog.create({data:{tenantId:i.tenantId,actorId:i.userId,action:'payment.proof_viewed',resourceType:'Payment',resourceId:paymentId,requestId:i.requestId,metadata:{proofId}}});return{url:body.signedURL.startsWith('http')?body.signedURL:`${url}/storage/v1${body.signedURL}`,expiresIn:300,originalName:proof.originalName}}
 }
 @UseGuards(IdentityGuard,PermissionGuard) @Controller('bookings') class BookingsController{constructor(@Inject(TransactionsService)private readonly s:TransactionsService){}@Get()@Permissions('booking.read')list(@CurrentIdentity()i:RequestIdentity,@Query()q:BookingQueryDto){return this.s.listBookings(i,q)}@Post()@Permissions('booking.manage')create(@CurrentIdentity()i:RequestIdentity,@Body()d:CreateBookingDto){return this.s.createBooking(i,d)}@Patch(':id/confirm')@Permissions('booking.manage')confirm(@CurrentIdentity()i:RequestIdentity,@Param('id')id:string,@Body()d:ConfirmBookingDto){return this.s.confirmBooking(i,id,d)}}
+@UseGuards(IdentityGuard,PermissionGuard) @Controller('pos') class PosController{constructor(@Inject(TransactionsService)private readonly s:TransactionsService){}@Post('transactions')@Permissions('booking.manage')create(@CurrentIdentity()i:RequestIdentity,@Body()d:CreatePosTransactionDto,@Headers('idempotency-key')key?:string){return this.s.createPosTransaction(i,d,key??'')}}
 @UseGuards(IdentityGuard,PermissionGuard) @Controller('invoices') class InvoicesController{constructor(@Inject(TransactionsService)private readonly s:TransactionsService){}@Get()@Permissions('invoice.read')list(@CurrentIdentity()i:RequestIdentity,@Query()q:InvoiceQueryDto){return this.s.listInvoices(i,q)}}
 @UseGuards(IdentityGuard,PermissionGuard) @Controller('payments') class PaymentsController{constructor(@Inject(TransactionsService)private readonly s:TransactionsService){}@Get()@Permissions('payment.read')list(@CurrentIdentity()i:RequestIdentity,@Query()q:PaymentQueryDto){return this.s.listPayments(i,q)}@Post()@Permissions('payment.manage')create(@CurrentIdentity()i:RequestIdentity,@Body()d:CreatePaymentDto){return this.s.createPayment(i,d)}@Post(':id/proof')@Permissions('payment.manage')proof(@CurrentIdentity()i:RequestIdentity,@Param('id')id:string,@Req()request:any){return this.s.uploadPaymentProof(i,id,request)}@Get(':id/proofs/:proofId/url')@Permissions('payment.read')proofUrl(@CurrentIdentity()i:RequestIdentity,@Param('id')id:string,@Param('proofId')proofId:string){return this.s.paymentProofUrl(i,id,proofId)}@Patch(':id/verify')@Permissions('payment.verify')verify(@CurrentIdentity()i:RequestIdentity,@Param('id')id:string,@Body()d:VerifyPaymentDto){return this.s.verifyPayment(i,id,d)}}
-@Module({controllers:[BookingsController,InvoicesController,PaymentsController],providers:[TransactionsService,PrismaService,BookingCodeService,DepartureCapacityService,IdentityGuard,PermissionGuard]})export class TransactionsModule{}
+@Module({controllers:[BookingsController,InvoicesController,PaymentsController,PosController],providers:[TransactionsService,PrismaService,BookingCodeService,DepartureCapacityService,IdentityGuard,PermissionGuard]})export class TransactionsModule{}

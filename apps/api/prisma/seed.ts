@@ -6,7 +6,7 @@ const permissions = [
   'customer.create', 'customer.read', 'customer.update', 'audit.read',
   'employee.read', 'employee.manage', 'project.read', 'project.manage',
   'task.read', 'task.create', 'task.update', 'task.manage', 'dashboard.owner',
-  'booking.read', 'booking.manage', 'invoice.read',
+  'booking.read', 'booking.manage', 'booking.confirm.override', 'invoice.read',
   'payment.read', 'payment.manage', 'payment.verify',
   'refund.view', 'refund.request', 'refund.approve.manager', 'refund.approve.owner', 'refund.reject', 'refund.process',
   'package.read', 'package.create', 'package.update',

@@ -1163,7 +1163,8 @@ model Project {
 model Task {
   id           String             @id @default(uuid()) @db.Uuid
   tenantId     String             @map("tenant_id") @db.Uuid
-  projectId    String             @map("project_id") @db.Uuid
+  projectId    String?            @map("project_id") @db.Uuid
+  tripId       String?            @map("trip_id") @db.Uuid
   title        String
   description  String?
   status       TaskStatus         @default(TODO)
@@ -1178,7 +1179,8 @@ model Task {
   createdAt    DateTime           @default(now()) @map("created_at")
   updatedAt    DateTime           @updatedAt @map("updated_at")
   tenant       Tenant             @relation(fields: [tenantId], references: [id], onDelete: Restrict)
-  project      Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project      Project?           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  trip         Trip?              @relation(fields: [tripId], references: [id], onDelete: Cascade)
   assignee     User?              @relation("TaskAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
   milestone    ProjectMilestone?  @relation(fields: [milestoneId], references: [id], onDelete: SetNull)
   departure    PackageDeparture?  @relation(fields: [departureId], references: [id], onDelete: SetNull)
@@ -1187,6 +1189,7 @@ model Task {
   comments     TaskComment[]
 
   @@index([tenantId, status, assigneeId, dueDate])
+  @@index([tenantId, tripId, status])
   @@map("tasks")
 }
 
@@ -1341,6 +1344,7 @@ model Booking {
   packageId        String?                @map("package_id") @db.Uuid
   departureId      String?                @map("departure_id") @db.Uuid
   quotationId      String?                @unique @map("quotation_id") @db.Uuid
+  leadId           String?                @map("lead_id") @db.Uuid
   source           BookingSource          @default(MANUAL)
   status           BookingStatus          @default(DRAFT)
   packageName      String                 @map("package_name")
@@ -1358,6 +1362,7 @@ model Booking {
   package          TravelPackage?         @relation(fields: [packageId], references: [id], onDelete: SetNull)
   departure        PackageDeparture?      @relation(fields: [departureId], references: [id], onDelete: SetNull)
   quotation        Quotation?             @relation(fields: [quotationId], references: [id], onDelete: SetNull)
+  lead             Lead?                  @relation(fields: [leadId], references: [id], onDelete: SetNull)
   invoice          Invoice?
   trip             Trip?
   items            BookingItem[]
@@ -1368,6 +1373,7 @@ model Booking {
   @@unique([tenantId, bookingCode])
   @@index([tenantId, status, travelDate])
   @@index([tenantId, departureId, status])
+  @@index([tenantId, leadId])
   @@map("bookings")
 }
 
@@ -1432,6 +1438,7 @@ model Trip {
   tenant           Tenant           @relation(fields: [tenantId], references: [id], onDelete: Restrict)
   booking          Booking          @relation(fields: [bookingId], references: [id], onDelete: Restrict)
   assignments      TripAssignment[]
+  tasks            Task[]
   financialEntries FinancialEntry[]
 
   @@unique([tenantId, tripCode])
@@ -1568,7 +1575,7 @@ model TenantRefundPolicy {
   tenantId             String   @unique @map("tenant_id") @db.Uuid
   managerApprovalLimit Decimal  @default(5000000) @map("manager_approval_limit") @db.Decimal(18, 2)
   createdAt            DateTime @default(now()) @map("created_at")
-  updatedAt            DateTime @updatedAt @map("updated_at")
+  updatedAt            DateTime @default(now()) @updatedAt @map("updated_at")
   tenant               Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@map("tenant_refund_policies")
@@ -1623,6 +1630,7 @@ model Lead {
   customer       Customer?    @relation(fields: [customerId], references: [id], onDelete: SetNull)
   followUps      FollowUp[]
   quotations     Quotation[]
+  bookings       Booking[]
 
   @@unique([tenantId, leadCode])
   @@index([tenantId, status, assignedUserId])
@@ -1887,7 +1895,7 @@ model CustomerAccount {
 }
 
 model CustomerBookingClaim {
-  id         String          @id @default(uuid()) @db.Uuid
+  id         String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   tenantId   String          @map("tenant_id") @db.Uuid
   accountId  String          @map("account_id") @db.Uuid
   bookingId  String          @map("booking_id") @db.Uuid

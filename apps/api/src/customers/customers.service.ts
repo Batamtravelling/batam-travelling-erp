@@ -51,7 +51,8 @@ export class CustomersService {
         take: pageSize,
       }),
     ]);
-    return { items, meta: { page, pageSize, total, totalPages: Math.max(1, Math.ceil(total / pageSize)) } };
+    const enrichedItems=items.map(customer=>{const effectiveBookings=customer.bookings.filter(booking=>!['CANCELLED','REFUNDED'].includes(booking.status));return{...customer,accountStatus:customer.status,commercialStage:effectiveBookings.length===0?'PROSPECT':effectiveBookings.length===1?'NEW_CUSTOMER':'REPEAT_CUSTOMER',commercialActivity:{leadCount:customer.leads.length,bookingCount:customer.bookings.length,activeBookingCount:effectiveBookings.length,lifetimeBookingValue:effectiveBookings.reduce((sum,booking)=>sum+Number(booking.totalAmount),0)}}});
+    return { items:enrichedItems, meta: { page, pageSize, total, totalPages: Math.max(1, Math.ceil(total / pageSize)) } };
   }
   async find(identity: RequestIdentity, id: string) { const customer = await this.prisma.customer.findFirst({ where: { id, tenantId: identity.tenantId, archivedAt: null } }); if (!customer) throw new NotFoundException('Customer not found'); return customer; }
   async update(identity: RequestIdentity, id: string, dto: UpdateCustomerDto) { const current = await this.find(identity, id); await this.assertUniqueContact(identity, { email: dto.email, phone: dto.phone }, id); const contact = this.normalizedContact({ email: dto.email, phone: dto.phone }); const customer = await this.prisma.customer.update({ where: { id }, data: { ...dto, fullName: dto.fullName?.trim(), email: dto.email === undefined ? undefined : contact.email, phone: dto.phone === undefined ? undefined : contact.phone } }); await this.audit.record(identity, 'customer.updated', 'customer', id, { emailChanged: dto.email !== undefined && contact.email !== current.email, phoneChanged: dto.phone !== undefined && contact.phone !== current.phone }); return customer; }
