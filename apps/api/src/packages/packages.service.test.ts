@@ -54,7 +54,7 @@ describe('PackagesService', () => {
     await expect(new PackagesService(prisma).remove(identity, 'package-a')).resolves.toEqual({ deleted: true, id: 'package-a' });
     expect(prisma.travelPackage.findFirst).toHaveBeenCalledWith({
       where: { id: 'package-a', tenantId: 'tenant-a', archivedAt: null },
-      select: { id: true },
+      select: { id: true, approvalStatus: true },
     });
     expect(prisma.travelPackage.update).toHaveBeenCalledWith({
       where: { id: 'package-a' },

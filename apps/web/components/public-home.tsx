@@ -30,10 +30,9 @@ type BrandProfile = {
 type Component = {
   type: string;
   name: string;
-  provider?: string;
   quantity: string;
   unit?: string;
-  notes?: string;
+  publicNotes?: string;
   included: boolean;
 };
 type Itinerary = {
@@ -43,7 +42,7 @@ type Itinerary = {
   location?: string;
   description?: string;
   duration?: string;
-  notes?: string;
+  publicNotes?: string;
   included: boolean;
 };
 type Departure = {
@@ -54,8 +53,8 @@ type Departure = {
   minPax: number;
   maxPax: number;
   meetingPoint?: string;
-  notes?: string;
-  reservedPax: number;
+  publicNotes?: string;
+  remainingPax: number;
   surchargeLabel?: string;
   surchargeAmount: string;
   surchargeBasis: 'PER_PAX' | 'PER_BOOKING';
@@ -492,7 +491,7 @@ export function PublicHome() {
                           <option key={d.id} value={d.id}>
                             {new Date(d.startsAt).toLocaleString("id-ID")} ·
                             sisa{" "}
-                            {Math.max(0, d.maxPax - d.reservedPax)}{" "}
+                            {d.remainingPax}{" "}
                             kursi{Number(d.surchargeAmount)>0 ? ` · ${d.surchargeLabel||'Surcharge'} ${money(d.surchargeAmount)} ${d.surchargeBasis==='PER_PAX'?'/ pax':'/ booking'}` : ''}
                           </option>
                         ))}
@@ -593,7 +592,7 @@ export function PublicHome() {
                             .filter((x) => x.included)
                             .map(
                               (x) =>
-                                `${x.name}${x.provider ? ` — ${x.provider}` : ""}`,
+                                x.name,
                             ),
                         ]
                           .filter((x, i, a) => a.indexOf(x) === i)
@@ -640,10 +639,7 @@ export function PublicHome() {
                             </span>
                             <small>
                               Sisa estimasi{" "}
-                              {Math.max(
-                                0,
-                                d.maxPax - d.reservedPax,
-                              )}{" "}
+                              {d.remainingPax}{" "}
                               dari {d.maxPax} kursi
                             </small>
                             {Number(d.surchargeAmount)>0&&<small>{d.surchargeLabel||'Surcharge jadwal'}: {money(d.surchargeAmount)} {d.surchargeBasis==='PER_PAX'?'/ peserta':'/ booking'}</small>}

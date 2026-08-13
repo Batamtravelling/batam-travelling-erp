@@ -2,7 +2,7 @@ export const publicDemoEnabled = process.env.NODE_ENV !== 'production' && proces
 
 const departures = (id: string, month: number, seats: number, surcharge = 0) => [{
   id: `${id}-departure`, startsAt: `2026-${String(month).padStart(2, '0')}-18T01:00:00.000Z`, endsAt: `2026-${String(month).padStart(2, '0')}-20T11:00:00.000Z`,
-  maxPax: 24, reservedPax: 24 - seats, meetingPoint: 'Batam Centre Ferry Terminal', status: 'OPEN', surchargeLabel: surcharge ? 'High season' : undefined, surchargeAmount: surcharge, surchargeBasis: 'PER_PAX',
+  maxPax: 24, remainingPax: seats, meetingPoint: 'Batam Centre Ferry Terminal', status: 'OPEN', surchargeLabel: surcharge ? 'High season' : undefined, surchargeAmount: surcharge, surchargeBasis: 'PER_PAX',
 }];
 
 export const demoTrips = [

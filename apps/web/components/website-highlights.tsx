@@ -20,7 +20,7 @@ type Pack = {
     startsAt: string;
     status: string;
     maxPax: number;
-    reservedPax: number;
+    remainingPax: number;
     surchargeLabel?: string;
     surchargeAmount: string;
     surchargeBasis: 'PER_PAX' | 'PER_BOOKING';
@@ -143,10 +143,7 @@ export function WebsiteHighlights({
               const premium = (p.serviceLevel || p.kind || "").includes(
                 "PREMIUM",
               );
-              const remaining = Math.max(
-                0,
-                d.maxPax - d.reservedPax,
-              );
+              const remaining = d.remainingPax;
               return (
                 <button
                   type="button"

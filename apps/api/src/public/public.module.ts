@@ -53,6 +53,24 @@ function normalizePhone(phone: string) {
 function normalizeEmail(email?: string) {
   return email?.trim().toLowerCase();
 }
+export function isSafePublicMediaUrl(value?: string | null) {
+  if (!value) return false;
+  try {
+    const url = new URL(value);
+    if (!['http:', 'https:'].includes(url.protocol)) return false;
+    const sensitiveQuery = new Set(['token', 'signature', 'sig', 'expires', 'x-amz-signature']);
+    return !url.pathname.includes('/storage/v1/object/sign/') &&
+      !Array.from(url.searchParams.keys()).some((key) => sensitiveQuery.has(key.toLowerCase()));
+  } catch {
+    return false;
+  }
+}
+const publicPackageWhere = (tenantId: string) => ({
+  tenantId,
+  status: 'ACTIVE' as const,
+  approvalStatus: 'APPROVED' as const,
+  archivedAt: null,
+});
 class BookingAccessDto {
   @IsString() @MaxLength(30) bookingCode!: string;
   @IsString() @MaxLength(40) @Matches(/^\+?[0-9][0-9\s().-]{7,20}$/) phone!: string;
@@ -105,12 +123,10 @@ export class PublicService {
   async profile() {
     const t = await this.tenant();
     if (!t) throw new BadRequestException("Website belum terhubung ke tenant");
-    return this.p.companyProfile.findUnique({
+    const profile = await this.p.companyProfile.findUnique({
       where: { tenantId: t.id },
       select: {
         websiteLogoUrl: true,
-        erpLogoUrl: true,
-        documentLogoUrl: true,
         homepageSections: true,
         heroTitle: true,
         heroSubtitle: true,
@@ -141,6 +157,11 @@ export class PublicService {
         cancellationPolicy: true,
       },
     });
+    return profile ? {
+      ...profile,
+      websiteLogoUrl: isSafePublicMediaUrl(profile.websiteLogoUrl) ? profile.websiteLogoUrl : null,
+      heroImageUrl: isSafePublicMediaUrl(profile.heroImageUrl) ? profile.heroImageUrl : null,
+    } : {};
   }
   async packages(id?: string) {
     const t = await this.tenant();
@@ -150,11 +171,8 @@ export class PublicService {
     }
     const rows = await this.p.travelPackage.findMany({
       where: {
-        tenantId: t.id,
+        ...publicPackageWhere(t.id),
         ...(id ? { id } : {}),
-        status: "ACTIVE",
-        approvalStatus: "APPROVED",
-        archivedAt: null,
       },
       select: {
         id: true,
@@ -168,7 +186,6 @@ export class PublicService {
         infantPrice: true,
         childAgePolicy: true,
         infantAgePolicy: true,
-        packageDifferences: true,
         promotionalLabel: true,
         originalPrice: true,
         specialPrice: true,
@@ -176,7 +193,6 @@ export class PublicService {
         destination: true,
         visitedDestinations: true,
         durationDays: true,
-        description: true,
         publicDescription: true,
         minPax: true,
         maxPax: true,
@@ -185,7 +201,6 @@ export class PublicService {
         included: true,
         excluded: true,
         importantInfo: true,
-        optionalRequirements: true,
         customizable: true,
         gallery: {
           orderBy: { sortOrder: "asc" },
@@ -197,11 +212,9 @@ export class PublicService {
             id: true,
             type: true,
             name: true,
-            provider: true,
             quantity: true,
             unit: true,
-            sellingPrice: true,
-            notes: true,
+            publicNotes: true,
             included: true,
           },
         },
@@ -214,7 +227,7 @@ export class PublicService {
             location: true,
             description: true,
             duration: true,
-            notes: true,
+            publicNotes: true,
             included: true,
           },
         },
@@ -237,7 +250,7 @@ export class PublicService {
             minPax: true,
             maxPax: true,
             meetingPoint: true,
-            notes: true,
+            publicNotes: true,
             surchargeLabel: true,
             surchargeAmount: true,
             surchargeBasis: true,
@@ -280,9 +293,10 @@ export class PublicService {
         .join("\n");
       return {
         ...x,
+        gallery: x.gallery.filter((image) => isSafePublicMediaUrl(image.imageUrl)),
         departures: x.departures.map((departure) => ({
           ...departure,
-          reservedPax: reservedByDeparture.get(departure.id) ?? 0,
+          remainingPax: Math.max(0, departure.maxPax - (reservedByDeparture.get(departure.id) ?? 0)),
         })),
         packageKind: kind,
         kind: serviceLevel,
@@ -290,17 +304,12 @@ export class PublicService {
         prices: x.adultPrice ? [{ sellingPrice: x.adultPrice }] : x.prices,
         publicDescription: [
           x.publicDescription,
-          x.packageDifferences
-            ? `Perbedaan ${serviceLevel}: ${x.packageDifferences}`
-            : null,
+          null,
         ]
           .filter(Boolean)
           .join(" · "),
         importantInfo: [
           x.importantInfo,
-          x.optionalRequirements
-            ? `Syarat opsional:\n${x.optionalRequirements}`
-            : null,
           pi,
         ]
           .filter(Boolean)
@@ -346,29 +355,48 @@ export class PublicService {
     const select = {
       slug: true, title: true, excerpt: true, content: true, coverImage: true,
       publishedAt: true, author: { select: { name: true } },
-      packages: { orderBy: { sortOrder: "asc" as const }, select: { package: { select: { id: true, name: true, destination: true } } } },
+      packages: {
+        where: { package: publicPackageWhere(t.id) },
+        orderBy: { sortOrder: "asc" as const },
+        select: { package: { select: { id: true, name: true, destination: true } } },
+      },
     };
     if (slug) {
       const article = await this.p.article.findFirst({ where, select });
       if (!article) throw new NotFoundException("Artikel tidak ditemukan");
-      return article;
+      return { ...article, coverImage: isSafePublicMediaUrl(article.coverImage) ? article.coverImage : null };
     }
-    return this.p.article.findMany({ where, select, orderBy: { publishedAt: "desc" }, take: 24 });
+    const rows = await this.p.article.findMany({ where, select, orderBy: { publishedAt: "desc" }, take: 24 });
+    return rows.map((article) => ({ ...article, coverImage: isSafePublicMediaUrl(article.coverImage) ? article.coverImage : null }));
   }
   async promotions() {
     const t = await this.tenant();
     if (!t) return [];
     const now = new Date();
-    return this.p.promotion.findMany({
-      where: { tenantId: t.id, status: "PUBLISHED", startsAt: { lte: now }, endsAt: { gte: now } },
+    const rows = await this.p.promotion.findMany({
+      where: {
+        tenantId: t.id,
+        status: "PUBLISHED",
+        approvalStatus: "APPROVED",
+        startsAt: { lte: now },
+        endsAt: { gte: now },
+        packages: { some: { package: publicPackageWhere(t.id) } },
+      },
       select: {
         id: true, code: true, title: true, description: true, discountType: true, discountValue: true,
         startsAt: true, endsAt: true, bannerImage: true, terms: true,
-        packages: { select: { package: { select: { id: true, name: true, destination: true } } } },
+        packages: {
+          where: { package: publicPackageWhere(t.id) },
+          select: { package: { select: { id: true, name: true, destination: true } } },
+        },
       },
       orderBy: { endsAt: "asc" },
       take: 24,
     });
+    return rows.map((row) => ({
+      ...row,
+      bannerImage: isSafePublicMediaUrl(row.bannerImage) ? row.bannerImage : null,
+    }));
   }
   private hash(d: unknown) {
     return createHash("sha256").update(JSON.stringify(d)).digest("hex");

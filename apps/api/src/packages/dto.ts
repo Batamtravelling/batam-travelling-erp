@@ -22,6 +22,8 @@ export class DepartureDto {
   @Type(() => Number) @IsInt() @Min(1) @Max(100000) maxPax!: number;
   @IsOptional() @IsString() @MaxLength(300) meetingPoint?: string;
   @IsOptional() @IsString() @MaxLength(5000) notes?: string;
+  @IsOptional() @IsString() @MaxLength(5000) publicNotes?: string;
+  @IsOptional() @IsString() @MaxLength(5000) internalNotes?: string;
   @IsOptional() @IsEnum(DepartureStatus) status?: DepartureStatus;
   @IsOptional() @IsString() @MaxLength(180) surchargeLabel?: string;
   @Type(() => Number) @IsNumber({ maxDecimalPlaces: 2 }) @Min(0) @Max(1_000_000_000_000) surchargeAmount!: number;

@@ -12,7 +12,7 @@ export type PackageInput = {
   sellingPrice?: number;
   status?: PackageStatus;
 };
-export type DepartureInput = { startsAt:string; endsAt?:string; bookingCloseAt?:string; minPax:number; maxPax:number; meetingPoint?:string; notes?:string; status?:DepartureStatus; surchargeLabel?:string; surchargeAmount?:number; surchargeBasis?:SurchargeBasis };
+export type DepartureInput = { startsAt:string; endsAt?:string; bookingCloseAt?:string; minPax:number; maxPax:number; meetingPoint?:string; notes?:string; publicNotes?:string; internalNotes?:string; status?:DepartureStatus; surchargeLabel?:string; surchargeAmount?:number; surchargeBasis?:SurchargeBasis };
 
 @Injectable()
 export class PackagesService {
@@ -71,19 +71,24 @@ export class PackagesService {
   }
 
   async update(identity: RequestIdentity, id: string, updates: Partial<PackageInput>) {
-    await this.assertOwned(identity, id);
+    const current = await this.assertOwned(identity, id);
     if(updates.packageCode&&await this.prisma.travelPackage.findFirst({where:{tenantId:identity.tenantId,packageCode:updates.packageCode,id:{not:id},archivedAt:null},select:{id:true}}))throw new ConflictException('Kode paket sudah digunakan');
     const { sellingPrice, ...packageData } = updates;
     return this.prisma.$transaction(async (tx) => {
+      const requiresReview = current.approvalStatus === 'APPROVED' && updates.status !== 'ARCHIVED' && Object.keys(updates).length > 0;
       const travelPackage = await tx.travelPackage.update({
         where: { id },
-        data: { ...packageData, adultPrice: sellingPrice } as Prisma.TravelPackageUpdateInput,
+        data: {
+          ...packageData,
+          adultPrice: sellingPrice,
+          ...(requiresReview ? { status: 'DRAFT', approvalStatus: 'DRAFT', submittedById: null, submittedAt: null, reviewedById: null, reviewedAt: null, reviewNote: null } : {}),
+        } as Prisma.TravelPackageUpdateInput,
       });
       if (sellingPrice !== undefined) {
         await tx.packagePrice.updateMany({ where: { tenantId: identity.tenantId, packageId: id, active: true }, data: { active: false } });
         await tx.packagePrice.create({ data: { tenantId: identity.tenantId, packageId: id, type: 'STANDARD', sellingPrice } });
       }
-      await tx.auditLog.create({data:{tenantId:identity.tenantId,actorId:identity.userId,action:'package.updated',resourceType:'TravelPackage',resourceId:id,requestId:identity.requestId,metadata:{priceChanged:sellingPrice!==undefined}}});
+      await tx.auditLog.create({data:{tenantId:identity.tenantId,actorId:identity.userId,action:requiresReview?'package.updated.requires_review':'package.updated',resourceType:'TravelPackage',resourceId:id,requestId:identity.requestId,metadata:{priceChanged:sellingPrice!==undefined,approvalInvalidated:requiresReview}}});
       return travelPackage;
     });
   }
@@ -96,16 +101,17 @@ export class PackagesService {
   }
 
   async createDeparture(identity:RequestIdentity,packageId:string,input:DepartureInput){
-    await this.assertOwned(identity,packageId);
+    const current = await this.assertOwned(identity,packageId);
     if(input.maxPax<input.minPax)throw new ConflictException('Kapasitas maksimal tidak boleh lebih kecil dari minimal pax');
     const startsAt=new Date(input.startsAt),endsAt=input.endsAt?new Date(input.endsAt):undefined,bookingCloseAt=input.bookingCloseAt?new Date(input.bookingCloseAt):undefined;
     if(endsAt&&endsAt<=startsAt)throw new ConflictException('Waktu selesai harus setelah waktu mulai');
     if(bookingCloseAt&&bookingCloseAt>=startsAt)throw new ConflictException('Penutupan booking harus sebelum keberangkatan');
-    return this.prisma.$transaction(async tx=>{const departure=await tx.packageDeparture.create({data:{tenantId:identity.tenantId,packageId,startsAt,endsAt,bookingCloseAt,minPax:input.minPax,maxPax:input.maxPax,meetingPoint:input.meetingPoint,notes:input.notes,status:input.status??'OPEN',surchargeLabel:input.surchargeLabel,surchargeAmount:input.surchargeAmount??0,surchargeBasis:input.surchargeBasis??'PER_PAX'}});await tx.auditLog.create({data:{tenantId:identity.tenantId,actorId:identity.userId,action:'departure.created',resourceType:'PackageDeparture',resourceId:departure.id,requestId:identity.requestId,metadata:{packageId,surchargeAmount:input.surchargeAmount??0,surchargeBasis:input.surchargeBasis??'PER_PAX'}}});return departure});
+    return this.prisma.$transaction(async tx=>{const departure=await tx.packageDeparture.create({data:{tenantId:identity.tenantId,packageId,startsAt,endsAt,bookingCloseAt,minPax:input.minPax,maxPax:input.maxPax,meetingPoint:input.meetingPoint,notes:input.notes,internalNotes:input.internalNotes??input.notes,publicNotes:input.publicNotes,status:input.status??'OPEN',surchargeLabel:input.surchargeLabel,surchargeAmount:input.surchargeAmount??0,surchargeBasis:input.surchargeBasis??'PER_PAX'}});if(current.approvalStatus==='APPROVED')await tx.travelPackage.update({where:{id:packageId},data:{status:'DRAFT',approvalStatus:'DRAFT',submittedById:null,submittedAt:null,reviewedById:null,reviewedAt:null,reviewNote:null}});await tx.auditLog.create({data:{tenantId:identity.tenantId,actorId:identity.userId,action:'departure.created',resourceType:'PackageDeparture',resourceId:departure.id,requestId:identity.requestId,metadata:{packageId,surchargeAmount:input.surchargeAmount??0,surchargeBasis:input.surchargeBasis??'PER_PAX',approvalInvalidated:current.approvalStatus==='APPROVED'}}});return departure});
   }
 
   private async assertOwned(identity: RequestIdentity, id: string) {
-    const row = await this.prisma.travelPackage.findFirst({ where: { id, tenantId: identity.tenantId, archivedAt: null }, select: { id: true } });
+    const row = await this.prisma.travelPackage.findFirst({ where: { id, tenantId: identity.tenantId, archivedAt: null }, select: { id: true, approvalStatus: true } });
     if (!row) throw new NotFoundException('Paket tidak ditemukan');
+    return row;
   }
 }

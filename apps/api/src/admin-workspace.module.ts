@@ -1,9 +1,10 @@
 import { BadRequestException, Body, Controller, Get, Inject, Injectable, Module, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import { ArchiveCategory, AssetStatus, KnowledgeStatus } from '@prisma/client';
+import { ArchiveCategory, AssetStatus, DiscountType, KnowledgeStatus } from '@prisma/client';
 import { PrismaService } from './core/prisma.service.js';
 import { CurrentIdentity, IdentityGuard, PermissionGuard, Permissions, RequestIdentity } from './core/request-context.js';
-import { IsDateString, IsEnum, IsOptional, IsString, IsUrl, IsUUID, Matches, MaxLength } from 'class-validator';
+import { ArrayUnique, IsArray, IsDateString, IsEnum, IsNumber, IsOptional, IsString, IsUrl, IsUUID, Matches, MaxLength, Min } from 'class-validator';
+import { Type } from 'class-transformer';
 import { PageQueryDto } from './connected-dto.js';
 
 class PackageReviewDto {
@@ -17,6 +18,22 @@ class ArticleDto {
   @IsString() @MaxLength(100000) content!: string;
   @IsOptional() @IsUrl({require_tld:false}) coverImage?: string;
   @IsOptional() @IsEnum(['DRAFT','PUBLISHED','ARCHIVED'] as const) status?: 'DRAFT'|'PUBLISHED'|'ARCHIVED';
+}
+class PromotionDto {
+  @IsString() @Matches(/^[A-Z0-9][A-Z0-9-]{1,39}$/) code!: string;
+  @IsString() @MaxLength(180) title!: string;
+  @IsOptional() @IsString() @MaxLength(5000) description?: string;
+  @IsEnum(DiscountType) discountType!: DiscountType;
+  @Type(() => Number) @IsNumber({maxDecimalPlaces:2}) @Min(0.01) discountValue!: number;
+  @IsDateString() startsAt!: string;
+  @IsDateString() endsAt!: string;
+  @IsOptional() @IsUrl({require_tld:false}) bannerImage?: string;
+  @IsOptional() @IsString() @MaxLength(10000) terms?: string;
+  @IsArray() @ArrayUnique() @IsUUID('4',{each:true}) packageIds!: string[];
+}
+class PromotionReviewDto {
+  @IsEnum(['SUBMIT','APPROVE','REJECT','ARCHIVE'] as const) action!: 'SUBMIT'|'APPROVE'|'REJECT'|'ARCHIVE';
+  @IsOptional() @IsString() @MaxLength(1000) note?: string;
 }
 class MediaDto {
   @IsString() @MaxLength(255) originalName!: string;
@@ -63,7 +80,7 @@ function imageMatchesMime(buffer: Buffer, mimeType: string) {
 }
 
 @Injectable()
-class AdminWorkspaceService {
+export class AdminWorkspaceService {
   constructor(@Inject(PrismaService) private readonly p: PrismaService) {}
 
   private page(query: PageQueryDto) {
@@ -96,6 +113,12 @@ class AdminWorkspaceService {
   createArticle(i:RequestIdentity,d:ArticleDto){return this.p.article.create({data:{tenantId:i.tenantId,authorId:i.userId,slug:d.slug,title:d.title,excerpt:d.excerpt,content:d.content,coverImage:d.coverImage,status:d.status??'DRAFT',publishedAt:d.status==='PUBLISHED'?new Date():undefined}})}
   updateArticle(i:RequestIdentity,id:string,d:ArticleDto){return this.p.article.updateMany({where:{id,tenantId:i.tenantId},data:{title:d.title,excerpt:d.excerpt,content:d.content,coverImage:d.coverImage,status:d.status,publishedAt:d.status==='PUBLISHED'?new Date():undefined}})}
 
+  async promotions(i:RequestIdentity,q:PageQueryDto){const{page,pageSize,skip}=this.page(q),search=q.search?.trim(),where={tenantId:i.tenantId,...(search?{OR:[{title:{contains:search,mode:'insensitive' as const}},{code:{contains:search,mode:'insensitive' as const}}]}:{})};const[items,total]=await Promise.all([this.p.promotion.findMany({where,include:{packages:{select:{package:{select:{id:true,name:true,status:true,approvalStatus:true}}}},submittedBy:{select:{id:true,name:true}},reviewedBy:{select:{id:true,name:true}}},orderBy:{updatedAt:'desc'},skip,take:pageSize}),this.p.promotion.count({where})]);return this.result(items,total,page,pageSize)}
+  private async validatePromotionPackages(i:RequestIdentity,packageIds:string[],requirePublic=false){if(!packageIds.length)throw new BadRequestException('Pilih minimal satu paket');const rows=await this.p.travelPackage.findMany({where:{tenantId:i.tenantId,id:{in:packageIds},archivedAt:null},select:{id:true,status:true,approvalStatus:true}});if(rows.length!==packageIds.length)throw new BadRequestException('Satu atau lebih paket tidak valid untuk tenant ini');if(requirePublic&&rows.some(row=>row.status!=='ACTIVE'||row.approvalStatus!=='APPROVED'))throw new BadRequestException('Semua paket promo harus aktif dan sudah disetujui');return rows}
+  async createPromotion(i:RequestIdentity,d:PromotionDto){if(new Date(d.endsAt)<=new Date(d.startsAt))throw new BadRequestException('Tanggal akhir promo harus setelah tanggal mulai');await this.validatePromotionPackages(i,d.packageIds);return this.p.$transaction(async tx=>{const row=await tx.promotion.create({data:{tenantId:i.tenantId,code:d.code.trim(),title:d.title.trim(),description:d.description,discountType:d.discountType,discountValue:d.discountValue,startsAt:new Date(d.startsAt),endsAt:new Date(d.endsAt),bannerImage:d.bannerImage,terms:d.terms,packages:{create:d.packageIds.map(packageId=>({tenantId:i.tenantId,packageId}))}}});await tx.auditLog.create({data:{tenantId:i.tenantId,actorId:i.userId,action:'promotion.created',resourceType:'Promotion',resourceId:row.id,requestId:i.requestId}});return row})}
+  async updatePromotion(i:RequestIdentity,id:string,d:PromotionDto){const current=await this.p.promotion.findFirst({where:{id,tenantId:i.tenantId}});if(!current)throw new BadRequestException('Promo tidak ditemukan');if(current.status==='ARCHIVED')throw new BadRequestException('Promo yang diarsipkan tidak dapat diubah');if(new Date(d.endsAt)<=new Date(d.startsAt))throw new BadRequestException('Tanggal akhir promo harus setelah tanggal mulai');await this.validatePromotionPackages(i,d.packageIds);return this.p.$transaction(async tx=>{const row=await tx.promotion.update({where:{id},data:{code:d.code.trim(),title:d.title.trim(),description:d.description,discountType:d.discountType,discountValue:d.discountValue,startsAt:new Date(d.startsAt),endsAt:new Date(d.endsAt),bannerImage:d.bannerImage,terms:d.terms,status:'DRAFT',approvalStatus:'DRAFT',submittedById:null,submittedAt:null,reviewedById:null,reviewedAt:null,reviewNote:null,packages:{deleteMany:{},create:d.packageIds.map(packageId=>({tenantId:i.tenantId,packageId}))}}});await tx.auditLog.create({data:{tenantId:i.tenantId,actorId:i.userId,action:'promotion.updated.requires_review',resourceType:'Promotion',resourceId:id,requestId:i.requestId,metadata:{fromStatus:current.status,fromApprovalStatus:current.approvalStatus}}});return row})}
+  async reviewPromotion(i:RequestIdentity,id:string,d:PromotionReviewDto){const current=await this.p.promotion.findFirst({where:{id,tenantId:i.tenantId},include:{packages:true}});if(!current)throw new BadRequestException('Promo tidak ditemukan');if(d.action==='SUBMIT'){if(!['DRAFT','REJECTED'].includes(current.approvalStatus))throw new BadRequestException('Promo tidak dapat diajukan dari status saat ini');await this.validatePromotionPackages(i,current.packages.map(x=>x.packageId),true)}else if(d.action==='ARCHIVE'){if(current.status==='ARCHIVED')throw new BadRequestException('Promo sudah diarsipkan')}else{if(!i.permissions.has('content.approve'))throw new BadRequestException('Anda tidak memiliki izin approval konten');if(current.approvalStatus!=='PENDING_REVIEW')throw new BadRequestException('Promo belum menunggu review');if(current.submittedById===i.userId)throw new BadRequestException('Pengaju promo tidak boleh menyetujui atau menolak pengajuannya sendiri');if(d.action==='REJECT'&&!d.note?.trim())throw new BadRequestException('Catatan wajib untuk penolakan');if(d.action==='APPROVE')await this.validatePromotionPackages(i,current.packages.map(x=>x.packageId),true)}return this.p.$transaction(async tx=>{const data=d.action==='SUBMIT'?{status:'DRAFT' as const,approvalStatus:'PENDING_REVIEW' as const,submittedById:i.userId,submittedAt:new Date(),reviewedById:null,reviewedAt:null,reviewNote:null}:d.action==='APPROVE'?{status:'PUBLISHED' as const,approvalStatus:'APPROVED' as const,reviewedById:i.userId,reviewedAt:new Date(),reviewNote:d.note}:d.action==='REJECT'?{status:'DRAFT' as const,approvalStatus:'REJECTED' as const,reviewedById:i.userId,reviewedAt:new Date(),reviewNote:d.note}:{status:'ARCHIVED' as const};const row=await tx.promotion.update({where:{id},data});await tx.auditLog.create({data:{tenantId:i.tenantId,actorId:i.userId,action:`promotion.${d.action.toLowerCase()}`,resourceType:'Promotion',resourceId:id,requestId:i.requestId,metadata:{fromStatus:current.status,fromApprovalStatus:current.approvalStatus,toStatus:row.status,toApprovalStatus:row.approvalStatus,note:d.note??null}}});return row})}
+
   async media(i:RequestIdentity,q:PageQueryDto){const{page,pageSize,skip}=this.page(q),search=q.search?.trim(),where={tenantId:i.tenantId,...(search?{OR:[{originalName:{contains:search,mode:'insensitive' as const}},{altText:{contains:search,mode:'insensitive' as const}},{category:{contains:search,mode:'insensitive' as const}}]}:{})};const[items,total]=await Promise.all([this.p.websiteMediaFile.findMany({where,orderBy:{createdAt:'desc'},skip,take:pageSize}),this.p.websiteMediaFile.count({where})]);return this.result(items,total,page,pageSize)}
   createMedia(i:RequestIdentity,d:MediaDto){return this.p.websiteMediaFile.create({data:{tenantId:i.tenantId,uploadedById:i.userId,originalName:d.originalName,storedName:d.originalName,mimeType:d.mimeType??'image/webp',size:0,url:d.url,altText:d.altText,category:d.category??'WEBSITE'}})}
   async uploadMedia(i:RequestIdentity,request:any){const file=await request.file();if(!file)throw new BadRequestException('Pilih satu file');const allowed=new Set(['image/png','image/jpeg','image/webp']);if(!allowed.has(file.mimetype))throw new BadRequestException('Format harus PNG, JPEG, atau WEBP');const buffer=await file.toBuffer();if(!buffer.length)throw new BadRequestException('File media kosong');if(!imageMatchesMime(buffer,file.mimetype))throw new BadRequestException('Isi file tidak sesuai dengan MIME type');const url=process.env.SUPABASE_URL?.replace(/\/$/,''),secret=process.env.SUPABASE_SECRET_KEY,bucket=process.env.SUPABASE_MEDIA_BUCKET??'erp-media';if(!url||!secret)throw new BadRequestException('Supabase Storage belum dikonfigurasi');const safe=file.filename.replace(/[^a-zA-Z0-9._-]/g,'_').slice(-180)||'media',storedName=`${i.tenantId}/${randomUUID()}-${safe}`;const upload=await fetch(`${url}/storage/v1/object/${bucket}/${storedName}`,{method:'POST',headers:{authorization:`Bearer ${secret}`,apikey:secret,'content-type':file.mimetype,'x-upsert':'false'},body:buffer});if(!upload.ok)throw new BadRequestException('Upload media gagal');const publicUrl=`${url}/storage/v1/object/public/${bucket}/${storedName}`;return this.p.websiteMediaFile.create({data:{tenantId:i.tenantId,uploadedById:i.userId,originalName:file.filename,storedName,mimeType:file.mimetype,size:buffer.length,url:publicUrl,category:'WEBSITE'}})}
@@ -116,6 +139,10 @@ class AdminWorkspaceService {
  @Get('content/articles') @Permissions('content.read') articles(@CurrentIdentity()i:RequestIdentity,@Query()q:PageQueryDto){return this.s.articles(i,q)}
  @Post('content/articles') @Permissions('content.manage') createArticle(@CurrentIdentity()i:RequestIdentity,@Body()d:ArticleDto){return this.s.createArticle(i,d)}
  @Patch('content/articles/:id') @Permissions('content.manage') updateArticle(@CurrentIdentity()i:RequestIdentity,@Param('id')id:string,@Body()d:ArticleDto){return this.s.updateArticle(i,id,d)}
+ @Get('content/promotions') @Permissions('content.read') promotions(@CurrentIdentity()i:RequestIdentity,@Query()q:PageQueryDto){return this.s.promotions(i,q)}
+ @Post('content/promotions') @Permissions('content.manage') createPromotion(@CurrentIdentity()i:RequestIdentity,@Body()d:PromotionDto){return this.s.createPromotion(i,d)}
+ @Patch('content/promotions/:id') @Permissions('content.manage') updatePromotion(@CurrentIdentity()i:RequestIdentity,@Param('id')id:string,@Body()d:PromotionDto){return this.s.updatePromotion(i,id,d)}
+ @Patch('content/promotions/:id/review') @Permissions('content.manage') reviewPromotion(@CurrentIdentity()i:RequestIdentity,@Param('id')id:string,@Body()d:PromotionReviewDto){return this.s.reviewPromotion(i,id,d)}
  @Get('media') @Permissions('media.read') media(@CurrentIdentity()i:RequestIdentity,@Query()q:PageQueryDto){return this.s.media(i,q)}
  @Post('media') @Permissions('media.manage') createMedia(@CurrentIdentity()i:RequestIdentity,@Body()d:MediaDto){return this.s.createMedia(i,d)}
  @Post('media/upload') @Permissions('media.manage') uploadMedia(@CurrentIdentity()i:RequestIdentity,@Req()request:any){return this.s.uploadMedia(i,request)}
