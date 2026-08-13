@@ -3,10 +3,10 @@
 
 **File Name:** `03_BUSINESS_RULES_AND_POLICY.md`  
 **Document Number:** 03  
-**Version:** 1.0  
+**Version:** 1.1
 **Status:** APPROVED BUSINESS RULES  
 **Project:** Batam Travelling ERP  
-**Last Updated:** 2026-08-08
+**Last Updated:** 2026-08-13
 
 ---
 
@@ -713,15 +713,17 @@ Refund tidak boleh melebihi jumlah payment customer.
 
 Refund kecil:
 
-**Manager**
+**Sampai dengan Rp5.000.000: Finance Manager**
 
 Refund besar:
 
-**Owner**
+**Di atas Rp5.000.000: Finance Manager lalu Owner secara berurutan**
 
-Nilai batas antara refund kecil dan besar belum ditentukan.
+Persetujuan Owner tidak menggantikan pemeriksaan Finance Manager.
 
-Batas harus dibuat sebagai **Business Setting** yang dapat diubah Owner.
+Batas dibuat sebagai **Business Setting** per tenant yang dapat diubah Owner, dengan default Rp5.000.000. Request refund menyimpan snapshot threshold agar perubahan policy berikutnya tidak mengubah approval transaksi yang sudah berjalan.
+
+Requester tidak boleh menjadi approver. Refund hanya boleh dieksekusi setelah seluruh persetujuan yang diwajibkan selesai.
 
 ---
 
@@ -1904,7 +1906,7 @@ Beberapa nilai bisnis masih perlu ditentukan:
 
 ## Refund
 
-- Refund threshold Manager vs Owner
+- Tidak ada keputusan refund threshold yang masih terbuka; threshold dan urutan approval ditetapkan pada versi 1.1 tanggal 2026-08-13.
 
 ## Finance
 

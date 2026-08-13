@@ -1,7 +1,7 @@
 # DECISIONS
 
 **Status:** decision register summary
-**Tanggal audit:** 12 Agustus 2026
+**Tanggal audit:** 13 Agustus 2026
 
 ## Decisions already reflected in repository
 
@@ -11,6 +11,15 @@
 - PostgreSQL is the transactional database.
 - Tenant-scoped data model is required.
 - AI is excluded from initial core scope.
+- Refund sampai dengan Rp5.000.000 memerlukan persetujuan Finance Manager.
+- Refund di atas Rp5.000.000 memerlukan dua persetujuan berurutan: Finance Manager lalu Owner; Owner tidak menggantikan pemeriksaan Finance Manager.
+- Requester tidak boleh menjadi approver dan refund hanya dapat dieksekusi setelah semua approval selesai.
+
+## Decision record — Refund approval v1.0
+
+- **Tanggal keputusan:** 13 Agustus 2026.
+- **Alasan:** menutup risiko self-approval, refund bernilai besar tanpa oversight, duplicate execution, dan ledger outflow sebelum approval lengkap.
+- **Dampak implementasi:** workflow request/manager approval/owner approval/rejection/execution terpisah; tenant policy default Rp5.000.000; permission refund terpisah; execution idempotent; approval, bukti, reference, executor, dan audit lineage wajib disimpan.
 
 ## Decisions that appear approved in docs
 
@@ -20,7 +29,6 @@
 
 ## Decisions still open
 
-- Refund policy and approval threshold.
 - Cancellation and reschedule policy.
 - Invoice void/replacement policy.
 - Payment reversal policy.

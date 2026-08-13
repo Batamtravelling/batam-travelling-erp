@@ -13,6 +13,22 @@
 
 `auth`, `users`, `roles`, `customers`, `leads`, `packages`, `itineraries`, `quotations`, `bookings`, `invoices`, `payments`, `vendors`, `trips`, `files`, `content`, `notifications`, and `reports`.
 
+## Refund lifecycle contract
+
+All refund operations are authenticated and tenant-scoped. Authorization uses separate permissions for viewing, requesting, Manager approval, Owner approval, rejection, and execution.
+
+| Method | Path | Permission | Purpose |
+|---|---|---|---|
+| `GET` | `/payments/{paymentId}/refunds` | `refund.view` | List payment refunds |
+| `POST` | `/payments/{paymentId}/refund-requests` | `refund.request` | Create a refund request without posting a ledger entry |
+| `GET` | `/refund-requests/{refundId}` | `refund.view` | Read one refund request |
+| `POST` | `/refund-requests/{refundId}/manager-approval` | `refund.approve.manager` | Record Finance Manager approval |
+| `POST` | `/refund-requests/{refundId}/owner-approval` | `refund.approve.owner` | Record Owner approval after Manager approval |
+| `POST` | `/refund-requests/{refundId}/reject` | `refund.reject` | Reject a non-executed request |
+| `POST` | `/refund-requests/{refundId}/execute` | `refund.process` | Execute an approved refund and post one ledger `OUT` entry |
+
+Execution requires an `Idempotency-Key` header plus proof and transaction reference. Reusing the same key with the same request returns the original result without duplicate refund, ledger, audit, or outbox records. A different key cannot execute an already executed request.
+
 ## Required events
 
 | Event | Producer | Consumers |
