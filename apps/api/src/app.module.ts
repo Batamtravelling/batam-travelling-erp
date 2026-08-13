@@ -9,6 +9,7 @@ import { PackagesService } from './packages/packages.service.js';
 import { SalesModule } from './sales/sales.module.js';
 import { PublicModule } from './public/public.module.js';
 import { TransactionsModule } from './transactions/transactions.module.js';
+import { RefundsModule } from './refunds/refunds.module.js';
 import { ConnectedModulesModule } from './connected-modules.module.js';
 import { AdminWorkspaceModule } from './admin-workspace.module.js';
 import { HealthController } from './health.controller.js';
@@ -16,7 +17,7 @@ import { HousekeepingService } from './core/housekeeping.service.js';
 import { EmployeeAccessInterceptor } from './core/employee-access.interceptor.js';
 
 @Module({
-  imports: [CustomersModule, LeadsModule, SalesModule, PublicModule, TransactionsModule, ConnectedModulesModule, AdminWorkspaceModule],
+  imports: [CustomersModule, LeadsModule, SalesModule, PublicModule, TransactionsModule, RefundsModule, ConnectedModulesModule, AdminWorkspaceModule],
   controllers: [PackagesController, DevAuthController, HealthController],
   providers: [
     PrismaService,
