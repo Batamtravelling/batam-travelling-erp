@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { apiGet, apiPost } from '../../lib/api';
 
 type Customer = { id: string; fullName: string };
@@ -27,6 +27,8 @@ export default function PosPage() {
   const [departureId, setDepartureId] = useState('');
   const [pax, setPax] = useState(1);
   const [msg, setMsg] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const idempotencyKey = useRef(crypto.randomUUID());
 
   const load = () => Promise.all([
     apiGet<Page<Customer>>('/customers?page=1&pageSize=100'),
@@ -54,33 +56,26 @@ export default function PosPage() {
       return;
     }
     try {
+      setSubmitting(true);
       const paymentAmount = Number(data.get('paymentAmount') || 0);
-      const booking = await apiPost<{ bookingCode: string; invoice: { id: string; invoiceNumber: string } }>('/bookings', {
-        source: 'POS',
-        customerId: data.get('customerId'),
-        packageId: packId,
-        departureId: departureId || undefined,
-        packageName: pack?.name,
-        travelDate: departure?.startsAt ?? data.get('travelDate'),
-        pax,
-        totalAmount: total,
-        dueDate: data.get('dueDate') || undefined,
-        notes: data.get('notes') || 'Transaksi POS',
-      });
-      if (paymentAmount > 0) await apiPost('/payments', {
-        invoiceId: booking.invoice.id,
-        amount: paymentAmount,
-        method: data.get('paymentMethod'),
-        reference: data.get('paymentReference') || undefined,
-        notes: `Pembayaran POS untuk ${booking.bookingCode}`,
-      });
+      const { booking } = await apiPost<{ booking: { bookingCode: string; invoice: { id: string; invoiceNumber: string } } }>('/pos/transactions', {
+        booking: {
+          source: 'POS', customerId: data.get('customerId'), packageId: packId, departureId: departureId || undefined,
+          packageName: pack?.name, travelDate: departure?.startsAt ?? data.get('travelDate'), pax, totalAmount: total,
+          dueDate: data.get('dueDate') || undefined, notes: data.get('notes') || 'Transaksi POS',
+        },
+        payment: paymentAmount > 0 ? { amount: paymentAmount, method: data.get('paymentMethod'), reference: data.get('paymentReference') || undefined, notes: 'Pembayaran POS' } : undefined,
+      }, { 'Idempotency-Key': idempotencyKey.current });
       setMsg(`Transaksi ${booking.bookingCode} berhasil. Invoice ${booking.invoice.invoiceNumber}${paymentAmount > 0 ? ' dan pembayaran menunggu verifikasi.' : '.'}`);
       form.reset();
       setPackId('');
       setDepartureId('');
       setPax(1);
+      idempotencyKey.current = crypto.randomUUID();
     } catch (error) {
       setMsg((error as Error).message);
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -107,7 +102,7 @@ export default function PosPage() {
         <label>Metode pembayaran<select name="paymentMethod"><option value="CASH">Cash</option><option value="BANK_TRANSFER">Bank transfer</option><option value="QRIS">QRIS</option><option value="OTHER">Lainnya</option></select></label>
         <label>Referensi pembayaran<input name="paymentReference" /></label>
         <label>Catatan<textarea name="notes" /></label>
-        <button className="primary" disabled={!packId || total <= 0 || exceedsAvailability}>Proses transaksi</button>
+        <button className="primary" disabled={submitting || !packId || total <= 0 || exceedsAvailability}>{submitting ? 'Memproses...' : 'Proses transaksi'}</button>
       </form>
       <aside className="posReceipt">
         <small>RINGKASAN TRANSAKSI</small><h2>{pack?.name || 'Pilih paket'}</h2>

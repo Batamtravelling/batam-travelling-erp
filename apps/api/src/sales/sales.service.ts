@@ -338,6 +338,7 @@ export class SalesService {
         tenantId: identity.tenantId,
         bookingCode,
         customerId: current.customerId,
+        leadId: current.leadId,
         packageId: current.packageId,
         quotationId: current.id,
         source: 'QUOTATION',
@@ -349,6 +350,7 @@ export class SalesService {
         totalAmount: current.totalAmount,
         notes: current.notes,
       } });
+      if (current.leadId) { await tx.lead.update({ where: { id: current.leadId }, data: { customerId: current.customerId, status: 'WON' } }); await tx.auditLog.create({ data: { tenantId: identity.tenantId, actorId: identity.userId, action: 'lead.won.booking_created', resourceType: 'Lead', resourceId: current.leadId, requestId: identity.requestId, metadata: { bookingId: booking.id, bookingCode } } }); }
       await tx.bookingItem.createMany({ data: current.items.map((item: any) => ({
         tenantId: identity.tenantId,
         bookingId: booking.id,

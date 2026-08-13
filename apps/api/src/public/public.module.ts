@@ -518,7 +518,7 @@ export class PublicService {
             pax: d.pax,
             estimatedValue: total,
             priority: "HIGH",
-            status: "QUALIFIED",
+            status: "WON",
             verifiedAt: new Date(),
             notes: d.notes,
           },
@@ -528,6 +528,7 @@ export class PublicService {
             tenantId: t.id,
             bookingCode: await this.codes.next(tx, t.id, date),
             customerId: c.id,
+            leadId: lead.id,
             packageId: pack.id,
             departureId: departure?.id,
             source: "WEBSITE",
@@ -576,6 +577,7 @@ export class PublicService {
           totalAmount: b.totalAmount,
         };
       await tx.auditLog.create({ data: { tenantId: t.id, actorId: null, action: 'booking.created.public', resourceType: 'Booking', resourceId: b.id, metadata: { source: 'WEBSITE', leadId: lead.id, invoiceId: inv.id, packageId: pack.id, departureId: departure?.id ?? null, totalAmount: total, pax: d.pax } } });
+      await tx.auditLog.create({ data: { tenantId: t.id, actorId: null, action: 'lead.won.booking_created', resourceType: 'Lead', resourceId: lead.id, metadata: { bookingId: b.id, bookingCode: b.bookingCode } } });
       await tx.outboxEvent.create({ data: { tenantId: t.id, eventType: 'public_order.created', aggregateType: 'booking', aggregateId: b.id, payload: { event_id: crypto.randomUUID(), event_type: 'public_order.created', tenant_id: t.id, actor_id: null, aggregate_type: 'booking', aggregate_id: b.id, schema_version: 1, lead_id: lead.id, invoice_id: inv.id } } });
       return this.remember(tx, t.id, "package-order", key, d, response);
     });
@@ -629,7 +631,7 @@ export class PublicService {
             pax,
             estimatedValue: total,
             priority: "HIGH",
-            status: "QUALIFIED",
+            status: "WON",
             verifiedAt: new Date(),
             notes: d.notes,
           },
@@ -639,6 +641,7 @@ export class PublicService {
             tenantId: t.id,
             bookingCode: await this.codes.next(tx, t.id, date),
             customerId: c.id,
+            leadId: lead.id,
             source: "WEBSITE",
             status: "PENDING_PAYMENT",
             packageName: names,
@@ -684,6 +687,7 @@ export class PublicService {
           totalAmount: b.totalAmount,
         };
       await tx.auditLog.create({ data: { tenantId: t.id, actorId: null, action: 'booking.created.public', resourceType: 'Booking', resourceId: b.id, metadata: { source: 'WEBSITE_PRODUCT', leadId: lead.id, invoiceId: inv.id, totalAmount: total, pax } } });
+      await tx.auditLog.create({ data: { tenantId: t.id, actorId: null, action: 'lead.won.booking_created', resourceType: 'Lead', resourceId: lead.id, metadata: { bookingId: b.id, bookingCode: b.bookingCode } } });
       await tx.outboxEvent.create({ data: { tenantId: t.id, eventType: 'public_order.created', aggregateType: 'booking', aggregateId: b.id, payload: { event_id: crypto.randomUUID(), event_type: 'public_order.created', tenant_id: t.id, actor_id: null, aggregate_type: 'booking', aggregate_id: b.id, schema_version: 1, lead_id: lead.id, invoice_id: inv.id } } });
       return this.remember(tx, t.id, "product-order", key, d, response);
     });
