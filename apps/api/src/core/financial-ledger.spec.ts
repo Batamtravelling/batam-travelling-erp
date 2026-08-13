@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildVerifiedPaymentLedgerEntry } from './financial-ledger';
+import { buildPaymentRefundLedgerEntry, buildVerifiedPaymentLedgerEntry } from './financial-ledger';
 
 describe('buildVerifiedPaymentLedgerEntry', () => {
   it('keeps canonical payment lineage and posts a cash receipt', () => {
@@ -47,5 +47,40 @@ describe('buildVerifiedPaymentLedgerEntry', () => {
     });
 
     expect(entry.reference).toBe('PAY-001');
+  });
+});
+
+describe('buildPaymentRefundLedgerEntry', () => {
+  it('posts an immutable refund as an OUT entry with refund lineage', () => {
+    const refundedAt = new Date('2026-08-13T04:00:00.000Z');
+    const entry = buildPaymentRefundLedgerEntry({
+      tenantId: 'tenant-1',
+      recordedById: 'finance-1',
+      refundId: 'refund-1',
+      refundNumber: 'RFD-000001',
+      paymentId: 'payment-1',
+      paymentNumber: 'PAY-001',
+      invoiceId: 'invoice-1',
+      invoiceNumber: 'INV-001',
+      bookingId: 'booking-1',
+      amount: 250000,
+      refundedAt,
+      reference: null,
+      reason: 'Customer cancellation',
+    });
+
+    expect(entry).toMatchObject({
+      refundId: 'refund-1',
+      invoiceId: 'invoice-1',
+      bookingId: 'booking-1',
+      origin: 'REFUND',
+      status: 'POSTED',
+      direction: 'OUT',
+      category: 'CUSTOMER_REFUND',
+      amount: 250000,
+      reference: 'RFD-000001',
+      notes: 'Customer cancellation',
+    });
+    expect(entry.transactionDate).toBe(refundedAt);
   });
 });
