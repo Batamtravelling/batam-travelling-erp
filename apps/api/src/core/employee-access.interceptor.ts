@@ -65,7 +65,7 @@ export class EmployeeAccessInterceptor implements NestInterceptor {
     if (!currentIsPrivileged) return next.handle();
 
     const nextActive = body.active ?? current.active;
-    let nextIsPrivileged = currentIsPrivileged;
+    let nextIsPrivileged: boolean = currentIsPrivileged;
     if (nextRoleIds !== undefined) {
       const roles = nextRoleIds.length
         ? await this.prisma.role.findMany({
