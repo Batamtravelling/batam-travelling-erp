@@ -1,0 +1,110 @@
+[
+  {
+    "route": "/",
+    "desktopOverflow": false,
+    "mobileOverflow": false,
+    "errors": []
+  },
+  {
+    "route": "/account",
+    "desktopOverflow": false,
+    "mobileOverflow": false,
+    "errors": []
+  },
+  {
+    "route": "/archives",
+    "desktopOverflow": false,
+    "mobileOverflow": false,
+    "errors": []
+  },
+  {
+    "route": "/articles",
+    "desktopOverflow": false,
+    "mobileOverflow": false,
+    "errors": []
+  },
+  {
+    "route": "/asset-knowledge",
+    "desktopOverflow": false,
+    "mobileOverflow": false,
+    "errors": []
+  },
+  {
+    "route": "/bookings",
+    "desktopOverflow": false,
+    "mobileOverflow": false,
+    "errors": []
+  },
+  {
+    "route": "/contact",
+    "desktopOverflow": false,
+    "mobileOverflow": false,
+    "errors": []
+  },
+  {
+    "route": "/content",
+    "desktopOverflow": false,
+    "mobileOverflow": false,
+    "errors": []
+  },
+  {
+    "route": "/crm/customers",
+    "desktopOverflow": false,
+    "mobileOverflow": false,
+    "errors": []
+  },
+  {
+    "route": "/crm/leads",
+    "desktopOverflow": false,
+    "mobileOverflow": false,
+    "errors": []
+  },
+  {
+    "route": "/dashboard",
+    "desktopOverflow": false,
+    "mobileOverflow": false,
+    "errors": []
+  },
+  {
+    "route": "/employees",
+    "desktopOverflow": false,
+    "mobileOverflow": false,
+    "errors": []
+  },
+  {
+    "route": "/erp-sign-in",
+    "desktopOverflow": false,
+    "mobileOverflow": false,
+    "errors": []
+  },
+  {
+    "route": "/finance/cashflow",
+    "desktopOverflow": false,
+    "mobileOverflow": false,
+    "errors": []
+  },
+  {
+    "route": "/finance/invoices",
+    "desktopOverflow": false,
+    "mobileOverflow": false,
+    "errors": []
+  },
+  {
+    "route": "/finance/payments",
+    "desktopOverflow": false,
+    "mobileOverflow": false,
+    "errors": []
+  },
+  {
+    "route": "/media-library",
+    "desktopOverflow": false,
+    "mobileOverflow": false,
+    "errors": []
+  },
+  {
+    "route": "/my-trip",
+    "desktopOverflow": false,
+    "mobileOverflow": false,
+    "errors": []
+  }
+]

@@ -403,63 +403,64 @@ enum SurchargeBasis {
 }
 
 model Tenant {
-  id                   String                 @id @default(uuid()) @db.Uuid
-  name                 String
-  slug                 String                 @unique
-  createdAt            DateTime               @default(now()) @map("created_at")
-  updatedAt            DateTime               @updatedAt @map("updated_at")
-  users                User[]
-  customers            Customer[]
-  leads                Lead[]
-  quotations           Quotation[]
-  quotationItems       QuotationItem[]
-  quotationVersions    QuotationVersion[]
-  followUps            FollowUp[]
-  audits               AuditLog[]
-  outbox               OutboxEvent[]
-  taskParticipants     TaskParticipant[]
-  taskComments         TaskComment[]
-  bookingPassengers    BookingPassenger[]
-  packages             TravelPackage[]
-  packageComponents    PackageComponent[]
-  packageItineraries   PackageItinerary[]
-  packageGallery       PackageGallery[]
-  packageDepartures    PackageDeparture[]
-  employeeContracts    EmployeeContract[]
-  employeeDocuments    EmployeeDocument[]
-  departureAssignments DepartureAssignment[]
-  employeeReminders    EmployeeReminder[]
-  fileArchives         FileArchive[]
-  articles             Article[]
-  promotions           Promotion[]
-  customerAccounts     CustomerAccount[]
-  teamAssets           TeamAsset[]
-  knowledgeDocuments   KnowledgeDocument[]
-  knowledgeRevisions   KnowledgeRevision[]
-  companyProfile       CompanyProfile?
-  websiteMedia         WebsiteMediaFile[]
-  vendors              Vendor[]
-  vendorBills          VendorBill[]
-  vendorLedger         VendorLedgerEntry[]
-  financialEntries     FinancialEntry[]
-  packageVendorRates   PackageVendorRate[]
-  serviceProducts      ServiceProduct[]
-  bookingItems         BookingItem[]
-  projects             Project[]
-  tasks                Task[]
-  milestones           ProjectMilestone[]
-  monthlyTargets       ProjectMonthlyTarget[]
-  bookings             Booking[]
-  invoices             Invoice[]
-  payments             Payment[]
-  paymentProofs        PaymentProof[]
-  paymentRefunds       PaymentRefund[]
-  refundPolicy         TenantRefundPolicy?
-  trips                Trip[]
-  assignments          TripAssignment[]
-  businessSequences    BusinessSequence[]
-  idempotencyRecords   IdempotencyRecord[]
-  publicAccessAttempts PublicAccessAttempt[]
+  id                    String                 @id @default(uuid()) @db.Uuid
+  name                  String
+  slug                  String                 @unique
+  createdAt             DateTime               @default(now()) @map("created_at")
+  updatedAt             DateTime               @updatedAt @map("updated_at")
+  users                 User[]
+  customers             Customer[]
+  leads                 Lead[]
+  quotations            Quotation[]
+  quotationItems        QuotationItem[]
+  quotationVersions     QuotationVersion[]
+  followUps             FollowUp[]
+  audits                AuditLog[]
+  outbox                OutboxEvent[]
+  taskParticipants      TaskParticipant[]
+  taskComments          TaskComment[]
+  bookingPassengers     BookingPassenger[]
+  packages              TravelPackage[]
+  packageComponents     PackageComponent[]
+  packageItineraries    PackageItinerary[]
+  packageGallery        PackageGallery[]
+  packageDepartures     PackageDeparture[]
+  employeeContracts     EmployeeContract[]
+  employeeDocuments     EmployeeDocument[]
+  departureAssignments  DepartureAssignment[]
+  employeeReminders     EmployeeReminder[]
+  fileArchives          FileArchive[]
+  articles              Article[]
+  promotions            Promotion[]
+  customerAccounts      CustomerAccount[]
+  customerBookingClaims CustomerBookingClaim[]
+  teamAssets            TeamAsset[]
+  knowledgeDocuments    KnowledgeDocument[]
+  knowledgeRevisions    KnowledgeRevision[]
+  companyProfile        CompanyProfile?
+  websiteMedia          WebsiteMediaFile[]
+  vendors               Vendor[]
+  vendorBills           VendorBill[]
+  vendorLedger          VendorLedgerEntry[]
+  financialEntries      FinancialEntry[]
+  packageVendorRates    PackageVendorRate[]
+  serviceProducts       ServiceProduct[]
+  bookingItems          BookingItem[]
+  projects              Project[]
+  tasks                 Task[]
+  milestones            ProjectMilestone[]
+  monthlyTargets        ProjectMonthlyTarget[]
+  bookings              Booking[]
+  invoices              Invoice[]
+  payments              Payment[]
+  paymentProofs         PaymentProof[]
+  paymentRefunds        PaymentRefund[]
+  refundPolicy          TenantRefundPolicy?
+  trips                 Trip[]
+  assignments           TripAssignment[]
+  businessSequences     BusinessSequence[]
+  idempotencyRecords    IdempotencyRecord[]
+  publicAccessAttempts  PublicAccessAttempt[]
 
   @@map("tenants")
 }
@@ -1333,35 +1334,36 @@ model Customer {
 }
 
 model Booking {
-  id               String             @id @default(uuid()) @db.Uuid
-  tenantId         String             @map("tenant_id") @db.Uuid
-  bookingCode      String             @map("booking_code")
-  customerId       String             @map("customer_id") @db.Uuid
-  packageId        String?            @map("package_id") @db.Uuid
-  departureId      String?            @map("departure_id") @db.Uuid
-  quotationId      String?            @unique @map("quotation_id") @db.Uuid
-  source           BookingSource      @default(MANUAL)
-  status           BookingStatus      @default(DRAFT)
-  packageName      String             @map("package_name")
-  travelDate       DateTime           @map("travel_date") @db.Date
-  returnDate       DateTime?          @map("return_date") @db.Date
+  id               String                 @id @default(uuid()) @db.Uuid
+  tenantId         String                 @map("tenant_id") @db.Uuid
+  bookingCode      String                 @map("booking_code")
+  customerId       String                 @map("customer_id") @db.Uuid
+  packageId        String?                @map("package_id") @db.Uuid
+  departureId      String?                @map("departure_id") @db.Uuid
+  quotationId      String?                @unique @map("quotation_id") @db.Uuid
+  source           BookingSource          @default(MANUAL)
+  status           BookingStatus          @default(DRAFT)
+  packageName      String                 @map("package_name")
+  travelDate       DateTime               @map("travel_date") @db.Date
+  returnDate       DateTime?              @map("return_date") @db.Date
   pax              Int
-  totalAmount      Decimal            @map("total_amount") @db.Decimal(18, 2)
-  dpPercentage     Decimal            @default(50) @map("dp_percentage") @db.Decimal(5, 2)
-  paidAmount       Decimal            @default(0) @map("paid_amount") @db.Decimal(18, 2)
+  totalAmount      Decimal                @map("total_amount") @db.Decimal(18, 2)
+  dpPercentage     Decimal                @default(50) @map("dp_percentage") @db.Decimal(5, 2)
+  paidAmount       Decimal                @default(0) @map("paid_amount") @db.Decimal(18, 2)
   notes            String?
-  createdAt        DateTime           @default(now()) @map("created_at")
-  updatedAt        DateTime           @updatedAt @map("updated_at")
-  tenant           Tenant             @relation(fields: [tenantId], references: [id], onDelete: Restrict)
-  customer         Customer           @relation(fields: [customerId], references: [id], onDelete: Restrict)
-  package          TravelPackage?     @relation(fields: [packageId], references: [id], onDelete: SetNull)
-  departure        PackageDeparture?  @relation(fields: [departureId], references: [id], onDelete: SetNull)
-  quotation        Quotation?         @relation(fields: [quotationId], references: [id], onDelete: SetNull)
+  createdAt        DateTime               @default(now()) @map("created_at")
+  updatedAt        DateTime               @updatedAt @map("updated_at")
+  tenant           Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  customer         Customer               @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  package          TravelPackage?         @relation(fields: [packageId], references: [id], onDelete: SetNull)
+  departure        PackageDeparture?      @relation(fields: [departureId], references: [id], onDelete: SetNull)
+  quotation        Quotation?             @relation(fields: [quotationId], references: [id], onDelete: SetNull)
   invoice          Invoice?
   trip             Trip?
   items            BookingItem[]
   passengers       BookingPassenger[]
   financialEntries FinancialEntry[]
+  customerClaims   CustomerBookingClaim[]
 
   @@unique([tenantId, bookingCode])
   @@index([tenantId, status, travelDate])
@@ -1866,21 +1868,38 @@ model PromotionPackage {
 }
 
 model CustomerAccount {
-  id           String            @id @default(uuid()) @db.Uuid
-  tenantId     String            @map("tenant_id") @db.Uuid
-  customerId   String            @unique @map("customer_id") @db.Uuid
-  email        String
-  passwordHash String            @map("password_hash")
-  active       Boolean           @default(true)
-  lastLoginAt  DateTime?         @map("last_login_at")
-  createdAt    DateTime          @default(now()) @map("created_at")
-  updatedAt    DateTime          @updatedAt @map("updated_at")
-  tenant       Tenant            @relation(fields: [tenantId], references: [id], onDelete: Restrict)
-  customer     Customer          @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  sessions     CustomerSession[]
+  id            String                 @id @default(uuid()) @db.Uuid
+  tenantId      String                 @map("tenant_id") @db.Uuid
+  customerId    String                 @unique @map("customer_id") @db.Uuid
+  email         String
+  passwordHash  String                 @map("password_hash")
+  active        Boolean                @default(true)
+  lastLoginAt   DateTime?              @map("last_login_at")
+  createdAt     DateTime               @default(now()) @map("created_at")
+  updatedAt     DateTime               @updatedAt @map("updated_at")
+  tenant        Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  customer      Customer               @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  sessions      CustomerSession[]
+  bookingClaims CustomerBookingClaim[]
 
   @@unique([tenantId, email])
   @@map("customer_accounts")
+}
+
+model CustomerBookingClaim {
+  id         String          @id @default(uuid()) @db.Uuid
+  tenantId   String          @map("tenant_id") @db.Uuid
+  accountId  String          @map("account_id") @db.Uuid
+  bookingId  String          @map("booking_id") @db.Uuid
+  verifiedAt DateTime        @default(now()) @map("verified_at")
+  tenant     Tenant          @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  account    CustomerAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  booking    Booking         @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@unique([accountId, bookingId])
+  @@index([tenantId, accountId, verifiedAt])
+  @@index([tenantId, bookingId])
+  @@map("customer_booking_claims")
 }
 
 model CustomerSession {

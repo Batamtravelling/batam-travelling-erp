@@ -72,9 +72,9 @@ export default function Page() {
 
   return (
     <main className="vendorPage">
-      <header className="vendorHero">
-        <div>
-          <span>FINANCIAL CONTROL</span>
+      <header className="pageHeader">
+        <div className="pageHeaderContent">
+          <nav className="pageBreadcrumb" aria-label="Breadcrumb"><span>Finance</span><span aria-hidden="true">/</span><strong>Arus Kas & Biaya</strong></nav>
           <h1>Arus Kas & Biaya</h1>
           <p>Uang masuk/keluar, biaya operasional, biaya tetap, Project, Trip, dan Vendor.</p>
         </div>
@@ -102,7 +102,7 @@ export default function Page() {
       )}
 
       <section className="cashGrid">
-        <form className="vendorForm" onSubmit={save}>
+        <form className="vendorForm cashForm" onSubmit={save}>
           <h2>Catat Transaksi</h2>
           <div className="vTwo">
             <label>Arah<select name="direction"><option>OUT</option><option>IN</option></select></label>

@@ -1,4 +1,4 @@
-import { CanActivate, createParamDecorator, ExecutionContext, ForbiddenException, Injectable, SetMetadata, UnauthorizedException } from '@nestjs/common';
+import { CanActivate, createParamDecorator, ExecutionContext, ForbiddenException, Inject, Injectable, SetMetadata, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { createRemoteJWKSet, jwtVerify, JWTPayload } from 'jose';
 import { PrismaService } from './prisma.service.js';
@@ -12,7 +12,7 @@ const jwksByUrl = new Map<string, ReturnType<typeof createRemoteJWKSet>>();
 
 @Injectable()
 export class IdentityGuard implements CanActivate {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   private async authenticateSupabase(authorization: string) {
     const supabaseUrl = process.env.SUPABASE_URL?.replace(/\/$/, '');
@@ -92,7 +92,7 @@ export class IdentityGuard implements CanActivate {
 
 @Injectable()
 export class PermissionGuard implements CanActivate {
-  constructor(private readonly reflector: Reflector) {}
+  constructor(@Inject(Reflector) private readonly reflector: Reflector) {}
   canActivate(context: ExecutionContext): boolean {
     const required = this.reflector.getAllAndOverride<string[]>('permissions', [context.getHandler(), context.getClass()]) ?? [];
     if (required.length === 0) return true;

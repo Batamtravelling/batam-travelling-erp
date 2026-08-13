@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { apiGet } from "../lib/api";
+import { demoPromotions, demoTrips, publicDemoEnabled } from "../lib/public-demo-data";
 
 type Pack = {
   id: string;
@@ -53,6 +54,11 @@ export function WebsiteHighlights({
   const [promos, setPromos] = useState<Promo[]>([]);
 
   useEffect(() => {
+    if (publicDemoEnabled) {
+      setPacks(demoTrips as unknown as Pack[]);
+      setPromos(demoPromotions as unknown as Promo[]);
+      return;
+    }
     Promise.all([
       apiGet<Pack[]>("/public/packages"),
       apiGet<Promo[]>("/public/promotions"),
@@ -71,7 +77,7 @@ export function WebsiteHighlights({
   const popular = useMemo(() => packs.slice(0, 4), [packs]);
   const flash = promos[0];
   const select = (id: string) =>
-    onSelect ? onSelect(id) : location.assign(`/?package=${id}#trips`);
+    onSelect ? onSelect(id) : location.assign(`/trips/${encodeURIComponent(id)}`);
 
   return (
     <>
@@ -128,7 +134,7 @@ export function WebsiteHighlights({
             <h2>Open Trip terdekat</h2>
             <p>Pilih jadwal dan lihat fasilitas lengkap sebelum booking.</p>
           </div>
-          <a href="#trips">Semua paket →</a>
+          <a href="/trips">Semua paket →</a>
         </header>
         <div className="scheduleCardGrid">
           {openTrips.length ? (

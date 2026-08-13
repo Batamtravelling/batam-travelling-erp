@@ -1,0 +1,1 @@
+'use client';import{PublicState}from'../components/public-ui';export default function ErrorPage(){return <main className="publicPage"><PublicState kind="error" title="Halaman tidak dapat ditampilkan" description="Terjadi gangguan saat memuat halaman. Silakan kembali ke katalog." actionHref="/trips" actionLabel="Kembali ke katalog"/></main>}

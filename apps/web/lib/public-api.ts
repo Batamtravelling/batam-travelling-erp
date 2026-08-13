@@ -2,6 +2,8 @@ export type PublicApiResult<T> =
   | { ok: true; data: T }
   | { ok: false; kind: 'not-found' | 'configuration' | 'upstream'; status?: number; requestId?: string };
 
+import { demoForPath, publicDemoEnabled } from './public-demo-data';
+
 function apiOrigin(): string | null {
   const configured = process.env.SERVER_API_URL ?? process.env.NEXT_PUBLIC_API_URL;
   if (configured) return configured.replace(/\/$/, '');
@@ -9,6 +11,10 @@ function apiOrigin(): string | null {
 }
 
 export async function publicApiGet<T>(path: string): Promise<PublicApiResult<T>> {
+  if (publicDemoEnabled) {
+    const demo = demoForPath(path);
+    return demo === undefined ? { ok: false, kind: 'not-found', status: 404 } : { ok: true, data: demo as T };
+  }
   const origin = apiOrigin();
   if (!origin) return { ok: false, kind: 'configuration' };
   try {

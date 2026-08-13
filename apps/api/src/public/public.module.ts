@@ -14,10 +14,12 @@ import {
   Param,
   Post,
   Req,
+  ValidationPipe,
 } from "@nestjs/common";
 import { createHash } from "node:crypto";
 import { Type } from "class-transformer";
 import {
+  Equals,
   IsArray,
   IsDateString,
   IsEmail,
@@ -26,6 +28,7 @@ import {
   IsString,
   IsUUID,
   MaxLength,
+  Matches,
   Min,
   ValidateNested,
 } from "class-validator";
@@ -52,7 +55,7 @@ function normalizeEmail(email?: string) {
 }
 class BookingAccessDto {
   @IsString() @MaxLength(30) bookingCode!: string;
-  @IsString() @MaxLength(40) phone!: string;
+  @IsString() @MaxLength(40) @Matches(/^\+?[0-9][0-9\s().-]{7,20}$/) phone!: string;
 }
 class OrderItemDto {
   @IsUUID() productId!: string;
@@ -63,10 +66,11 @@ class WebsiteOrderDto {
   @IsUUID() packageId!: string;
   @IsOptional() @IsUUID() departureId?: string;
   @IsString() @MaxLength(160) fullName!: string;
-  @IsString() @MaxLength(40) phone!: string;
+  @IsString() @MaxLength(40) @Matches(/^\+?[0-9][0-9\s().-]{7,20}$/) phone!: string;
   @IsOptional() @IsEmail() email?: string;
   @IsDateString() travelDate!: string;
   @IsInt() @Min(1) pax!: number;
+  @Equals(true) acceptedTerms!: boolean;
   @IsOptional() @IsString() notes?: string;
   @IsOptional()
   @IsArray()
@@ -820,7 +824,7 @@ class PublicController {
   }
   @Post("orders") order(
     @Headers("idempotency-key") key: string,
-    @Body() d: WebsiteOrderDto,
+    @Body(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true, expectedType: WebsiteOrderDto })) d: WebsiteOrderDto,
   ) {
     return this.s.order(d, key);
   }

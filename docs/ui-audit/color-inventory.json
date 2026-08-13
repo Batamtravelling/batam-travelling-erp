@@ -1,0 +1,3267 @@
+{
+  "generatedAt": "2026-08-13T12:02:48.281Z",
+  "uniqueColorCount": 226,
+  "approved": [
+    "#082653",
+    "#061A38",
+    "#123B70",
+    "#FFBF18",
+    "#E5A800",
+    "#F4F7FB",
+    "#FFFFFF",
+    "#102747",
+    "#667085",
+    "#DCE3EC"
+  ],
+  "semanticAllowlist": [
+    "#15803D",
+    "#047857",
+    "#147647",
+    "#16804D",
+    "#22C55E",
+    "#16A34A",
+    "#B91C1C",
+    "#B42318",
+    "#BE123C",
+    "#EF4444",
+    "#F59E0B",
+    "#9A3412",
+    "#92400E",
+    "#1E40AF",
+    "#2167D9",
+    "#3B82F6",
+    "#60A5FA"
+  ],
+  "colors": [
+    {
+      "value": "white",
+      "count": 43,
+      "files": [
+        "apps/web/app/asset-knowledge/asset-knowledge.css",
+        "apps/web/app/branding-contact.css",
+        "apps/web/app/crm/leads/[id]/page.tsx",
+        "apps/web/app/crm-pipeline.css",
+        "apps/web/app/crm-trip-improvements.css",
+        "apps/web/app/operations/open-trips/open-trips.css",
+        "apps/web/app/packages/page.tsx",
+        "apps/web/app/public-shell.css",
+        "apps/web/app/public-site.css",
+        "apps/web/app/sales/quotations/page.tsx",
+        "apps/web/app/styles.css",
+        "apps/web/app/vendors/vendors.css",
+        "apps/web/components/crm-editor.tsx",
+        "apps/web/components/crm-list.tsx"
+      ],
+      "locations": [
+        "apps/web/app/asset-knowledge/asset-knowledge.css:1",
+        "apps/web/app/asset-knowledge/asset-knowledge.css:1",
+        "apps/web/app/branding-contact.css:3",
+        "apps/web/app/crm/leads/[id]/page.tsx:9",
+        "apps/web/app/crm-pipeline.css:1",
+        "apps/web/app/crm-pipeline.css:1",
+        "apps/web/app/crm-pipeline.css:1",
+        "apps/web/app/crm-pipeline.css:1",
+        "apps/web/app/crm-pipeline.css:1",
+        "apps/web/app/crm-trip-improvements.css:1",
+        "apps/web/app/crm-trip-improvements.css:1",
+        "apps/web/app/operations/open-trips/open-trips.css:1"
+      ],
+      "kind": "functional/named",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#0F766E",
+      "count": 19,
+      "files": [
+        "apps/web/app/crm/leads/[id]/page.tsx",
+        "apps/web/app/crm-pipeline.css",
+        "apps/web/app/operations/open-trips/open-trips.css",
+        "apps/web/app/packages/page.tsx",
+        "apps/web/app/sales/quotations/page.tsx",
+        "apps/web/app/sales/quotations/quotation-print.css",
+        "apps/web/components/crm-editor.tsx",
+        "apps/web/components/crm-list.tsx"
+      ],
+      "locations": [
+        "apps/web/app/crm/leads/[id]/page.tsx:10",
+        "apps/web/app/crm-pipeline.css:1",
+        "apps/web/app/crm-pipeline.css:1",
+        "apps/web/app/crm-pipeline.css:1",
+        "apps/web/app/crm-pipeline.css:1",
+        "apps/web/app/crm-pipeline.css:1",
+        "apps/web/app/operations/open-trips/open-trips.css:1",
+        "apps/web/app/operations/open-trips/open-trips.css:1",
+        "apps/web/app/operations/open-trips/open-trips.css:1",
+        "apps/web/app/operations/open-trips/open-trips.css:1",
+        "apps/web/app/operations/open-trips/open-trips.css:1",
+        "apps/web/app/operations/open-trips/open-trips.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "transparent",
+      "count": 15,
+      "files": [
+        "apps/web/app/asset-knowledge/asset-knowledge.css",
+        "apps/web/app/crm-pipeline.css",
+        "apps/web/app/my-trip/portal.css",
+        "apps/web/app/operations/open-trips/open-trips.css",
+        "apps/web/app/project-planner.css",
+        "apps/web/app/public-shell.css",
+        "apps/web/app/styles.css",
+        "apps/web/app/vendors/vendors.css",
+        "apps/web/components/crm-editor.tsx"
+      ],
+      "locations": [
+        "apps/web/app/asset-knowledge/asset-knowledge.css:1",
+        "apps/web/app/crm-pipeline.css:1",
+        "apps/web/app/crm-pipeline.css:1",
+        "apps/web/app/my-trip/portal.css:1",
+        "apps/web/app/operations/open-trips/open-trips.css:1",
+        "apps/web/app/project-planner.css:1",
+        "apps/web/app/project-planner.css:1",
+        "apps/web/app/public-shell.css:12",
+        "apps/web/app/styles.css:73",
+        "apps/web/app/styles.css:113",
+        "apps/web/app/styles.css:128",
+        "apps/web/app/styles.css:139"
+      ],
+      "kind": "functional/named",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#2167D9",
+      "count": 12,
+      "files": [
+        "apps/web/app/crm-pipeline.css",
+        "apps/web/app/design-tokens.css",
+        "apps/web/app/project-planner.css",
+        "apps/web/app/styles.css",
+        "apps/web/app/work.css"
+      ],
+      "locations": [
+        "apps/web/app/crm-pipeline.css:1",
+        "apps/web/app/crm-pipeline.css:1",
+        "apps/web/app/design-tokens.css:27",
+        "apps/web/app/project-planner.css:1",
+        "apps/web/app/project-planner.css:1",
+        "apps/web/app/project-planner.css:1",
+        "apps/web/app/project-planner.css:1",
+        "apps/web/app/styles.css:1",
+        "apps/web/app/styles.css:95",
+        "apps/web/app/styles.css:95",
+        "apps/web/app/work.css:1",
+        "apps/web/app/work.css:1"
+      ],
+      "kind": "hex",
+      "classification": "semantic exception",
+      "action": "keep via token"
+    },
+    {
+      "value": "#64748B",
+      "count": 9,
+      "files": [
+        "apps/web/app/crm/leads/[id]/page.tsx",
+        "apps/web/app/packages/page.tsx",
+        "apps/web/app/sales/quotations/page.tsx",
+        "apps/web/components/crm-editor.tsx"
+      ],
+      "locations": [
+        "apps/web/app/crm/leads/[id]/page.tsx:12",
+        "apps/web/app/packages/page.tsx:73",
+        "apps/web/app/packages/page.tsx:75",
+        "apps/web/app/packages/page.tsx:95",
+        "apps/web/app/packages/page.tsx:95",
+        "apps/web/app/packages/page.tsx:114",
+        "apps/web/app/packages/page.tsx:118",
+        "apps/web/app/sales/quotations/page.tsx:11",
+        "apps/web/components/crm-editor.tsx:168"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#1265D6",
+      "count": 7,
+      "files": [
+        "apps/web/app/asset-knowledge/asset-knowledge.css",
+        "apps/web/app/public-commerce.css",
+        "apps/web/app/reports/report-center.css",
+        "apps/web/app/vendors/vendors.css"
+      ],
+      "locations": [
+        "apps/web/app/asset-knowledge/asset-knowledge.css:1",
+        "apps/web/app/asset-knowledge/asset-knowledge.css:1",
+        "apps/web/app/public-commerce.css:1",
+        "apps/web/app/public-commerce.css:1",
+        "apps/web/app/reports/report-center.css:1",
+        "apps/web/app/vendors/vendors.css:1",
+        "apps/web/app/vendors/vendors.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#E2E8F0",
+      "count": 7,
+      "files": [
+        "apps/web/app/packages/page.tsx",
+        "apps/web/components/data-shell.tsx"
+      ],
+      "locations": [
+        "apps/web/app/packages/page.tsx:115",
+        "apps/web/components/data-shell.tsx:52",
+        "apps/web/components/data-shell.tsx:55",
+        "apps/web/components/data-shell.tsx:58",
+        "apps/web/components/data-shell.tsx:61",
+        "apps/web/components/data-shell.tsx:64",
+        "apps/web/components/data-shell.tsx:67"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#EEF2F7",
+      "count": 7,
+      "files": [
+        "apps/web/app/crm-pipeline.css",
+        "apps/web/app/operations/open-trips/open-trips.css",
+        "apps/web/app/project-planner.css",
+        "apps/web/app/styles.css"
+      ],
+      "locations": [
+        "apps/web/app/crm-pipeline.css:1",
+        "apps/web/app/operations/open-trips/open-trips.css:1",
+        "apps/web/app/project-planner.css:1",
+        "apps/web/app/styles.css:30",
+        "apps/web/app/styles.css:35",
+        "apps/web/app/styles.css:46",
+        "apps/web/app/styles.css:53"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#0B3970",
+      "count": 6,
+      "files": [
+        "apps/web/app/branding-contact.css"
+      ],
+      "locations": [
+        "apps/web/app/branding-contact.css:2",
+        "apps/web/app/branding-contact.css:3",
+        "apps/web/app/branding-contact.css:6",
+        "apps/web/app/branding-contact.css:6",
+        "apps/web/app/branding-contact.css:6",
+        "apps/web/app/branding-contact.css:6"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#147647",
+      "count": 6,
+      "files": [
+        "apps/web/app/asset-knowledge/asset-knowledge.css",
+        "apps/web/app/crm-trip-improvements.css",
+        "apps/web/app/design-tokens.css",
+        "apps/web/app/vendors/vendors.css"
+      ],
+      "locations": [
+        "apps/web/app/asset-knowledge/asset-knowledge.css:1",
+        "apps/web/app/crm-trip-improvements.css:1",
+        "apps/web/app/crm-trip-improvements.css:1",
+        "apps/web/app/crm-trip-improvements.css:1",
+        "apps/web/app/design-tokens.css:17",
+        "apps/web/app/vendors/vendors.css:1"
+      ],
+      "kind": "hex",
+      "classification": "semantic exception",
+      "action": "keep via token"
+    },
+    {
+      "value": "#748196",
+      "count": 6,
+      "files": [
+        "apps/web/app/asset-knowledge/asset-knowledge.css",
+        "apps/web/app/reports/report-center.css",
+        "apps/web/app/vendors/vendors.css"
+      ],
+      "locations": [
+        "apps/web/app/asset-knowledge/asset-knowledge.css:1",
+        "apps/web/app/asset-knowledge/asset-knowledge.css:1",
+        "apps/web/app/asset-knowledge/asset-knowledge.css:1",
+        "apps/web/app/reports/report-center.css:1",
+        "apps/web/app/vendors/vendors.css:1",
+        "apps/web/app/vendors/vendors.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#EEF1F5",
+      "count": 6,
+      "files": [
+        "apps/web/app/crm-pipeline.css",
+        "apps/web/app/project-planner.css"
+      ],
+      "locations": [
+        "apps/web/app/crm-pipeline.css:1",
+        "apps/web/app/crm-pipeline.css:1",
+        "apps/web/app/crm-pipeline.css:1",
+        "apps/web/app/project-planner.css:1",
+        "apps/web/app/project-planner.css:1",
+        "apps/web/app/project-planner.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#075FC4",
+      "count": 5,
+      "files": [
+        "apps/web/app/asset-knowledge/asset-knowledge.css",
+        "apps/web/app/public-commerce.css",
+        "apps/web/app/vendors/vendors.css"
+      ],
+      "locations": [
+        "apps/web/app/asset-knowledge/asset-knowledge.css:1",
+        "apps/web/app/asset-knowledge/asset-knowledge.css:1",
+        "apps/web/app/asset-knowledge/asset-knowledge.css:1",
+        "apps/web/app/public-commerce.css:2",
+        "apps/web/app/vendors/vendors.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#0868D5",
+      "count": 5,
+      "files": [
+        "apps/web/app/crm-trip-improvements.css"
+      ],
+      "locations": [
+        "apps/web/app/crm-trip-improvements.css:1",
+        "apps/web/app/crm-trip-improvements.css:1",
+        "apps/web/app/crm-trip-improvements.css:1",
+        "apps/web/app/crm-trip-improvements.css:1",
+        "apps/web/app/crm-trip-improvements.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#B42318",
+      "count": 5,
+      "files": [
+        "apps/web/app/design-tokens.css",
+        "apps/web/app/reports/report-center.css",
+        "apps/web/app/styles.css",
+        "apps/web/app/vendors/vendors.css"
+      ],
+      "locations": [
+        "apps/web/app/design-tokens.css:21",
+        "apps/web/app/reports/report-center.css:1",
+        "apps/web/app/styles.css:34",
+        "apps/web/app/vendors/vendors.css:1",
+        "apps/web/app/vendors/vendors.css:1"
+      ],
+      "kind": "hex",
+      "classification": "semantic exception",
+      "action": "keep via token"
+    },
+    {
+      "value": "#CBD5E1",
+      "count": 5,
+      "files": [
+        "apps/web/app/packages/page.tsx",
+        "apps/web/components/crm-editor.tsx",
+        "apps/web/components/crm-list.tsx"
+      ],
+      "locations": [
+        "apps/web/app/packages/page.tsx:136",
+        "apps/web/components/crm-editor.tsx:260",
+        "apps/web/components/crm-editor.tsx:274",
+        "apps/web/components/crm-list.tsx:15",
+        "apps/web/components/crm-list.tsx:15"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#EF4444",
+      "count": 5,
+      "files": [
+        "apps/web/app/crm-pipeline.css",
+        "apps/web/app/project-planner.css",
+        "apps/web/app/styles.css",
+        "apps/web/components/crm-editor.tsx"
+      ],
+      "locations": [
+        "apps/web/app/crm-pipeline.css:1",
+        "apps/web/app/project-planner.css:1",
+        "apps/web/app/styles.css:59",
+        "apps/web/components/crm-editor.tsx:256",
+        "apps/web/components/crm-editor.tsx:256"
+      ],
+      "kind": "hex",
+      "classification": "semantic exception",
+      "action": "keep via token"
+    },
+    {
+      "value": "rgba(15, 23, 42, 0.08)",
+      "count": 5,
+      "files": [
+        "apps/web/app/crm/leads/[id]/page.tsx",
+        "apps/web/app/packages/page.tsx",
+        "apps/web/app/sales/quotations/page.tsx"
+      ],
+      "locations": [
+        "apps/web/app/crm/leads/[id]/page.tsx:9",
+        "apps/web/app/packages/page.tsx:70",
+        "apps/web/app/packages/page.tsx:94",
+        "apps/web/app/packages/page.tsx:110",
+        "apps/web/app/sales/quotations/page.tsx:7"
+      ],
+      "kind": "functional/named",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#082653",
+      "count": 4,
+      "files": [
+        "apps/web/app/design-tokens.css"
+      ],
+      "locations": [
+        "apps/web/app/design-tokens.css:2",
+        "apps/web/app/design-tokens.css:14",
+        "apps/web/app/design-tokens.css:25",
+        "apps/web/app/design-tokens.css:28"
+      ],
+      "kind": "hex",
+      "classification": "approved token value",
+      "action": "keep via token"
+    },
+    {
+      "value": "#B91C1C",
+      "count": 4,
+      "files": [
+        "apps/web/app/crm-pipeline.css",
+        "apps/web/app/public-commerce.css",
+        "apps/web/components/crm-editor.tsx",
+        "apps/web/components/data-shell.tsx"
+      ],
+      "locations": [
+        "apps/web/app/crm-pipeline.css:1",
+        "apps/web/app/public-commerce.css:1",
+        "apps/web/components/crm-editor.tsx:177",
+        "apps/web/components/data-shell.tsx:47"
+      ],
+      "kind": "hex",
+      "classification": "semantic exception",
+      "action": "keep via token"
+    },
+    {
+      "value": "#EFF6FF",
+      "count": 4,
+      "files": [
+        "apps/web/app/crm-pipeline.css",
+        "apps/web/app/design-tokens.css",
+        "apps/web/app/project-planner.css",
+        "apps/web/app/styles.css"
+      ],
+      "locations": [
+        "apps/web/app/crm-pipeline.css:1",
+        "apps/web/app/design-tokens.css:24",
+        "apps/web/app/project-planner.css:1",
+        "apps/web/app/styles.css:66"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#F1F5F9",
+      "count": 4,
+      "files": [
+        "apps/web/app/crm-pipeline.css",
+        "apps/web/app/operations/open-trips/open-trips.css",
+        "apps/web/app/sales/quotations/quotation-print.css"
+      ],
+      "locations": [
+        "apps/web/app/crm-pipeline.css:1",
+        "apps/web/app/crm-pipeline.css:1",
+        "apps/web/app/operations/open-trips/open-trips.css:1",
+        "apps/web/app/sales/quotations/quotation-print.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#FFBF18",
+      "count": 4,
+      "files": [
+        "apps/web/app/design-tokens.css"
+      ],
+      "locations": [
+        "apps/web/app/design-tokens.css:5",
+        "apps/web/app/design-tokens.css:16",
+        "apps/web/app/design-tokens.css:26",
+        "apps/web/app/design-tokens.css:32"
+      ],
+      "kind": "hex",
+      "classification": "approved token value",
+      "action": "keep via token"
+    },
+    {
+      "value": "#FFF7ED",
+      "count": 4,
+      "files": [
+        "apps/web/app/crm-pipeline.css",
+        "apps/web/app/project-planner.css",
+        "apps/web/app/work.css"
+      ],
+      "locations": [
+        "apps/web/app/crm-pipeline.css:1",
+        "apps/web/app/crm-pipeline.css:1",
+        "apps/web/app/project-planner.css:1",
+        "apps/web/app/work.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#061A38",
+      "count": 3,
+      "files": [
+        "apps/web/app/design-tokens.css"
+      ],
+      "locations": [
+        "apps/web/app/design-tokens.css:3",
+        "apps/web/app/design-tokens.css:29",
+        "apps/web/app/design-tokens.css:34"
+      ],
+      "kind": "hex",
+      "classification": "approved token value",
+      "action": "keep via token"
+    },
+    {
+      "value": "#0D5FBA",
+      "count": 3,
+      "files": [
+        "apps/web/app/packages/page.tsx",
+        "apps/web/app/reports/report-center.css",
+        "apps/web/app/vendors/vendors.css"
+      ],
+      "locations": [
+        "apps/web/app/packages/page.tsx:106",
+        "apps/web/app/reports/report-center.css:1",
+        "apps/web/app/vendors/vendors.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#0F172A",
+      "count": 3,
+      "files": [
+        "apps/web/app/operations/open-trips/open-trips.css",
+        "apps/web/app/sales/quotations/quotation-print.css"
+      ],
+      "locations": [
+        "apps/web/app/operations/open-trips/open-trips.css:1",
+        "apps/web/app/operations/open-trips/open-trips.css:1",
+        "apps/web/app/sales/quotations/quotation-print.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#123B70",
+      "count": 3,
+      "files": [
+        "apps/web/app/design-tokens.css"
+      ],
+      "locations": [
+        "apps/web/app/design-tokens.css:4",
+        "apps/web/app/design-tokens.css:15",
+        "apps/web/app/design-tokens.css:30"
+      ],
+      "kind": "hex",
+      "classification": "approved token value",
+      "action": "keep via token"
+    },
+    {
+      "value": "#14304B",
+      "count": 3,
+      "files": [
+        "apps/web/app/sales/quotations/quotation-print.css",
+        "apps/web/app/work.css"
+      ],
+      "locations": [
+        "apps/web/app/sales/quotations/quotation-print.css:3",
+        "apps/web/app/work.css:1",
+        "apps/web/app/work.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#607087",
+      "count": 3,
+      "files": [
+        "apps/web/app/reports/report-center.css",
+        "apps/web/app/tasks/page.tsx"
+      ],
+      "locations": [
+        "apps/web/app/reports/report-center.css:1",
+        "apps/web/app/tasks/page.tsx:56",
+        "apps/web/app/tasks/page.tsx:56"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#738196",
+      "count": 3,
+      "files": [
+        "apps/web/app/asset-knowledge/asset-knowledge.css",
+        "apps/web/app/vendors/vendors.css"
+      ],
+      "locations": [
+        "apps/web/app/asset-knowledge/asset-knowledge.css:1",
+        "apps/web/app/asset-knowledge/asset-knowledge.css:1",
+        "apps/web/app/vendors/vendors.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#94A3B8",
+      "count": 3,
+      "files": [
+        "apps/web/app/operations/open-trips/open-trips.css",
+        "apps/web/app/project-planner.css"
+      ],
+      "locations": [
+        "apps/web/app/operations/open-trips/open-trips.css:1",
+        "apps/web/app/operations/open-trips/open-trips.css:1",
+        "apps/web/app/project-planner.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#D9EAFF",
+      "count": 3,
+      "files": [
+        "apps/web/app/asset-knowledge/asset-knowledge.css",
+        "apps/web/app/reports/report-center.css",
+        "apps/web/app/vendors/vendors.css"
+      ],
+      "locations": [
+        "apps/web/app/asset-knowledge/asset-knowledge.css:1",
+        "apps/web/app/reports/report-center.css:1",
+        "apps/web/app/vendors/vendors.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#DBE5F0",
+      "count": 3,
+      "files": [
+        "apps/web/app/branding-contact.css"
+      ],
+      "locations": [
+        "apps/web/app/branding-contact.css:2",
+        "apps/web/app/branding-contact.css:6",
+        "apps/web/app/branding-contact.css:6"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#E8F8EF",
+      "count": 3,
+      "files": [
+        "apps/web/app/asset-knowledge/asset-knowledge.css",
+        "apps/web/app/design-tokens.css",
+        "apps/web/app/vendors/vendors.css"
+      ],
+      "locations": [
+        "apps/web/app/asset-knowledge/asset-knowledge.css:1",
+        "apps/web/app/design-tokens.css:18",
+        "apps/web/app/vendors/vendors.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#EDF1F5",
+      "count": 3,
+      "files": [
+        "apps/web/app/asset-knowledge/asset-knowledge.css",
+        "apps/web/app/vendors/vendors.css"
+      ],
+      "locations": [
+        "apps/web/app/asset-knowledge/asset-knowledge.css:1",
+        "apps/web/app/asset-knowledge/asset-knowledge.css:1",
+        "apps/web/app/vendors/vendors.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#F59E0B",
+      "count": 3,
+      "files": [
+        "apps/web/app/operations/open-trips/open-trips.css",
+        "apps/web/app/styles.css"
+      ],
+      "locations": [
+        "apps/web/app/operations/open-trips/open-trips.css:1",
+        "apps/web/app/styles.css:58",
+        "apps/web/app/styles.css:66"
+      ],
+      "kind": "hex",
+      "classification": "semantic exception",
+      "action": "keep via token"
+    },
+    {
+      "value": "#FFF",
+      "count": 3,
+      "files": [
+        "apps/web/app/design-tokens.css",
+        "apps/web/app/packages/page.tsx"
+      ],
+      "locations": [
+        "apps/web/app/design-tokens.css:8",
+        "apps/web/app/design-tokens.css:12",
+        "apps/web/app/packages/page.tsx:106"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "linear-gradient(125deg,#073b87,#087fe2)",
+      "count": 3,
+      "files": [
+        "apps/web/app/asset-knowledge/asset-knowledge.css",
+        "apps/web/app/reports/report-center.css",
+        "apps/web/app/vendors/vendors.css"
+      ],
+      "locations": [
+        "apps/web/app/asset-knowledge/asset-knowledge.css:1",
+        "apps/web/app/reports/report-center.css:1",
+        "apps/web/app/vendors/vendors.css:1"
+      ],
+      "kind": "gradient",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "rgba(16,35,61,.04)",
+      "count": 3,
+      "files": [
+        "apps/web/app/styles.css"
+      ],
+      "locations": [
+        "apps/web/app/styles.css:13",
+        "apps/web/app/styles.css:17",
+        "apps/web/app/styles.css:51"
+      ],
+      "kind": "functional/named",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#071D3A",
+      "count": 2,
+      "files": [
+        "apps/web/app/branding-contact.css"
+      ],
+      "locations": [
+        "apps/web/app/branding-contact.css:2",
+        "apps/web/app/branding-contact.css:3"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#072A5C",
+      "count": 2,
+      "files": [
+        "apps/web/app/public-commerce.css"
+      ],
+      "locations": [
+        "apps/web/app/public-commerce.css:1",
+        "apps/web/app/public-commerce.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#102843",
+      "count": 2,
+      "files": [
+        "apps/web/app/branding-contact.css",
+        "apps/web/app/crm-trip-improvements.css"
+      ],
+      "locations": [
+        "apps/web/app/branding-contact.css:1",
+        "apps/web/app/crm-trip-improvements.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#102A43",
+      "count": 2,
+      "files": [
+        "apps/web/app/branding-contact.css"
+      ],
+      "locations": [
+        "apps/web/app/branding-contact.css:3",
+        "apps/web/app/branding-contact.css:7"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#143251",
+      "count": 2,
+      "files": [
+        "apps/web/app/asset-knowledge/asset-knowledge.css",
+        "apps/web/app/reports/report-center.css"
+      ],
+      "locations": [
+        "apps/web/app/asset-knowledge/asset-knowledge.css:1",
+        "apps/web/app/reports/report-center.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#14B8A6",
+      "count": 2,
+      "files": [
+        "apps/web/app/operations/open-trips/open-trips.css"
+      ],
+      "locations": [
+        "apps/web/app/operations/open-trips/open-trips.css:1",
+        "apps/web/app/operations/open-trips/open-trips.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#1E40AF",
+      "count": 2,
+      "files": [
+        "apps/web/app/design-tokens.css",
+        "apps/web/app/styles.css"
+      ],
+      "locations": [
+        "apps/web/app/design-tokens.css:23",
+        "apps/web/app/styles.css:66"
+      ],
+      "kind": "hex",
+      "classification": "semantic exception",
+      "action": "keep via token"
+    },
+    {
+      "value": "#344E68",
+      "count": 2,
+      "files": [
+        "apps/web/app/crm-trip-improvements.css"
+      ],
+      "locations": [
+        "apps/web/app/crm-trip-improvements.css:1",
+        "apps/web/app/crm-trip-improvements.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#43536A",
+      "count": 2,
+      "files": [
+        "apps/web/app/styles.css"
+      ],
+      "locations": [
+        "apps/web/app/styles.css:30",
+        "apps/web/app/styles.css:35"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#52677D",
+      "count": 2,
+      "files": [
+        "apps/web/app/branding-contact.css"
+      ],
+      "locations": [
+        "apps/web/app/branding-contact.css:3",
+        "apps/web/app/branding-contact.css:6"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#66798D",
+      "count": 2,
+      "files": [
+        "apps/web/app/crm-trip-improvements.css"
+      ],
+      "locations": [
+        "apps/web/app/crm-trip-improvements.css:1",
+        "apps/web/app/crm-trip-improvements.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#718096",
+      "count": 2,
+      "files": [
+        "apps/web/app/public-commerce.css",
+        "apps/web/app/reports/report-center.css"
+      ],
+      "locations": [
+        "apps/web/app/public-commerce.css:1",
+        "apps/web/app/reports/report-center.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#92400E",
+      "count": 2,
+      "files": [
+        "apps/web/app/design-tokens.css",
+        "apps/web/app/styles.css"
+      ],
+      "locations": [
+        "apps/web/app/design-tokens.css:19",
+        "apps/web/app/styles.css:66"
+      ],
+      "kind": "hex",
+      "classification": "semantic exception",
+      "action": "keep via token"
+    },
+    {
+      "value": "#9A3412",
+      "count": 2,
+      "files": [
+        "apps/web/app/crm-pipeline.css",
+        "apps/web/app/work.css"
+      ],
+      "locations": [
+        "apps/web/app/crm-pipeline.css:1",
+        "apps/web/app/work.css:1"
+      ],
+      "kind": "hex",
+      "classification": "semantic exception",
+      "action": "keep via token"
+    },
+    {
+      "value": "#B9C8DC",
+      "count": 2,
+      "files": [
+        "apps/web/app/styles.css"
+      ],
+      "locations": [
+        "apps/web/app/styles.css:107",
+        "apps/web/app/styles.css:111"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#DBE3EE",
+      "count": 2,
+      "files": [
+        "apps/web/app/tasks/page.tsx"
+      ],
+      "locations": [
+        "apps/web/app/tasks/page.tsx:56",
+        "apps/web/app/tasks/page.tsx:56"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#DCE3EC",
+      "count": 2,
+      "files": [
+        "apps/web/app/design-tokens.css"
+      ],
+      "locations": [
+        "apps/web/app/design-tokens.css:13",
+        "apps/web/app/design-tokens.css:31"
+      ],
+      "kind": "hex",
+      "classification": "approved token value",
+      "action": "keep via token"
+    },
+    {
+      "value": "#DCFCE7",
+      "count": 2,
+      "files": [
+        "apps/web/app/packages/page.tsx",
+        "apps/web/app/project-planner.css"
+      ],
+      "locations": [
+        "apps/web/app/packages/page.tsx:123",
+        "apps/web/app/project-planner.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#DFE5ED",
+      "count": 2,
+      "files": [
+        "apps/web/app/styles.css"
+      ],
+      "locations": [
+        "apps/web/app/styles.css:95",
+        "apps/web/app/styles.css:95"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#E4EBF3",
+      "count": 2,
+      "files": [
+        "apps/web/app/crm-trip-improvements.css"
+      ],
+      "locations": [
+        "apps/web/app/crm-trip-improvements.css:1",
+        "apps/web/app/crm-trip-improvements.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#E5A800",
+      "count": 2,
+      "files": [
+        "apps/web/app/design-tokens.css"
+      ],
+      "locations": [
+        "apps/web/app/design-tokens.css:6",
+        "apps/web/app/design-tokens.css:33"
+      ],
+      "kind": "hex",
+      "classification": "approved token value",
+      "action": "keep via token"
+    },
+    {
+      "value": "#E5EBF2",
+      "count": 2,
+      "files": [
+        "apps/web/app/asset-knowledge/asset-knowledge.css",
+        "apps/web/app/reports/report-center.css"
+      ],
+      "locations": [
+        "apps/web/app/asset-knowledge/asset-knowledge.css:1",
+        "apps/web/app/reports/report-center.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#EEF5FF",
+      "count": 2,
+      "files": [
+        "apps/web/app/sales/quotations/quotation-print.css",
+        "apps/web/app/vendors/vendors.css"
+      ],
+      "locations": [
+        "apps/web/app/sales/quotations/quotation-print.css:3",
+        "apps/web/app/vendors/vendors.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#F4F7FB",
+      "count": 2,
+      "files": [
+        "apps/web/app/design-tokens.css"
+      ],
+      "locations": [
+        "apps/web/app/design-tokens.css:7",
+        "apps/web/app/design-tokens.css:9"
+      ],
+      "kind": "hex",
+      "classification": "approved token value",
+      "action": "keep via token"
+    },
+    {
+      "value": "#F5F7FB",
+      "count": 2,
+      "files": [
+        "apps/web/app/crm/leads/[id]/page.tsx",
+        "apps/web/app/sales/quotations/page.tsx"
+      ],
+      "locations": [
+        "apps/web/app/crm/leads/[id]/page.tsx:8",
+        "apps/web/app/sales/quotations/page.tsx:6"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#FEE2E2",
+      "count": 2,
+      "files": [
+        "apps/web/app/crm-pipeline.css",
+        "apps/web/app/packages/page.tsx"
+      ],
+      "locations": [
+        "apps/web/app/crm-pipeline.css:1",
+        "apps/web/app/packages/page.tsx:123"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#FFF1F2",
+      "count": 2,
+      "files": [
+        "apps/web/app/design-tokens.css",
+        "apps/web/app/operations/open-trips/open-trips.css"
+      ],
+      "locations": [
+        "apps/web/app/design-tokens.css:22",
+        "apps/web/app/operations/open-trips/open-trips.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#FFFBEB",
+      "count": 2,
+      "files": [
+        "apps/web/app/design-tokens.css",
+        "apps/web/app/styles.css"
+      ],
+      "locations": [
+        "apps/web/app/design-tokens.css:20",
+        "apps/web/app/styles.css:66"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "rgba(255,255,255,.08)",
+      "count": 2,
+      "files": [
+        "apps/web/app/styles.css"
+      ],
+      "locations": [
+        "apps/web/app/styles.css:110",
+        "apps/web/app/styles.css:115"
+      ],
+      "kind": "functional/named",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#00000008",
+      "count": 1,
+      "files": [
+        "apps/web/app/crm-pipeline.css"
+      ],
+      "locations": [
+        "apps/web/app/crm-pipeline.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#0005",
+      "count": 1,
+      "files": [
+        "apps/web/app/public-commerce.css"
+      ],
+      "locations": [
+        "apps/web/app/public-commerce.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#001B3F",
+      "count": 1,
+      "files": [
+        "apps/web/app/crm-trip-improvements.css"
+      ],
+      "locations": [
+        "apps/web/app/crm-trip-improvements.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#001B3F0A",
+      "count": 1,
+      "files": [
+        "apps/web/app/crm-trip-improvements.css"
+      ],
+      "locations": [
+        "apps/web/app/crm-trip-improvements.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#001B3F0C",
+      "count": 1,
+      "files": [
+        "apps/web/app/crm-trip-improvements.css"
+      ],
+      "locations": [
+        "apps/web/app/crm-trip-improvements.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#001B3F0D",
+      "count": 1,
+      "files": [
+        "apps/web/app/crm-trip-improvements.css"
+      ],
+      "locations": [
+        "apps/web/app/crm-trip-improvements.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#001D4DCC",
+      "count": 1,
+      "files": [
+        "apps/web/app/public-commerce.css"
+      ],
+      "locations": [
+        "apps/web/app/public-commerce.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#047857",
+      "count": 1,
+      "files": [
+        "apps/web/app/sales/quotations/quotation-print.css"
+      ],
+      "locations": [
+        "apps/web/app/sales/quotations/quotation-print.css:3"
+      ],
+      "kind": "hex",
+      "classification": "semantic exception",
+      "action": "keep via token"
+    },
+    {
+      "value": "#052E1660",
+      "count": 1,
+      "files": [
+        "apps/web/app/branding-contact.css"
+      ],
+      "locations": [
+        "apps/web/app/branding-contact.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#071D3A20",
+      "count": 1,
+      "files": [
+        "apps/web/app/branding-contact.css"
+      ],
+      "locations": [
+        "apps/web/app/branding-contact.css:3"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#075985",
+      "count": 1,
+      "files": [
+        "apps/web/app/packages/page.tsx"
+      ],
+      "locations": [
+        "apps/web/app/packages/page.tsx:123"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#075F38",
+      "count": 1,
+      "files": [
+        "apps/web/app/branding-contact.css"
+      ],
+      "locations": [
+        "apps/web/app/branding-contact.css:2"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#0B2344",
+      "count": 1,
+      "files": [
+        "apps/web/app/branding-contact.css"
+      ],
+      "locations": [
+        "apps/web/app/branding-contact.css:2"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#0C5BB8",
+      "count": 1,
+      "files": [
+        "apps/web/app/asset-knowledge/asset-knowledge.css"
+      ],
+      "locations": [
+        "apps/web/app/asset-knowledge/asset-knowledge.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#10223A",
+      "count": 1,
+      "files": [
+        "apps/web/app/tasks/page.tsx"
+      ],
+      "locations": [
+        "apps/web/app/tasks/page.tsx:56"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#102747",
+      "count": 1,
+      "files": [
+        "apps/web/app/design-tokens.css"
+      ],
+      "locations": [
+        "apps/web/app/design-tokens.css:10"
+      ],
+      "kind": "hex",
+      "classification": "approved token value",
+      "action": "keep via token"
+    },
+    {
+      "value": "#102A4310",
+      "count": 1,
+      "files": [
+        "apps/web/app/branding-contact.css"
+      ],
+      "locations": [
+        "apps/web/app/branding-contact.css:2"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#132B47",
+      "count": 1,
+      "files": [
+        "apps/web/app/asset-knowledge/asset-knowledge.css"
+      ],
+      "locations": [
+        "apps/web/app/asset-knowledge/asset-knowledge.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#157347",
+      "count": 1,
+      "files": [
+        "apps/web/app/styles.css"
+      ],
+      "locations": [
+        "apps/web/app/styles.css:38"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#15803D",
+      "count": 1,
+      "files": [
+        "apps/web/app/project-planner.css"
+      ],
+      "locations": [
+        "apps/web/app/project-planner.css:1"
+      ],
+      "kind": "hex",
+      "classification": "semantic exception",
+      "action": "keep via token"
+    },
+    {
+      "value": "#166534",
+      "count": 1,
+      "files": [
+        "apps/web/app/packages/page.tsx"
+      ],
+      "locations": [
+        "apps/web/app/packages/page.tsx:123"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#16804D",
+      "count": 1,
+      "files": [
+        "apps/web/app/vendors/vendors.css"
+      ],
+      "locations": [
+        "apps/web/app/vendors/vendors.css:1"
+      ],
+      "kind": "hex",
+      "classification": "semantic exception",
+      "action": "keep via token"
+    },
+    {
+      "value": "#168652",
+      "count": 1,
+      "files": [
+        "apps/web/app/crm-trip-improvements.css"
+      ],
+      "locations": [
+        "apps/web/app/crm-trip-improvements.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#16A34A",
+      "count": 1,
+      "files": [
+        "apps/web/app/branding-contact.css"
+      ],
+      "locations": [
+        "apps/web/app/branding-contact.css:1"
+      ],
+      "kind": "hex",
+      "classification": "semantic exception",
+      "action": "keep via token"
+    },
+    {
+      "value": "#172033",
+      "count": 1,
+      "files": [
+        "apps/web/app/project-planner.css"
+      ],
+      "locations": [
+        "apps/web/app/project-planner.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#174A9A",
+      "count": 1,
+      "files": [
+        "apps/web/app/styles.css"
+      ],
+      "locations": [
+        "apps/web/app/styles.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#177245",
+      "count": 1,
+      "files": [
+        "apps/web/app/styles.css"
+      ],
+      "locations": [
+        "apps/web/app/styles.css:31"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#19A85B",
+      "count": 1,
+      "files": [
+        "apps/web/app/crm-trip-improvements.css"
+      ],
+      "locations": [
+        "apps/web/app/crm-trip-improvements.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#1D4ED8",
+      "count": 1,
+      "files": [
+        "apps/web/app/sales/quotations/quotation-print.css"
+      ],
+      "locations": [
+        "apps/web/app/sales/quotations/quotation-print.css:3"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#1E4F9C",
+      "count": 1,
+      "files": [
+        "apps/web/app/project-planner.css"
+      ],
+      "locations": [
+        "apps/web/app/project-planner.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#1F5FBF",
+      "count": 1,
+      "files": [
+        "apps/web/app/styles.css"
+      ],
+      "locations": [
+        "apps/web/app/styles.css:36"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#22C55E",
+      "count": 1,
+      "files": [
+        "apps/web/app/branding-contact.css"
+      ],
+      "locations": [
+        "apps/web/app/branding-contact.css:1"
+      ],
+      "kind": "hex",
+      "classification": "semantic exception",
+      "action": "keep via token"
+    },
+    {
+      "value": "#2351C2",
+      "count": 1,
+      "files": [
+        "apps/web/app/styles.css"
+      ],
+      "locations": [
+        "apps/web/app/styles.css:32"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#25334D0A",
+      "count": 1,
+      "files": [
+        "apps/web/app/project-planner.css"
+      ],
+      "locations": [
+        "apps/web/app/project-planner.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#25466E",
+      "count": 1,
+      "files": [
+        "apps/web/app/styles.css"
+      ],
+      "locations": [
+        "apps/web/app/styles.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#28405F",
+      "count": 1,
+      "files": [
+        "apps/web/app/styles.css"
+      ],
+      "locations": [
+        "apps/web/app/styles.css:45"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#334155",
+      "count": 1,
+      "files": [
+        "apps/web/app/operations/open-trips/open-trips.css"
+      ],
+      "locations": [
+        "apps/web/app/operations/open-trips/open-trips.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#34D399",
+      "count": 1,
+      "files": [
+        "apps/web/app/styles.css"
+      ],
+      "locations": [
+        "apps/web/app/styles.css:56"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#3B82F6",
+      "count": 1,
+      "files": [
+        "apps/web/app/project-planner.css"
+      ],
+      "locations": [
+        "apps/web/app/project-planner.css:1"
+      ],
+      "kind": "hex",
+      "classification": "semantic exception",
+      "action": "keep via token"
+    },
+    {
+      "value": "#475569",
+      "count": 1,
+      "files": [
+        "apps/web/app/packages/page.tsx"
+      ],
+      "locations": [
+        "apps/web/app/packages/page.tsx:119"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#52627A",
+      "count": 1,
+      "files": [
+        "apps/web/app/public-commerce.css"
+      ],
+      "locations": [
+        "apps/web/app/public-commerce.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#52677C",
+      "count": 1,
+      "files": [
+        "apps/web/app/crm-trip-improvements.css"
+      ],
+      "locations": [
+        "apps/web/app/crm-trip-improvements.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#5C6F8E",
+      "count": 1,
+      "files": [
+        "apps/web/app/public-commerce.css"
+      ],
+      "locations": [
+        "apps/web/app/public-commerce.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#5F6F7D",
+      "count": 1,
+      "files": [
+        "apps/web/app/public-commerce.css"
+      ],
+      "locations": [
+        "apps/web/app/public-commerce.css:2"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#60A5FA",
+      "count": 1,
+      "files": [
+        "apps/web/app/styles.css"
+      ],
+      "locations": [
+        "apps/web/app/styles.css:57"
+      ],
+      "kind": "hex",
+      "classification": "semantic exception",
+      "action": "keep via token"
+    },
+    {
+      "value": "#627187",
+      "count": 1,
+      "files": [
+        "apps/web/app/asset-knowledge/asset-knowledge.css"
+      ],
+      "locations": [
+        "apps/web/app/asset-knowledge/asset-knowledge.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#63768A",
+      "count": 1,
+      "files": [
+        "apps/web/app/crm-trip-improvements.css"
+      ],
+      "locations": [
+        "apps/web/app/crm-trip-improvements.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#667085",
+      "count": 1,
+      "files": [
+        "apps/web/app/design-tokens.css"
+      ],
+      "locations": [
+        "apps/web/app/design-tokens.css:11"
+      ],
+      "kind": "hex",
+      "classification": "approved token value",
+      "action": "keep via token"
+    },
+    {
+      "value": "#68768A",
+      "count": 1,
+      "files": [
+        "apps/web/app/asset-knowledge/asset-knowledge.css"
+      ],
+      "locations": [
+        "apps/web/app/asset-knowledge/asset-knowledge.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#687B8D",
+      "count": 1,
+      "files": [
+        "apps/web/app/crm-trip-improvements.css"
+      ],
+      "locations": [
+        "apps/web/app/crm-trip-improvements.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#6B7D91",
+      "count": 1,
+      "files": [
+        "apps/web/app/crm-trip-improvements.css"
+      ],
+      "locations": [
+        "apps/web/app/crm-trip-improvements.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#6C7F92",
+      "count": 1,
+      "files": [
+        "apps/web/app/crm-trip-improvements.css"
+      ],
+      "locations": [
+        "apps/web/app/crm-trip-improvements.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#6D7F92",
+      "count": 1,
+      "files": [
+        "apps/web/app/crm-trip-improvements.css"
+      ],
+      "locations": [
+        "apps/web/app/crm-trip-improvements.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#708096",
+      "count": 1,
+      "files": [
+        "apps/web/app/vendors/vendors.css"
+      ],
+      "locations": [
+        "apps/web/app/vendors/vendors.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#708398",
+      "count": 1,
+      "files": [
+        "apps/web/app/crm-trip-improvements.css"
+      ],
+      "locations": [
+        "apps/web/app/crm-trip-improvements.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#75B1FF",
+      "count": 1,
+      "files": [
+        "apps/web/app/styles.css"
+      ],
+      "locations": [
+        "apps/web/app/styles.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#765B00",
+      "count": 1,
+      "files": [
+        "apps/web/app/reports/report-center.css"
+      ],
+      "locations": [
+        "apps/web/app/reports/report-center.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#78869A",
+      "count": 1,
+      "files": [
+        "apps/web/app/reports/report-center.css"
+      ],
+      "locations": [
+        "apps/web/app/reports/report-center.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#91A7C3",
+      "count": 1,
+      "files": [
+        "apps/web/app/styles.css"
+      ],
+      "locations": [
+        "apps/web/app/styles.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#94A3B84D",
+      "count": 1,
+      "files": [
+        "apps/web/app/crm-pipeline.css"
+      ],
+      "locations": [
+        "apps/web/app/crm-pipeline.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#991B1B",
+      "count": 1,
+      "files": [
+        "apps/web/app/packages/page.tsx"
+      ],
+      "locations": [
+        "apps/web/app/packages/page.tsx:123"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#A16207",
+      "count": 1,
+      "files": [
+        "apps/web/app/styles.css"
+      ],
+      "locations": [
+        "apps/web/app/styles.css:37"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#B45309",
+      "count": 1,
+      "files": [
+        "apps/web/app/project-planner.css"
+      ],
+      "locations": [
+        "apps/web/app/project-planner.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#B8C9DE",
+      "count": 1,
+      "files": [
+        "apps/web/app/styles.css"
+      ],
+      "locations": [
+        "apps/web/app/styles.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#B9C2D0",
+      "count": 1,
+      "files": [
+        "apps/web/app/project-planner.css"
+      ],
+      "locations": [
+        "apps/web/app/project-planner.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#B9C8D9",
+      "count": 1,
+      "files": [
+        "apps/web/app/branding-contact.css"
+      ],
+      "locations": [
+        "apps/web/app/branding-contact.css:2"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#B9D9C7",
+      "count": 1,
+      "files": [
+        "apps/web/app/crm-trip-improvements.css"
+      ],
+      "locations": [
+        "apps/web/app/crm-trip-improvements.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#BBB",
+      "count": 1,
+      "files": [
+        "apps/web/app/reports/report-center.css"
+      ],
+      "locations": [
+        "apps/web/app/reports/report-center.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#BE123C",
+      "count": 1,
+      "files": [
+        "apps/web/app/operations/open-trips/open-trips.css"
+      ],
+      "locations": [
+        "apps/web/app/operations/open-trips/open-trips.css:1"
+      ],
+      "kind": "hex",
+      "classification": "semantic exception",
+      "action": "keep via token"
+    },
+    {
+      "value": "#BFDBFE",
+      "count": 1,
+      "files": [
+        "apps/web/app/styles.css"
+      ],
+      "locations": [
+        "apps/web/app/styles.css:66"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#C45A00",
+      "count": 1,
+      "files": [
+        "apps/web/app/styles.css"
+      ],
+      "locations": [
+        "apps/web/app/styles.css:33"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#C7D8EB",
+      "count": 1,
+      "files": [
+        "apps/web/app/work.css"
+      ],
+      "locations": [
+        "apps/web/app/work.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#C8D7E5",
+      "count": 1,
+      "files": [
+        "apps/web/app/crm-trip-improvements.css"
+      ],
+      "locations": [
+        "apps/web/app/crm-trip-improvements.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#CBD8E6",
+      "count": 1,
+      "files": [
+        "apps/web/app/branding-contact.css"
+      ],
+      "locations": [
+        "apps/web/app/branding-contact.css:2"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#CBD8E7",
+      "count": 1,
+      "files": [
+        "apps/web/app/branding-contact.css"
+      ],
+      "locations": [
+        "apps/web/app/branding-contact.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#CBD9E6",
+      "count": 1,
+      "files": [
+        "apps/web/app/crm-trip-improvements.css"
+      ],
+      "locations": [
+        "apps/web/app/crm-trip-improvements.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#CCD6E5",
+      "count": 1,
+      "files": [
+        "apps/web/app/public-commerce.css"
+      ],
+      "locations": [
+        "apps/web/app/public-commerce.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#CCFBF1",
+      "count": 1,
+      "files": [
+        "apps/web/app/operations/open-trips/open-trips.css"
+      ],
+      "locations": [
+        "apps/web/app/operations/open-trips/open-trips.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#D7E4F8",
+      "count": 1,
+      "files": [
+        "apps/web/app/styles.css"
+      ],
+      "locations": [
+        "apps/web/app/styles.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#D8E2EC",
+      "count": 1,
+      "files": [
+        "apps/web/app/reports/report-center.css"
+      ],
+      "locations": [
+        "apps/web/app/reports/report-center.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#DAE4EF",
+      "count": 1,
+      "files": [
+        "apps/web/app/asset-knowledge/asset-knowledge.css"
+      ],
+      "locations": [
+        "apps/web/app/asset-knowledge/asset-knowledge.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#DBE4ED",
+      "count": 1,
+      "files": [
+        "apps/web/app/vendors/vendors.css"
+      ],
+      "locations": [
+        "apps/web/app/vendors/vendors.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#DCE9E1",
+      "count": 1,
+      "files": [
+        "apps/web/app/crm-trip-improvements.css"
+      ],
+      "locations": [
+        "apps/web/app/crm-trip-improvements.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#DCE9FF",
+      "count": 1,
+      "files": [
+        "apps/web/app/styles.css"
+      ],
+      "locations": [
+        "apps/web/app/styles.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#E0E7EF",
+      "count": 1,
+      "files": [
+        "apps/web/app/asset-knowledge/asset-knowledge.css"
+      ],
+      "locations": [
+        "apps/web/app/asset-knowledge/asset-knowledge.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#E0F2FE",
+      "count": 1,
+      "files": [
+        "apps/web/app/packages/page.tsx"
+      ],
+      "locations": [
+        "apps/web/app/packages/page.tsx:123"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#E3EAF2",
+      "count": 1,
+      "files": [
+        "apps/web/app/crm-trip-improvements.css"
+      ],
+      "locations": [
+        "apps/web/app/crm-trip-improvements.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#E4EAF1",
+      "count": 1,
+      "files": [
+        "apps/web/app/styles.css"
+      ],
+      "locations": [
+        "apps/web/app/styles.css:27"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#E6EDF4",
+      "count": 1,
+      "files": [
+        "apps/web/app/styles.css"
+      ],
+      "locations": [
+        "apps/web/app/styles.css:42"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#E7F0FB",
+      "count": 1,
+      "files": [
+        "apps/web/app/branding-contact.css"
+      ],
+      "locations": [
+        "apps/web/app/branding-contact.css:3"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#E7F8EF",
+      "count": 1,
+      "files": [
+        "apps/web/app/styles.css"
+      ],
+      "locations": [
+        "apps/web/app/styles.css:38"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#E8EDF5",
+      "count": 1,
+      "files": [
+        "apps/web/app/crm-pipeline.css"
+      ],
+      "locations": [
+        "apps/web/app/crm-pipeline.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#E8F1FF",
+      "count": 1,
+      "files": [
+        "apps/web/app/styles.css"
+      ],
+      "locations": [
+        "apps/web/app/styles.css:36"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#E9EEF4",
+      "count": 1,
+      "files": [
+        "apps/web/app/styles.css"
+      ],
+      "locations": [
+        "apps/web/app/styles.css:52"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#E9EEF6",
+      "count": 1,
+      "files": [
+        "apps/web/app/project-planner.css"
+      ],
+      "locations": [
+        "apps/web/app/project-planner.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#E9F3FF",
+      "count": 1,
+      "files": [
+        "apps/web/app/asset-knowledge/asset-knowledge.css"
+      ],
+      "locations": [
+        "apps/web/app/asset-knowledge/asset-knowledge.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#E9F8EF",
+      "count": 1,
+      "files": [
+        "apps/web/app/crm-trip-improvements.css"
+      ],
+      "locations": [
+        "apps/web/app/crm-trip-improvements.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#EAF0F6",
+      "count": 1,
+      "files": [
+        "apps/web/app/styles.css"
+      ],
+      "locations": [
+        "apps/web/app/styles.css:26"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#EAF3FF",
+      "count": 1,
+      "files": [
+        "apps/web/app/crm-trip-improvements.css"
+      ],
+      "locations": [
+        "apps/web/app/crm-trip-improvements.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#ECFDF5",
+      "count": 1,
+      "files": [
+        "apps/web/app/sales/quotations/quotation-print.css"
+      ],
+      "locations": [
+        "apps/web/app/sales/quotations/quotation-print.css:3"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#EDF1F7",
+      "count": 1,
+      "files": [
+        "apps/web/app/project-planner.css"
+      ],
+      "locations": [
+        "apps/web/app/project-planner.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#EDF2F7",
+      "count": 1,
+      "files": [
+        "apps/web/app/reports/report-center.css"
+      ],
+      "locations": [
+        "apps/web/app/reports/report-center.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#EDF5FF",
+      "count": 1,
+      "files": [
+        "apps/web/app/asset-knowledge/asset-knowledge.css"
+      ],
+      "locations": [
+        "apps/web/app/asset-knowledge/asset-knowledge.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#EDF9F4",
+      "count": 1,
+      "files": [
+        "apps/web/app/styles.css"
+      ],
+      "locations": [
+        "apps/web/app/styles.css:31"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#EEF4FB",
+      "count": 1,
+      "files": [
+        "apps/web/app/branding-contact.css"
+      ],
+      "locations": [
+        "apps/web/app/branding-contact.css:6"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#EEF4FF",
+      "count": 1,
+      "files": [
+        "apps/web/app/styles.css"
+      ],
+      "locations": [
+        "apps/web/app/styles.css:32"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#F0FDFA",
+      "count": 1,
+      "files": [
+        "apps/web/app/operations/open-trips/open-trips.css"
+      ],
+      "locations": [
+        "apps/web/app/operations/open-trips/open-trips.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#F2F6FB",
+      "count": 1,
+      "files": [
+        "apps/web/app/branding-contact.css"
+      ],
+      "locations": [
+        "apps/web/app/branding-contact.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#F4F8FC",
+      "count": 1,
+      "files": [
+        "apps/web/app/vendors/vendors.css"
+      ],
+      "locations": [
+        "apps/web/app/vendors/vendors.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#F7FAFC",
+      "count": 1,
+      "files": [
+        "apps/web/app/crm-trip-improvements.css"
+      ],
+      "locations": [
+        "apps/web/app/crm-trip-improvements.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#F8FAFC",
+      "count": 1,
+      "files": [
+        "apps/web/app/packages/page.tsx"
+      ],
+      "locations": [
+        "apps/web/app/packages/page.tsx:68"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#F8FBFF",
+      "count": 1,
+      "files": [
+        "apps/web/app/work.css"
+      ],
+      "locations": [
+        "apps/web/app/work.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#FEECEC",
+      "count": 1,
+      "files": [
+        "apps/web/app/styles.css"
+      ],
+      "locations": [
+        "apps/web/app/styles.css:34"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#FFCA05",
+      "count": 1,
+      "files": [
+        "apps/web/app/crm-trip-improvements.css"
+      ],
+      "locations": [
+        "apps/web/app/crm-trip-improvements.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#FFF1",
+      "count": 1,
+      "files": [
+        "apps/web/app/asset-knowledge/asset-knowledge.css"
+      ],
+      "locations": [
+        "apps/web/app/asset-knowledge/asset-knowledge.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#FFF3D9",
+      "count": 1,
+      "files": [
+        "apps/web/app/styles.css"
+      ],
+      "locations": [
+        "apps/web/app/styles.css:37"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#FFF3E8",
+      "count": 1,
+      "files": [
+        "apps/web/app/styles.css"
+      ],
+      "locations": [
+        "apps/web/app/styles.css:33"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#FFF5",
+      "count": 1,
+      "files": [
+        "apps/web/app/asset-knowledge/asset-knowledge.css"
+      ],
+      "locations": [
+        "apps/web/app/asset-knowledge/asset-knowledge.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#FFF7C8",
+      "count": 1,
+      "files": [
+        "apps/web/app/reports/report-center.css"
+      ],
+      "locations": [
+        "apps/web/app/reports/report-center.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "#FFFBDF",
+      "count": 1,
+      "files": [
+        "apps/web/app/crm-trip-improvements.css"
+      ],
+      "locations": [
+        "apps/web/app/crm-trip-improvements.css:1"
+      ],
+      "kind": "hex",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "linear-gradient(#001b3f55,#001b3faa)",
+      "count": 1,
+      "files": [
+        "apps/web/components/public-home.tsx"
+      ],
+      "locations": [
+        "apps/web/components/public-home.tsx:317"
+      ],
+      "kind": "gradient",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "linear-gradient(100deg,#f1f6fb,var(--surface-primary))",
+      "count": 1,
+      "files": [
+        "apps/web/app/crm-trip-improvements.css"
+      ],
+      "locations": [
+        "apps/web/app/crm-trip-improvements.css:1"
+      ],
+      "kind": "gradient",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "linear-gradient(100deg,#f2fff7,var(--surface-primary))",
+      "count": 1,
+      "files": [
+        "apps/web/app/crm-trip-improvements.css"
+      ],
+      "locations": [
+        "apps/web/app/crm-trip-improvements.css:1"
+      ],
+      "kind": "gradient",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "linear-gradient(120deg,#edf5ff,var(--surface-primary))",
+      "count": 1,
+      "files": [
+        "apps/web/app/crm-trip-improvements.css"
+      ],
+      "locations": [
+        "apps/web/app/crm-trip-improvements.css:1"
+      ],
+      "kind": "gradient",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "linear-gradient(125deg,var(--brand-navy-primary),var(--brand-navy-hover))",
+      "count": 1,
+      "files": [
+        "apps/web/app/website-enhancements.css"
+      ],
+      "locations": [
+        "apps/web/app/website-enhancements.css:1"
+      ],
+      "kind": "gradient",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "linear-gradient(135deg,#071d3a,#0b3970)",
+      "count": 1,
+      "files": [
+        "apps/web/app/branding-contact.css"
+      ],
+      "locations": [
+        "apps/web/app/branding-contact.css:2"
+      ],
+      "kind": "gradient",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "linear-gradient(135deg,var(--app-background),var(--surface-primary))",
+      "count": 1,
+      "files": [
+        "apps/web/app/public-shell.css"
+      ],
+      "locations": [
+        "apps/web/app/public-shell.css:15"
+      ],
+      "kind": "gradient",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "linear-gradient(135deg,var(--brand-navy-primary),var(--brand-navy-hover))",
+      "count": 1,
+      "files": [
+        "apps/web/app/my-trip/portal.css"
+      ],
+      "locations": [
+        "apps/web/app/my-trip/portal.css:1"
+      ],
+      "kind": "gradient",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "linear-gradient(140deg,var(--brand-navy-hover),var(--brand-yellow-primary))",
+      "count": 1,
+      "files": [
+        "apps/web/app/public-site.css"
+      ],
+      "locations": [
+        "apps/web/app/public-site.css:1"
+      ],
+      "kind": "gradient",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "linear-gradient(140deg,var(--brand-navy-primary),var(--brand-navy-hover))",
+      "count": 1,
+      "files": [
+        "apps/web/app/public-site.css"
+      ],
+      "locations": [
+        "apps/web/app/public-site.css:1"
+      ],
+      "kind": "gradient",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "linear-gradient(140deg,var(--brand-yellow-hover),var(--brand-navy-primary))",
+      "count": 1,
+      "files": [
+        "apps/web/app/public-site.css"
+      ],
+      "locations": [
+        "apps/web/app/public-site.css:1"
+      ],
+      "kind": "gradient",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "linear-gradient(145deg,#061a35 0,#0b3970 46%,var(--surface-subtle) 46%)",
+      "count": 1,
+      "files": [
+        "apps/web/app/branding-contact.css"
+      ],
+      "locations": [
+        "apps/web/app/branding-contact.css:3"
+      ],
+      "kind": "gradient",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "linear-gradient(155deg,#061a35 0,#0b3970 55%,var(--surface-subtle) 55%)",
+      "count": 1,
+      "files": [
+        "apps/web/app/branding-contact.css"
+      ],
+      "locations": [
+        "apps/web/app/branding-contact.css:4"
+      ],
+      "kind": "gradient",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "linear-gradient(155deg,#1174df 0 34%,#0b4e98 34% 56%,#071d3a 56% 75%,#ffd524 75%)",
+      "count": 1,
+      "files": [
+        "apps/web/components/public-home.tsx"
+      ],
+      "locations": [
+        "apps/web/components/public-home.tsx:243"
+      ],
+      "kind": "gradient",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "linear-gradient(155deg,var(--brand-navy-primary) 0 56%,var(--brand-navy-hover) 56% 72%,var(--border-default) 72%)",
+      "count": 1,
+      "files": [
+        "apps/web/app/public-shell.css"
+      ],
+      "locations": [
+        "apps/web/app/public-shell.css:16"
+      ],
+      "kind": "gradient",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "linear-gradient(160deg,var(--brand-navy-hover) 0 32%,var(--brand-navy-primary) 32% 50%,var(--brand-navy-strong) 50% 68%,var(--border-default) 68%)",
+      "count": 1,
+      "files": [
+        "apps/web/app/public-site.css"
+      ],
+      "locations": [
+        "apps/web/app/public-site.css:1"
+      ],
+      "kind": "gradient",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "linear-gradient(90deg,rgba(255,255,255,.06),rgba(255,255,255,.14),rgba(255,255,255,.06))",
+      "count": 1,
+      "files": [
+        "apps/web/app/styles.css"
+      ],
+      "locations": [
+        "apps/web/app/styles.css:123"
+      ],
+      "kind": "gradient",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "radial-gradient(circle at 15% 50%,var(--app-background),transparent 30%)",
+      "count": 1,
+      "files": [
+        "apps/web/app/public-site.css"
+      ],
+      "locations": [
+        "apps/web/app/public-site.css:1"
+      ],
+      "kind": "gradient",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "rgba(15, 23, 42, 0.2)",
+      "count": 1,
+      "files": [
+        "apps/web/components/crm-editor.tsx"
+      ],
+      "locations": [
+        "apps/web/components/crm-editor.tsx:164"
+      ],
+      "kind": "functional/named",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "rgba(15, 23, 42, 0.45)",
+      "count": 1,
+      "files": [
+        "apps/web/components/crm-editor.tsx"
+      ],
+      "locations": [
+        "apps/web/components/crm-editor.tsx:163"
+      ],
+      "kind": "functional/named",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "rgba(16,35,61,.03)",
+      "count": 1,
+      "files": [
+        "apps/web/app/styles.css"
+      ],
+      "locations": [
+        "apps/web/app/styles.css:23"
+      ],
+      "kind": "functional/named",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "rgba(16,35,61,.05)",
+      "count": 1,
+      "files": [
+        "apps/web/app/styles.css"
+      ],
+      "locations": [
+        "apps/web/app/styles.css:27"
+      ],
+      "kind": "functional/named",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "rgba(248,113,113,.4)",
+      "count": 1,
+      "files": [
+        "apps/web/app/styles.css"
+      ],
+      "locations": [
+        "apps/web/app/styles.css:124"
+      ],
+      "kind": "functional/named",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "rgba(255,255,255,.05)",
+      "count": 1,
+      "files": [
+        "apps/web/app/styles.css"
+      ],
+      "locations": [
+        "apps/web/app/styles.css:118"
+      ],
+      "kind": "functional/named",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "rgba(255,255,255,.06)",
+      "count": 1,
+      "files": [
+        "apps/web/app/styles.css"
+      ],
+      "locations": [
+        "apps/web/app/styles.css:124"
+      ],
+      "kind": "functional/named",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "rgba(255,255,255,.12)",
+      "count": 1,
+      "files": [
+        "apps/web/app/styles.css"
+      ],
+      "locations": [
+        "apps/web/app/styles.css:117"
+      ],
+      "kind": "functional/named",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "rgba(255,255,255,.14)",
+      "count": 1,
+      "files": [
+        "apps/web/app/styles.css"
+      ],
+      "locations": [
+        "apps/web/app/styles.css:124"
+      ],
+      "kind": "functional/named",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "rgba(255,255,255,.22)",
+      "count": 1,
+      "files": [
+        "apps/web/app/styles.css"
+      ],
+      "locations": [
+        "apps/web/app/styles.css:139"
+      ],
+      "kind": "functional/named",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "rgba(6,26,56,.05)",
+      "count": 1,
+      "files": [
+        "apps/web/app/public-shell.css"
+      ],
+      "locations": [
+        "apps/web/app/public-shell.css:2"
+      ],
+      "kind": "functional/named",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "rgba(6,26,56,.08)",
+      "count": 1,
+      "files": [
+        "apps/web/app/design-tokens.css"
+      ],
+      "locations": [
+        "apps/web/app/design-tokens.css:54"
+      ],
+      "kind": "functional/named",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "rgba(6,26,56,.11)",
+      "count": 1,
+      "files": [
+        "apps/web/app/website-enhancements.css"
+      ],
+      "locations": [
+        "apps/web/app/website-enhancements.css:1"
+      ],
+      "kind": "functional/named",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "rgba(6,26,56,.12)",
+      "count": 1,
+      "files": [
+        "apps/web/app/public-site.css"
+      ],
+      "locations": [
+        "apps/web/app/public-site.css:1"
+      ],
+      "kind": "functional/named",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "rgba(6,26,56,.13)",
+      "count": 1,
+      "files": [
+        "apps/web/app/public-site.css"
+      ],
+      "locations": [
+        "apps/web/app/public-site.css:1"
+      ],
+      "kind": "functional/named",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "rgba(6,26,56,.14)",
+      "count": 1,
+      "files": [
+        "apps/web/app/design-tokens.css"
+      ],
+      "locations": [
+        "apps/web/app/design-tokens.css:55"
+      ],
+      "kind": "functional/named",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "rgba(6,26,56,.27)",
+      "count": 1,
+      "files": [
+        "apps/web/app/my-trip/portal.css"
+      ],
+      "locations": [
+        "apps/web/app/my-trip/portal.css:1"
+      ],
+      "kind": "functional/named",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "rgba(6,26,56,.48)",
+      "count": 1,
+      "files": [
+        "apps/web/app/public-shell.css"
+      ],
+      "locations": [
+        "apps/web/app/public-shell.css:10"
+      ],
+      "kind": "functional/named",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    },
+    {
+      "value": "rgba(6,26,56,.58)",
+      "count": 1,
+      "files": [
+        "apps/web/app/styles.css"
+      ],
+      "locations": [
+        "apps/web/app/styles.css:147"
+      ],
+      "kind": "functional/named",
+      "classification": "legacy/review required",
+      "action": "map or replace"
+    }
+  ]
+}

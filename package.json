@@ -15,6 +15,10 @@
     "db:generate": "pnpm --filter @batam/api prisma:generate",
     "db:migrate": "pnpm --filter @batam/api prisma:migrate",
     "db:seed": "pnpm --filter @batam/api prisma:seed"
-    ,"verify:production-env": "node scripts/verify-production-env.mjs"
+    ,"verify:production-env": "node scripts/verify-production-env.mjs",
+    "ui:audit": "node scripts/audit-ui-foundation.mjs",
+    "ui:colors": "node scripts/check-ui-colors.mjs",
+    "ui:migrate-foundation-colors": "node scripts/migrate-ui-foundation-colors.mjs",
+    "ui:migrate-neutral-tokens": "node scripts/migrate-ui-neutral-tokens.mjs"
   }
 }

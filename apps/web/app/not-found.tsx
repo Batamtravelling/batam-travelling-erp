@@ -1,0 +1,1 @@
+import{PublicState}from'../components/public-ui';export default function NotFound(){return <main className="publicPage"><PublicState kind="not-found" title="Halaman tidak ditemukan" description="Alamat mungkin berubah atau konten belum dipublikasikan." actionHref="/trips" actionLabel="Lihat paket"/></main>}
