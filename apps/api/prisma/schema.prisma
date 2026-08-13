@@ -171,6 +171,7 @@ enum CostType {
 enum FinancialEntryOrigin {
   MANUAL
   PAYMENT
+  REFUND
 }
 enum FinancialEntryStatus {
   POSTED
@@ -320,6 +321,10 @@ enum PaymentStatus {
   VERIFIED
   REJECTED
 }
+enum RefundStatus {
+  POSTED
+  CANCELLED
+}
 enum TripStatus {
   DRAFT
   PLANNED
@@ -402,6 +407,7 @@ model Tenant {
   invoices  Invoice[]
   payments  Payment[]
   paymentProofs PaymentProof[]
+  paymentRefunds PaymentRefund[]
   trips     Trip[]
   assignments TripAssignment[]
   businessSequences BusinessSequence[]
@@ -729,6 +735,7 @@ model User {
   recordedFinancialEntries FinancialEntry[] @relation("FinancialEntryRecordedBy")
   reversedFinancialEntries FinancialEntry[] @relation("FinancialEntryReversedBy")
   uploadedPaymentProofs PaymentProof[]
+  processedPaymentRefunds PaymentRefund[]
   createdQuotations Quotation[] @relation("QuotationCreator")
   sentQuotations Quotation[] @relation("QuotationSender")
   acceptedQuotations Quotation[] @relation("QuotationAcceptor")
@@ -947,6 +954,7 @@ model FinancialEntry {
   reversalReason String? @map("reversal_reason")
   reversedAt DateTime? @map("reversed_at")
   paymentId String? @unique @map("payment_id") @db.Uuid
+  refundId String? @unique @map("refund_id") @db.Uuid
   invoiceId String? @map("invoice_id") @db.Uuid
   bookingId String? @map("booking_id") @db.Uuid
   projectId String? @map("project_id") @db.Uuid
@@ -971,6 +979,7 @@ model FinancialEntry {
   reversalOf FinancialEntry? @relation("FinancialEntryReversal",fields:[reversalOfId],references:[id],onDelete:Restrict)
   reversal FinancialEntry? @relation("FinancialEntryReversal")
   payment Payment? @relation(fields:[paymentId],references:[id],onDelete:Restrict)
+  refund PaymentRefund? @relation(fields:[refundId],references:[id],onDelete:Restrict)
   invoice Invoice? @relation(fields:[invoiceId],references:[id],onDelete:Restrict)
   booking Booking? @relation(fields:[bookingId],references:[id],onDelete:Restrict)
   project Project? @relation(fields:[projectId],references:[id],onDelete:SetNull)
@@ -1403,11 +1412,34 @@ model Payment {
   verifiedBy     User?         @relation("PaymentVerifier",fields:[verifiedById],references:[id],onDelete:SetNull)
   proofs         PaymentProof[]
   financialEntry FinancialEntry?
+  refunds        PaymentRefund[]
   @@unique([tenantId,paymentNumber])
   @@unique([tenantId,receiptNumber])
   @@index([tenantId,invoiceId,status])
   @@index([tenantId,status,receivedAt])
   @@map("payments")
+}
+
+model PaymentRefund {
+  id            String       @id @default(uuid()) @db.Uuid
+  tenantId      String       @map("tenant_id") @db.Uuid
+  paymentId     String       @map("payment_id") @db.Uuid
+  refundNumber  String       @map("refund_number")
+  amount        Decimal      @db.Decimal(18,2)
+  method        PaymentMethod
+  status        RefundStatus @default(POSTED)
+  reason        String
+  reference     String?
+  processedById String       @map("processed_by_id") @db.Uuid
+  refundedAt    DateTime     @default(now()) @map("refunded_at")
+  createdAt     DateTime     @default(now()) @map("created_at")
+  tenant        Tenant       @relation(fields:[tenantId],references:[id],onDelete:Restrict)
+  payment       Payment      @relation(fields:[paymentId],references:[id],onDelete:Restrict)
+  processedBy   User         @relation(fields:[processedById],references:[id],onDelete:Restrict)
+  financialEntry FinancialEntry?
+  @@unique([tenantId,refundNumber])
+  @@index([tenantId,paymentId,refundedAt])
+  @@map("payment_refunds")
 }
 
 model PaymentProof {
