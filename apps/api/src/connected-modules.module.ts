@@ -5,6 +5,7 @@ import { CurrentIdentity, IdentityGuard, PermissionGuard, Permissions, RequestId
 import { AssignTripDto, BusinessReportQueryDto, CashflowQueryDto, CreateCashflowDto, ReverseFinancialEntryDto, CreateEmployeeDto, CreateProjectDto, CreateTaskDto, CreateTripDto, CreateVendorDto, PageQueryDto, TaskCommentDto, TransitionTripDto, UpdateAssignmentDto, UpdateEmployeeDto, UpdateProfileDto, UpdateProjectDto, UpdateTaskDto, UpdateVendorDto } from './connected-dto.js';
 import { TripStatus } from '@prisma/client';
 import { summarizeDepartureCapacity } from './core/departure-capacity-summary.js';
+import { invoiceRefundBalanceIssue, orphanRefundLedgerIssue, refundLedgerIssue } from './core/refund-reconciliation.js';
 
 const taskInclude = { project: { include: { milestones: true } }, assignee: { select: { id: true, name: true } }, milestone: true, participants: { include: { user: { select: { id: true, name: true } } } }, comments: { include: { author: { select: { name: true } } }, orderBy: { createdAt: 'desc' as const }, take: 5 } };
 
@@ -95,14 +96,20 @@ class ConnectedModulesService {
 
   async reconcileCashflow(i: RequestIdentity, year: number, month: number) {
     const from=new Date(Date.UTC(year,month-1,1)),to=new Date(Date.UTC(year,month,1));
-    const [payments,automaticEntries]=await Promise.all([
+    const [payments,automaticEntries,refunds,refundEntries,invoices]=await Promise.all([
       this.p.payment.findMany({where:{tenantId:i.tenantId,status:'VERIFIED',receivedAt:{gte:from,lt:to}},select:{id:true,paymentNumber:true,invoiceId:true,amount:true,financialEntry:{select:{id:true,paymentId:true,invoiceId:true,amount:true,direction:true,origin:true,status:true}}}}),
-      this.p.financialEntry.findMany({where:{tenantId:i.tenantId,origin:'PAYMENT',transactionDate:{gte:from,lt:to}},select:{id:true,paymentId:true,amount:true,payment:{select:{paymentNumber:true,status:true}}}})
+      this.p.financialEntry.findMany({where:{tenantId:i.tenantId,origin:'PAYMENT',transactionDate:{gte:from,lt:to}},select:{id:true,paymentId:true,amount:true,payment:{select:{paymentNumber:true,status:true}}}}),
+      this.p.paymentRefund.findMany({where:{tenantId:i.tenantId,status:'EXECUTED',refundedAt:{gte:from,lt:to}},select:{id:true,refundNumber:true,paymentId:true,amount:true,payment:{select:{invoiceId:true}},financialEntry:{select:{id:true,refundId:true,invoiceId:true,amount:true,direction:true,origin:true,status:true}}}}),
+      this.p.financialEntry.findMany({where:{tenantId:i.tenantId,origin:'REFUND',transactionDate:{gte:from,lt:to}},select:{id:true,refundId:true,amount:true,refund:{select:{refundNumber:true,status:true}}}}),
+      this.p.invoice.findMany({where:{tenantId:i.tenantId,OR:[{payments:{some:{receivedAt:{gte:from,lt:to}}}},{payments:{some:{refunds:{some:{status:'EXECUTED',refundedAt:{gte:from,lt:to}}}}}}]},select:{id:true,invoiceNumber:true,totalAmount:true,paidAmount:true,status:true,payments:{where:{status:'VERIFIED'},select:{amount:true,refunds:{where:{status:'EXECUTED'},select:{amount:true}}}}}})
     ]);
     const issues:Array<Record<string,unknown>>=[];
     for(const payment of payments){const entry=payment.financialEntry;if(!entry){issues.push({type:'MISSING_LEDGER',paymentId:payment.id,paymentNumber:payment.paymentNumber});continue}if(entry.origin!=='PAYMENT'||entry.direction!=='IN'||entry.status!=='POSTED'||entry.paymentId!==payment.id||entry.invoiceId!==payment.invoiceId||Number(entry.amount)!==Number(payment.amount)){issues.push({type:'LEDGER_MISMATCH',paymentId:payment.id,paymentNumber:payment.paymentNumber,entryId:entry.id,paymentAmount:Number(payment.amount),ledgerAmount:Number(entry.amount),ledgerStatus:entry.status})}}
     for(const entry of automaticEntries){if(!entry.payment||entry.payment.status!=='VERIFIED')issues.push({type:'ORPHAN_LEDGER',entryId:entry.id,paymentId:entry.paymentId,paymentNumber:entry.payment?.paymentNumber,paymentStatus:entry.payment?.status})}
-    return{period:`${year}-${String(month).padStart(2,'0')}`,ok:issues.length===0,summary:{verifiedPayments:payments.length,automaticEntries:automaticEntries.length,issues:issues.length},issues};
+    for(const refund of refunds){const issue=refundLedgerIssue(refund);if(issue)issues.push(issue)}
+    for(const entry of refundEntries){const issue=orphanRefundLedgerIssue(entry);if(issue)issues.push(issue)}
+    for(const invoice of invoices){const issue=invoiceRefundBalanceIssue(invoice);if(issue)issues.push(issue)}
+    return{period:`${year}-${String(month).padStart(2,'0')}`,ok:issues.length===0,summary:{verifiedPayments:payments.length,automaticEntries:automaticEntries.length,postedRefunds:refunds.length,refundEntries:refundEntries.length,invoicesChecked:invoices.length,issues:issues.length},issues};
   }
 
   async report(i: RequestIdentity, q: BusinessReportQueryDto) {

@@ -8,6 +8,7 @@ const permissions = [
   'task.read', 'task.create', 'task.update', 'task.manage', 'dashboard.owner',
   'booking.read', 'booking.manage', 'invoice.read',
   'payment.read', 'payment.manage', 'payment.verify',
+  'refund.view', 'refund.request', 'refund.approve.manager', 'refund.approve.owner', 'refund.reject', 'refund.process',
   'package.read', 'package.create', 'package.update',
   'package.approve',
   'trip.read', 'trip.manage', 'assignment.manage',
@@ -45,6 +46,11 @@ async function main() {
     update: { name: ownerName }, create: { tenantId: tenant.id, email: ownerEmail, name: ownerName },
   });
   await prisma.userRole.upsert({ where: { userId_roleId: { userId: user.id, roleId: role.id } }, update: {}, create: { userId: user.id, roleId: role.id } });
+  await prisma.tenantRefundPolicy.upsert({
+    where: { tenantId: tenant.id },
+    update: {},
+    create: { tenantId: tenant.id, managerApprovalLimit: 5_000_000 },
+  });
 
   // Production bootstrap must never create example customers, bookings, trips,
   // projects, or placeholder content. Demo data is opt-in for local/staging only.

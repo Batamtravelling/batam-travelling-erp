@@ -3,10 +3,10 @@
 
 **File Name:** `07_USER_ROLES_PERMISSIONS_MATRIX.md`  
 **Document Number:** 07  
-**Version:** 1.0  
+**Version:** 1.1
 **Status:** AUTHORIZATION BASELINE  
 **Project:** Batam Travelling ERP  
-**Last Updated:** 2026-08-08
+**Last Updated:** 2026-08-13
 
 ---
 
@@ -2304,17 +2304,14 @@ Role
 Contoh:
 
 ```text
-Refund ≤ Limit A
-→ Manager
+Refund ≤ Rp5.000.000
+→ Finance Manager
 
-Refund > Limit A
-→ GM
-
-Refund > Limit B
-→ Owner
+Refund > Rp5.000.000
+→ Finance Manager, kemudian Owner
 ```
 
-Nilai limit didefinisikan dalam Business Policy.
+Nilai default limit ditetapkan Rp5.000.000 dan disimpan sebagai tenant Business Setting yang dapat diubah Owner. Perubahan limit tidak berlaku surut terhadap refund request yang telah dibuat.
 
 ---
 

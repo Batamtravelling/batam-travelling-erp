@@ -104,7 +104,12 @@
 ### Refund
 
 - Refund bukan delete atau edit payment asli.
-- Flow minimum: `REFUND_REQUESTED -> APPROVAL -> REFUND_EXECUTED/REJECTED`.
+- Workflow refund: `REQUESTED -> MANAGER_APPROVED -> OWNER_APPROVED (jika diperlukan) -> PROCESSING -> EXECUTED`, atau `REQUESTED -> REJECTED`.
+- Refund sampai dengan Rp5.000.000 memerlukan persetujuan Finance Manager.
+- Refund di atas Rp5.000.000 wajib melalui persetujuan berurutan Finance Manager lalu Owner; persetujuan Owner tidak menggantikan pemeriksaan Finance Manager.
+- Requester tidak boleh menjadi approver. Partial refund minimal memerlukan Finance Manager. Exception selalu memerlukan Finance Manager lalu Owner.
+- Threshold berasal dari tenant refund policy dengan default Rp5.000.000 dan dapat diubah Owner sebagai Business Setting tanpa mengubah snapshot request lama.
+- Refund hanya dapat dieksekusi setelah seluruh persetujuan terpenuhi dan execution wajib idempotent.
 - Refund yang dieksekusi menghasilkan financial outflow/ledger entry baru dengan lineage ke payment, invoice, booking, customer, dan approval terkait.
 - Cancellation/reschedule harus menghitung refund, credit, cancellation fee, tambahan harga, dan capacity effect sesuai policy.
 
@@ -166,7 +171,7 @@ Dashboard dan laporan harus dapat menurunkan metrik dari data transaksi kanonik,
 
 ## Aturan yang masih perlu keputusan bisnis eksplisit
 
-- Nilai threshold dan four-eyes approval untuk refund, adjustment, discount, write-off, dan journal.
+- Nilai threshold dan four-eyes approval untuk adjustment, discount, write-off, dan journal.
 - Cancellation dan reschedule eligibility, fee, refund/credit, dan capacity release.
 - Invoice void/replacement policy.
 - Payment reversal/refund authority.
