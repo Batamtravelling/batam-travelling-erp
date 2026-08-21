@@ -64,7 +64,8 @@ export default function PrintPackage() {
         <p>Memuat dokumen...</p>
       </main>
     );
-  const days = [...new Set(p.itineraries.map((x) => x.dayNumber))];
+  const itineraries = p.itineraries ?? [];
+  const days = [...new Set(itineraries.map((x) => x.dayNumber))];
   return (
     <main className="printPackage">
       <div className="printToolbar">
@@ -138,7 +139,7 @@ export default function PrintPackage() {
           days.map((day) => (
             <div className="printDay" key={day}>
               <h3>Hari {day}</h3>
-              {p.itineraries
+              {itineraries
                 .filter((x) => x.dayNumber === day)
                 .map((x, n) => (
                   <article key={n}>

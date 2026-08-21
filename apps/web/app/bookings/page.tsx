@@ -302,15 +302,17 @@ export default function Page() {
           <input name="fullName" placeholder="Nama customer" required />
           <select name="type">
             <option value="">Tipe customer</option>
-            <option>INDIVIDUAL</option>
-            <option>CORPORATE</option>
-            <option>AGENT</option>
-            <option>GROUP</option>
+            <option value="INDIVIDUAL">INDIVIDUAL</option>
+            <option value="FAMILY">FAMILY</option>
+            <option value="GROUP">GROUP</option>
+            <option value="CORPORATE">CORPORATE</option>
+            <option value="AGENT">AGENT</option>
+            <option value="RESELLER">RESELLER</option>
           </select>
           <input name="phone" placeholder="Nomor WhatsApp" />
           <input name="email" type="email" placeholder="Email" />
           <input name="city" placeholder="Kota" />
-          <input name="country" placeholder="Negara" />
+          <input name="country" maxLength={2} placeholder="Negara (ID/SG/MY)" defaultValue="ID" />
           <input name="address" className="full" placeholder="Alamat" />
           <textarea name="notes" className="full" placeholder="Catatan customer" />
           <button className="primary">Simpan Customer</button>

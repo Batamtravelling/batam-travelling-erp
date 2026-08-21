@@ -14,6 +14,8 @@ Promotions follow `DRAFT -> PENDING_REVIEW -> APPROVED/PUBLISHED -> ARCHIVED`. S
 
 `content.manage` permits editing and submission. `content.approve` permits approval or rejection. The migration grants this approval capability only to tenant-scoped roles named exactly `Tenant Owner`; it does not broaden editor or global-role permissions.
 
+Package review follows the same least-privilege split: `package.update` permits submission, while `package.approve` permits approval or rejection. The approval capability is registered and granted only to tenant-scoped roles named exactly `Tenant Owner`; read-only and editor roles do not receive it implicitly. Rejection requires a review note, and resubmission clears the previous review decision before the package returns to `PENDING_REVIEW`.
+
 ## Tenant and relation safety
 
 `ArticlePackage` and `PromotionPackage` carry `tenant_id` and use composite foreign keys to both parents. The migration stops if legacy cross-tenant links exist. Public article and promotion responses independently filter linked packages through the same package eligibility predicate.
