@@ -5,6 +5,7 @@ import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { apiGet, apiPatch, apiPost } from '../../lib/api';
 
 type P = { id: string; name: string; milestones?: { id: string; title: string }[] };
+type TripSummary = { id: string; tripCode: string; title: string; status: string };
 type E = { id: string; name: string };
 type Comment = { id: string; message: string; type: string; createdAt: string; author?: { name: string } };
 type Participant = { id: string; role: string; user: E };
@@ -19,13 +20,15 @@ type T = {
   dueDate?: string;
   completedAt?: string;
   updatedAt: string;
-  project: P;
+  project?: P | null;
+  trip?: TripSummary | null;
   assignee?: E;
   milestone?: { id: string; title: string };
   participants?: Participant[];
   comments?: Comment[];
 };
 type PageResult<T> = { items: T[] };
+type Me = { permissions: string[] };
 
 const statuses = ['TODO', 'IN_PROGRESS', 'BLOCKED', 'DONE'] as const;
 const labels: Record<string, string> = { TODO: 'To Do', IN_PROGRESS: 'In Progress', BLOCKED: 'Blocked', DONE: 'Done' };
@@ -37,7 +40,8 @@ const escapeHtml = (value: string) => value.replaceAll('&', '&amp;').replaceAll(
 function taskDoc(task: T) {
   const participants = task.participants?.map((x) => `- ${x.user.name} (${x.role})`).join('\n') || '-';
   const comments = task.comments?.map((x) => `- ${x.author?.name || 'System'}: ${x.message} (${fmt(x.createdAt)})`).join('\n') || '-';
-  return `TASK / TRIP SHEET\n\nJudul: ${task.title}\nProyek: ${task.project.name}\nMilestone: ${task.milestone?.title || '-'}\nPIC utama: ${task.assignee?.name || '-'}\nPetugas:\n${participants}\n\nStatus: ${task.status}\nProgress: ${task.progress}%\nPrioritas: ${task.priority}\nMulai: ${fmt(task.startDate)}\nTenggat: ${fmt(task.dueDate)}\nSelesai: ${fmt(task.completedAt)}\nLast update: ${fmt(task.updatedAt)}\n\nDeskripsi:\n${task.description || '-'}\n\nCatatan terbaru:\n${comments}`;
+  const parentLabel = task.project?.name ? `Proyek: ${task.project.name}` : task.trip ? `Trip: ${task.trip.tripCode} · ${task.trip.title}` : 'Operasional';
+  return `TASK / TRIP SHEET\n\nJudul: ${task.title}\n${parentLabel}\nMilestone: ${task.milestone?.title || '-'}\nPIC utama: ${task.assignee?.name || '-'}\nPetugas:\n${participants}\n\nStatus: ${task.status}\nProgress: ${task.progress}%\nPrioritas: ${task.priority}\nMulai: ${fmt(task.startDate)}\nTenggat: ${fmt(task.dueDate)}\nSelesai: ${fmt(task.completedAt)}\nLast update: ${fmt(task.updatedAt)}\n\nDeskripsi:\n${task.description || '-'}\n\nCatatan terbaru:\n${comments}`;
 }
 
 function downloadText(name: string, content: string) {
@@ -53,7 +57,8 @@ function downloadText(name: string, content: string) {
 function printTask(task: T) {
   const win = window.open('', '_blank', 'width=900,height=1200');
   if (!win) return;
-  win.document.write(`<!doctype html><html><head><title>${escapeHtml(task.title)}</title><style>body{font-family:var(--font-sans),ui-sans-serif,system-ui,sans-serif;padding:32px;line-height:1.5;color:#10223a}h1{margin:0 0 10px;font-weight:700;letter-spacing:-.03em}h2{margin:22px 0 8px;font-size:16px;font-weight:700;letter-spacing:-.02em}table{width:100%;border-collapse:collapse}td{padding:8px;border-bottom:1px solid #dbe3ee;vertical-align:top}small{color:#607087}.meta{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:16px 0}.box{border:1px solid #dbe3ee;border-radius:12px;padding:14px}.muted{color:#607087}</style></head><body><h1>${escapeHtml(task.title)}</h1><div class="muted">Proyek: ${escapeHtml(task.project.name)} · PIC: ${escapeHtml(task.assignee?.name || '-')}</div><div class="meta"><div class="box"><b>Status</b><div>${escapeHtml(task.status)}</div></div><div class="box"><b>Progress</b><div>${task.progress}%</div></div><div class="box"><b>Tenggat</b><div>${escapeHtml(fmt(task.dueDate))}</div></div><div class="box"><b>Last update</b><div>${escapeHtml(fmt(task.updatedAt))}</div></div></div><h2>Deskripsi</h2><div class="box">${escapeHtml(task.description || '-').replaceAll('\\n','<br/>')}</div><h2>Petugas</h2><div class="box">${escapeHtml(task.participants?.map((x) => `${x.user.name} (${x.role})`).join(', ') || '-')}</div><h2>Catatan</h2><div class="box">${escapeHtml(task.comments?.map((x) => `${x.author?.name || 'System'}: ${x.message}`).join('\\n\\n') || '-').replaceAll('\\n','<br/>')}</div><script>window.onload=()=>{window.print();setTimeout(()=>window.close(),250)}</script></body></html>`);
+  const parentText = task.project?.name ? `Proyek: ${escapeHtml(task.project.name)}` : task.trip ? `Trip: ${escapeHtml(task.trip.tripCode)} · ${escapeHtml(task.trip.title)}` : 'Operasional';
+  win.document.write(`<!doctype html><html><head><title>${escapeHtml(task.title)}</title><style>body{font-family:var(--font-sans),ui-sans-serif,system-ui,sans-serif;padding:32px;line-height:1.5;color:#10223a}h1{margin:0 0 10px;font-weight:700;letter-spacing:-.03em}h2{margin:22px 0 8px;font-size:16px;font-weight:700;letter-spacing:-.02em}table{width:100%;border-collapse:collapse}td{padding:8px;border-bottom:1px solid #dbe3ee;vertical-align:top}small{color:#607087}.meta{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:16px 0}.box{border:1px solid #dbe3ee;border-radius:12px;padding:14px}.muted{color:#607087}</style></head><body><h1>${escapeHtml(task.title)}</h1><div class="muted">${parentText} · PIC: ${escapeHtml(task.assignee?.name || '-')}</div><div class="meta"><div class="box"><b>Status</b><div>${escapeHtml(task.status)}</div></div><div class="box"><b>Progress</b><div>${task.progress}%</div></div><div class="box"><b>Tenggat</b><div>${escapeHtml(fmt(task.dueDate))}</div></div><div class="box"><b>Last update</b><div>${escapeHtml(fmt(task.updatedAt))}</div></div></div><h2>Deskripsi</h2><div class="box">${escapeHtml(task.description || '-').replaceAll('\\n','<br/>')}</div><h2>Petugas</h2><div class="box">${escapeHtml(task.participants?.map((x) => `${x.user.name} (${x.role})`).join(', ') || '-')}</div><h2>Catatan</h2><div class="box">${escapeHtml(task.comments?.map((x) => `${x.author?.name || 'System'}: ${x.message}`).join('\\n\\n') || '-').replaceAll('\\n','<br/>')}</div><script>window.onload=()=>{window.print();setTimeout(()=>window.close(),250)}</script></body></html>`);
   win.document.close();
 }
 
@@ -65,20 +70,36 @@ function timeLabel(updatedAt: string, completedAt?: string) {
 export default function TasksPage() {
   const [tasks, setTasks] = useState<T[]>([]);
   const [projects, setProjects] = useState<P[]>([]);
+  const [trips, setTrips] = useState<TripSummary[]>([]);
   const [employees, setEmployees] = useState<E[]>([]);
   const [view, setView] = useState<'kanban' | 'table' | 'calendar'>('kanban');
   const [filter, setFilter] = useState('');
   const [projectId, setProjectId] = useState('');
+  const [targetType, setTargetType] = useState<'project' | 'trip'>('project');
   const [selectedTask, setSelectedTask] = useState('');
   const [comment, setComment] = useState('');
   const [msg, setMsg] = useState('');
+  const [permissions, setPermissions] = useState<string[]>([]);
+  const can = (permission: string) => permissions.includes(permission);
 
   const load = async () => {
     try {
-      const [t, p, e] = await Promise.all([apiGet<PageResult<T>>('/tasks?page=1&pageSize=100'), apiGet<PageResult<P>>('/projects?page=1&pageSize=100'), apiGet<PageResult<E>>('/employees?page=1&pageSize=100')]);
+      const [t, identity] = await Promise.all([
+        apiGet<PageResult<T>>('/tasks?page=1&pageSize=100'),
+        apiGet<Me>('/auth/me'),
+      ]);
+      const [p, e, tr] = await Promise.all([
+        identity.permissions.includes('project.read') ? apiGet<PageResult<P>>('/projects?page=1&pageSize=100') : Promise.resolve({ items: [] }),
+        identity.permissions.includes('employee.read') ? apiGet<PageResult<E>>('/employees?page=1&pageSize=100') : Promise.resolve({ items: [] }),
+        identity.permissions.includes('trip.read') ? apiGet<PageResult<TripSummary>>('/trips?page=1&pageSize=100') : Promise.resolve({ items: [] }),
+      ]);
       setTasks(t.items);
       setProjects(p.items);
       setEmployees(e.items);
+      setTrips(tr.items);
+      setPermissions(identity.permissions);
+      if (!identity.permissions.includes('project.read') && identity.permissions.includes('trip.read')) setTargetType('trip');
+      setMsg('');
     } catch (x) {
       setMsg((x as Error).message);
     }
@@ -89,30 +110,41 @@ export default function TasksPage() {
   }, []);
 
   const visible = useMemo(
-    () => tasks.filter((t) => (!projectId || t.project.id === projectId) && (!filter || t.title.toLowerCase().includes(filter.toLowerCase()))),
+    () => tasks.filter((t) => (!projectId || t.project?.id === projectId) && (!filter || t.title.toLowerCase().includes(filter.toLowerCase()))),
     [tasks, projectId, filter]
   );
 
   const selectedProject = projects.find((p) => p.id === projectId);
   const selectedTaskObj = visible.find((t) => t.id === selectedTask);
+  const canCreate = can('task.create') && (can('project.read') || can('trip.read'));
+  const effectiveTargetType = can(targetType === 'project' ? 'project.read' : 'trip.read') ? targetType : can('project.read') ? 'project' : 'trip';
 
   async function create(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const f = new FormData(e.currentTarget);
+    const chosenTarget = f.get('targetType') as string;
+    const targetProjectId = chosenTarget === 'project' ? (String(f.get('projectId') || '') || undefined) : undefined;
+    const targetTripId = chosenTarget === 'trip' ? (String(f.get('tripId') || '') || undefined) : undefined;
+    if (!targetProjectId && !targetTripId) {
+      setMsg('Pilih salah satu Proyek atau Trip operasional untuk tugas ini.');
+      return;
+    }
     try {
       await apiPost('/tasks', {
         title: f.get('title'),
         description: f.get('description') || undefined,
-        projectId: f.get('projectId'),
+        projectId: targetProjectId,
+        tripId: targetTripId,
         assigneeId: f.get('assigneeId') || undefined,
         participantIds: (f.getAll('participantIds') as string[]).filter(Boolean),
-        milestoneId: f.get('milestoneId') || undefined,
+        milestoneId: targetProjectId ? (f.get('milestoneId') || undefined) : undefined,
         priority: f.get('priority'),
         startDate: f.get('startDate') || undefined,
         dueDate: f.get('dueDate') || undefined,
       });
       e.currentTarget.reset();
       await load();
+      setMsg('Tugas baru berhasil disimpan.');
     } catch (x) {
       setMsg((x as Error).message);
     }
@@ -160,31 +192,54 @@ export default function TasksPage() {
           <h1>Task Planner</h1>
           <span>Kelola pekerjaan dalam Kanban, tabel, atau kalender tenggat. Progress, last update, dan waktu selesai kini terlihat jelas.</span>
         </div>
-        <Link href="/projects">← Project Portfolio</Link>
+        {can('project.read') && <Link href="/projects">← Project Portfolio</Link>}
       </div>
 
-      <details className="createPanel">
+      {canCreate && <details className="createPanel">
         <summary>＋ Tambah tugas</summary>
         <form className="taskCreate moduleForm" onSubmit={create}>
           <input name="title" placeholder="Judul tugas" required />
           <input name="description" placeholder="Deskripsi/checklist ringkas" />
-          <select name="projectId" required onChange={(e) => setProjectId(e.target.value)}>
-            <option value="">Pilih proyek</option>
-            {projects.map((x) => (
-              <option value={x.id} key={x.id}>
-                {x.name}
-              </option>
-            ))}
-          </select>
-          <select name="milestoneId">
-            <option value="">Tanpa milestone</option>
-            {selectedProject?.milestones?.map((x) => (
-              <option value={x.id} key={x.id}>
-                {x.title}
-              </option>
-            ))}
-          </select>
+
           <label>
+            Target Tugas
+            <select name="targetType" value={effectiveTargetType} onChange={(e) => setTargetType(e.target.value as 'project' | 'trip')}>
+              {can('project.read') && <option value="project">Proyek Bisnis / Portofolio</option>}
+              {can('trip.read') && <option value="trip">Trip Operasional</option>}
+            </select>
+          </label>
+
+          {effectiveTargetType === 'project' ? (
+            <>
+              <select name="projectId" required onChange={(e) => setProjectId(e.target.value)}>
+                <option value="">Pilih proyek</option>
+                {projects.map((x) => (
+                  <option value={x.id} key={x.id}>
+                    {x.name}
+                  </option>
+                ))}
+              </select>
+              <select name="milestoneId">
+                <option value="">Tanpa milestone</option>
+                {selectedProject?.milestones?.map((x) => (
+                  <option value={x.id} key={x.id}>
+                    {x.title}
+                  </option>
+                ))}
+              </select>
+            </>
+          ) : (
+            <select name="tripId" required>
+              <option value="">Pilih trip operasional</option>
+              {trips.map((x) => (
+                <option value={x.id} key={x.id}>
+                  {x.tripCode} · {x.title} ({x.status})
+                </option>
+              ))}
+            </select>
+          )}
+
+          {can('employee.read') && <><label>
             PIC utama
             <select name="assigneeId">
               <option value="">Pilih PIC</option>
@@ -204,7 +259,7 @@ export default function TasksPage() {
                 </option>
               ))}
             </select>
-          </label>
+          </label></>}
           <select name="priority">
             <option>NORMAL</option>
             <option>LOW</option>
@@ -221,7 +276,7 @@ export default function TasksPage() {
           </label>
           <button className="primary">Simpan tugas</button>
         </form>
-      </details>
+      </details>}
 
       {msg && <p className="errorText">{msg}</p>}
 
@@ -234,14 +289,14 @@ export default function TasksPage() {
           ))}
         </div>
         <input value={filter} onChange={(e) => setFilter(e.target.value)} placeholder="Cari tugas..." />
-        <select value={projectId} onChange={(e) => setProjectId(e.target.value)}>
+        {can('project.read') && <select value={projectId} onChange={(e) => setProjectId(e.target.value)}>
           <option value="">Semua proyek</option>
           {projects.map((p) => (
             <option value={p.id} key={p.id}>
               {p.name}
             </option>
           ))}
-        </select>
+        </select>}
         <b>{visible.length} tugas</b>
       </div>
 
@@ -268,7 +323,7 @@ export default function TasksPage() {
         </article>
       </section>
 
-      <form className="moduleForm" onSubmit={submitComment}>
+      {can('task.update') && <form className="moduleForm" onSubmit={submitComment}>
         <label>
           Pilih task
           <select value={selectedTask} onChange={(e) => setSelectedTask(e.target.value)} required>
@@ -285,7 +340,7 @@ export default function TasksPage() {
           <input value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Catatan progress, kendala, atau konfirmasi selesai" />
         </label>
         <button className="primary">Tambah catatan</button>
-      </form>
+      </form>}
 
       {selectedTaskObj && (
         <section className="bookingTotal">
@@ -320,7 +375,7 @@ export default function TasksPage() {
                     <h3>{t.title}</h3>
                     {t.description && <p>{t.description}</p>}
                     <div className="taskMetaGrid">
-                      <span><b>Proyek</b><small>{t.project.name}</small></span>
+                      <span><b>Proyek/Trip</b><small>{t.project?.name ?? (t.trip ? `${t.trip.tripCode} · ${t.trip.title}` : 'Operasional')}</small></span>
                       <span><b>PIC</b><small>{t.assignee?.name || 'Belum ada PIC'}</small></span>
                       <span><b>Petugas</b><small>{t.participants?.length ?? 0} orang</small></span>
                       <span><b>Milestone</b><small>{t.milestone?.title || 'Tanpa milestone'}</small></span>
@@ -333,11 +388,11 @@ export default function TasksPage() {
                       <div className="bookingActions">
                         <button type="button" onClick={() => printTask(t)}>Print</button>
                         <button type="button" onClick={() => downloadText(`${t.title}.txt`, taskDoc(t))}>Download</button>
-                        <select value={t.status} onChange={(e) => move(t.id, e.target.value, `Status diubah ke ${e.target.value}`)}>
+                        {can('task.update') && <select value={t.status} onChange={(e) => move(t.id, e.target.value, `Status diubah ke ${e.target.value}`)}>
                           {statuses.map((x) => (
                             <option key={x}>{x}</option>
                           ))}
-                        </select>
+                        </select>}
                       </div>
                     </footer>
                   </article>
@@ -351,7 +406,7 @@ export default function TasksPage() {
         <div className="dataTable taskTable">
           <div className="tableRow tableHead">
             <span>Tugas</span>
-            <span>Proyek / Milestone</span>
+            <span>Proyek / Trip / Milestone</span>
             <span>PIC</span>
             <span>Petugas</span>
             <span>Progres</span>
@@ -363,16 +418,16 @@ export default function TasksPage() {
                 <span>
                   <b>{t.title}</b>
                   <small>{fmtDate(t.dueDate)}</small>
-                  <small>{t.project.name}</small>
+                  <small>{t.project?.name ?? (t.trip ? `${t.trip.tripCode} · ${t.trip.title}` : 'Operasional')}</small>
                 </span>
                 <span>
-                  {t.project.name}
+                  {t.project?.name ?? (t.trip ? `${t.trip.tripCode} · ${t.trip.title}` : 'Operasional')}
                   <small>{t.milestone?.title || '-'}</small>
               </span>
               <span>{t.assignee?.name || '-'}</span>
               <span>{t.participants?.map((x) => x.user.name).join(', ') || '-'}</span>
               <span>
-                <input
+                {can('task.update') ? <input
                   className="progressInput"
                   type="number"
                   min="0"
@@ -382,7 +437,7 @@ export default function TasksPage() {
                     await apiPatch(`/tasks/${t.id}`, { progress: Number(e.target.value) });
                     await load();
                   }}
-                />
+                /> : t.progress}
                 %
               </span>
               <span>
@@ -394,11 +449,11 @@ export default function TasksPage() {
               <div className="bookingActions">
                 <button type="button" onClick={() => printTask(t)}>Print</button>
                 <button type="button" onClick={() => downloadText(`${t.title}.txt`, taskDoc(t))}>Download</button>
-                <select value={t.status} onChange={(e) => move(t.id, e.target.value, `Status diubah ke ${e.target.value}`)}>
+                {can('task.update') && <select value={t.status} onChange={(e) => move(t.id, e.target.value, `Status diubah ke ${e.target.value}`)}>
                   {statuses.map((x) => (
                     <option key={x}>{x}</option>
                   ))}
-                </select>
+                </select>}
               </div>
             </div>
           ))}
@@ -420,19 +475,19 @@ export default function TasksPage() {
                     <span>
                       <b>{t.title}</b>
                       <small>
-                        {t.project.name} · {t.assignee?.name || 'Belum ada PIC'}
+                        {t.project?.name ?? (t.trip ? `${t.trip.tripCode} · ${t.trip.title}` : 'Operasional')} · {t.assignee?.name || 'Belum ada PIC'}
                       </small>
                     </span>
                     <div className="bookingActions">
                       <button type="button" onClick={() => printTask(t)}>Print</button>
                       <button type="button" onClick={() => downloadText(`${t.title}.txt`, taskDoc(t))}>Download</button>
-                      <select value={t.status} onChange={(e) => move(t.id, e.target.value, `Status diubah ke ${e.target.value}`)}>
+                      {can('task.update') && <select value={t.status} onChange={(e) => move(t.id, e.target.value, `Status diubah ke ${e.target.value}`)}>
                         {statuses.map((x) => (
                           <option key={x} value={x}>
                             {labels[x]}
                           </option>
                         ))}
-                      </select>
+                      </select>}
                     </div>
                   </div>
                 ))}
