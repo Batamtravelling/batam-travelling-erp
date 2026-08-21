@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useEffect, useRef, useState } from 'react';
 import { apiGet, apiPatch, apiPost, apiUpload } from '../../../lib/api';
 
 type InvoiceRow = { id: string; invoiceNumber: string; issuedAt: string; status: string; totalAmount: number; paidAmount: number; customer: { fullName: string }; booking: { bookingCode: string; packageName: string } };
@@ -25,6 +25,7 @@ const csv = (name: string, rows: Record<string, string | number | null>[]) => {
 };
 
 export default function Page() {
+  const paymentIdempotencyKey = useRef(crypto.randomUUID());
   const [items, setItems] = useState<P[]>([]);
   const [invoices, setInvoices] = useState<InvoiceRow[]>([]);
   const [brand, setBrand] = useState<Brand>({});
@@ -88,7 +89,8 @@ export default function Page() {
     e.preventDefault();
     const f = new FormData(e.currentTarget);
     try {
-      await apiPost('/payments', { invoiceId: f.get('invoiceId'), amount: Number(f.get('amount')), method: f.get('method'), reference: f.get('reference') || undefined });
+      await apiPost('/payments', { invoiceId: f.get('invoiceId'), amount: Number(f.get('amount')), method: f.get('method'), reference: f.get('reference') || undefined }, { 'Idempotency-Key': paymentIdempotencyKey.current });
+      paymentIdempotencyKey.current = crypto.randomUUID();
       e.currentTarget.reset();
       await load();
     } catch (x) {

@@ -2,10 +2,10 @@
 
 Generated mechanically from frontend source.
 
-- Routes: 44
-- Stylesheets: 19
-- Unique color/gradient expressions: 226
-- Legacy/review-required expressions: 200
+- Routes: 45
+- Stylesheets: 21
+- Unique color/gradient expressions: 99
+- Legacy/review-required expressions: 84
 
 Artifacts:
 

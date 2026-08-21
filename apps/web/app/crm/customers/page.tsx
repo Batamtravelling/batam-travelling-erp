@@ -5,7 +5,7 @@ import { apiGet, apiPatch, apiPost } from '../../../lib/api';
 
 type Follow = { id: string; dueAt: string; channel: string; subject: string; status: string; notes?: string; nextAction?: string; customer?: { id: string; customerCode: string; fullName: string; phone?: string; email?: string }; lead?: { id: string; leadCode: string; senderName?: string; status: string }; assignedUser?: { id: string; name: string } };
 type Lead = { id: string; leadCode: string; senderName?: string; phone?: string; email?: string; message?: string; source: string; estimatedValue?: string; priority: string; status: string; verifiedAt?: string; notes?: string; nextFollowUpAt?: string; updatedAt: string; customer?: { id: string; fullName: string }; followUps: Follow[] };
-type Customer = { id: string; customerCode: string; fullName: string; phone?: string; email?: string; type: string; status: string; leadSource?: string; notes?: string; leads: { id: string; leadCode: string; status: string; estimatedValue?: string }[]; bookings: { id: string; totalAmount: string; status: string }[]; followUps: Follow[] };
+type Customer = { id: string; customerCode: string; fullName: string; phone?: string; email?: string; type: string; status: string; leadSource?: string; notes?: string; leads: { id: string; leadCode: string; status: string; estimatedValue?: string }[]; bookings: { id: string; totalAmount: string; status: string }[]; followUps: Follow[]; commercialActivity: { leadCount: number; bookingCount: number; activeBookingCount: number; lifetimeBookingValue: number } };
 type PageResult<T> = { items: T[]; meta: { page: number; pageSize: number; total: number; totalPages: number } };
 
 const statuses = ['NEW', 'CONTACTED', 'QUALIFIED', 'QUOTATION', 'NEGOTIATION', 'WON', 'LOST'] as const;
@@ -71,8 +71,8 @@ export default function CrmCustomerPage() {
 
   useEffect(() => { load(); }, [customerPage, customerPageSize, leadPage, leadPageSize, followPage, q, source]);
 
-  const activePipeline = leads.filter((x) => x.status !== 'LOST').reduce((n, x) => n + Number(x.estimatedValue || 0), 0);
-  const revenue = customers.reduce((n, c) => n + c.bookings.reduce((m, b) => m + Number(b.totalAmount), 0), 0);
+  const activePipeline = leads.filter((x) => !['WON', 'LOST'].includes(x.status)).reduce((n, x) => n + Number(x.estimatedValue || 0), 0);
+  const revenue = customers.reduce((n, c) => n + c.commercialActivity.lifetimeBookingValue, 0);
 
   async function createCustomer(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -191,7 +191,7 @@ export default function CrmCustomerPage() {
 
           <section className="customerGrid detailed">
             {customers.map((c) => {
-              const total = c.bookings.reduce((n, b) => n + Number(b.totalAmount), 0);
+              const total = c.commercialActivity.lifetimeBookingValue;
               const pipe = c.leads.reduce((n, l) => n + Number(l.estimatedValue || 0), 0);
               const latest = c.followUps[0];
               return (
@@ -206,7 +206,7 @@ export default function CrmCustomerPage() {
                   </header>
                   <div className="customerMetrics">
                     <span><b>{c.leads.length}</b>Lead</span>
-                    <span><b>{c.bookings.length}</b>Booking</span>
+                    <span><b>{c.commercialActivity.activeBookingCount}</b>Booking aktif</span>
                     <span><b>{money(pipe)}</b>Pipeline</span>
                     <span><b>{money(total)}</b>Transaksi</span>
                   </div>

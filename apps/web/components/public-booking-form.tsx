@@ -8,7 +8,7 @@ import { money } from './public-ui';
 
 type Price = { category: string; sellingPrice: number | string };
 type Departure = { id:string; startsAt:string; maxPax:number; remainingPax:number; status?:string; surchargeAmount?:number|string; surchargeBasis?:string };
-type Result = { customerCode:string; leadCode:string; bookingCode:string; invoiceNumber:string; totalAmount:number|string };
+type Result = { bookingCode:string; invoiceNumber:string; totalAmount:number|string };
 type Trip = { id:string; name:string; kind:string; minPax:number; maxPax:number; prices:Price[]; departures:Departure[] };
 
 export function PublicBookingForm({trip}:{trip:Trip}) {

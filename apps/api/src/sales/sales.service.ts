@@ -1,8 +1,10 @@
 import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { BookingCodeService } from '../core/booking-code.service.js';
+import { DepartureCapacityService } from '../core/departure-capacity.service.js';
 import { PrismaService } from '../core/prisma.service.js';
 import { RequestIdentity } from '../core/request-context.js';
+import { calculateDepartureSurcharge } from '../core/surcharge.js';
 import { AcceptQuotationDto, ConvertQuotationDto, CreateQuotationDto, QuotationItemDto, QuotationQueryDto, RejectQuotationDto, UpdateQuotationDto } from './dto.js';
 
 type ResolvedItem = {
@@ -20,6 +22,7 @@ const quotationInclude = {
   customer: { select: { id: true, customerCode: true, fullName: true, phone: true, email: true } },
   lead: { select: { id: true, leadCode: true, status: true } },
   package: { select: { id: true, packageCode: true, name: true } },
+  departure: { select: { id: true, startsAt: true, status: true, maxPax: true, surchargeLabel: true, surchargeAmount: true, surchargeBasis: true } },
   createdBy: { select: { id: true, name: true } },
   sentBy: { select: { id: true, name: true } },
   acceptedBy: { select: { id: true, name: true } },
@@ -48,8 +51,9 @@ export function quotationItemsRequireRepricing(input: {
   packageChanged: boolean;
   paxChanged: boolean;
   hasPackage: boolean;
+  departureChanged?: boolean;
 }) {
-  return input.itemsProvided || input.packageChanged || (input.paxChanged && input.hasPackage);
+  return input.itemsProvided || input.packageChanged || input.departureChanged === true || (input.paxChanged && input.hasPackage);
 }
 
 function snapshotOf(quotation: Record<string, any>, items: ResolvedItem[]) {
@@ -59,6 +63,7 @@ function snapshotOf(quotation: Record<string, any>, items: ResolvedItem[]) {
     customerId: quotation.customerId,
     leadId: quotation.leadId ?? null,
     packageId: quotation.packageId ?? null,
+    departureId: quotation.departureId ?? null,
     status: quotation.status,
     travelDate: new Date(quotation.travelDate).toISOString().slice(0, 10),
     returnDate: quotation.returnDate ? new Date(quotation.returnDate).toISOString().slice(0, 10) : null,
@@ -89,6 +94,7 @@ export class SalesService {
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(BookingCodeService) private readonly codes: BookingCodeService,
+    @Inject(DepartureCapacityService) private readonly capacity: DepartureCapacityService,
   ) {}
 
   private db(client: PrismaService | Prisma.TransactionClient = this.prisma): any {
@@ -130,7 +136,7 @@ export class SalesService {
     return quotation;
   }
 
-  private async validateReferences(identity: RequestIdentity, dto: Pick<CreateQuotationDto, 'customerId' | 'leadId' | 'packageId'>) {
+  private async validateReferences(identity: RequestIdentity, dto: Pick<CreateQuotationDto, 'customerId' | 'leadId' | 'packageId' | 'departureId'>) {
     const customer = await this.prisma.customer.findFirst({ where: { id: dto.customerId, tenantId: identity.tenantId, archivedAt: null, status: 'ACTIVE' }, select: { id: true } });
     if (!customer) throw new BadRequestException('Customer tidak valid atau tidak aktif');
 
@@ -143,7 +149,12 @@ export class SalesService {
       include: { prices: { where: { active: true }, orderBy: { priority: 'desc' }, take: 1 } },
     }) : null;
     if (dto.packageId && !travelPackage) throw new BadRequestException('Paket belum aktif atau belum disetujui');
-    return { lead, travelPackage };
+    const departure = dto.departureId ? await this.prisma.packageDeparture.findFirst({ where: { id: dto.departureId, tenantId: identity.tenantId } }) : null;
+    if (dto.departureId && !departure) throw new BadRequestException('Jadwal Open Trip tidak valid');
+    if (departure && (!dto.packageId || departure.packageId !== dto.packageId)) throw new BadRequestException('Jadwal Open Trip tidak sesuai dengan paket quotation');
+    if (departure && !['OPEN', 'SCHEDULED'].includes(departure.status)) throw new BadRequestException('Open Trip tidak menerima quotation baru');
+    if (departure?.bookingCloseAt && departure.bookingCloseAt < new Date()) throw new BadRequestException('Booking Open Trip sudah ditutup');
+    return { lead, travelPackage, departure };
   }
 
   private validateDates(travelDateValue: string, returnDateValue: string | undefined, validUntilValue: string) {
@@ -155,7 +166,7 @@ export class SalesService {
     return { travelDate, returnDate, validUntil };
   }
 
-  private async resolveItems(identity: RequestIdentity, input: QuotationItemDto[] | undefined, travelPackage: any, pax: number): Promise<ResolvedItem[]> {
+  private async resolveItems(identity: RequestIdentity, input: QuotationItemDto[] | undefined, travelPackage: any, departure: any, pax: number): Promise<ResolvedItem[]> {
     const items: ResolvedItem[] = [];
     if (travelPackage) {
       const price = new Prisma.Decimal(travelPackage.adultPrice ?? travelPackage.prices[0]?.sellingPrice ?? 0);
@@ -170,6 +181,11 @@ export class SalesService {
         totalPrice: price.mul(quantity),
         sortOrder: 0,
       });
+    }
+
+    if (departure && Number(departure.surchargeAmount) > 0) {
+      const surcharge = new Prisma.Decimal(calculateDepartureSurcharge(Number(departure.surchargeAmount), departure.surchargeBasis, pax));
+      items.push({ name: departure.surchargeLabel || 'Open Trip surcharge', description: 'Snapshot surcharge jadwal keberangkatan', quantity: new Prisma.Decimal(1), unit: 'booking', unitPrice: surcharge, totalPrice: surcharge, sortOrder: items.length });
     }
 
     for (const [index, line] of (input ?? []).entries()) {
@@ -190,9 +206,9 @@ export class SalesService {
   }
 
   async create(identity: RequestIdentity, dto: CreateQuotationDto) {
-    const { lead, travelPackage } = await this.validateReferences(identity, dto);
-    const dates = this.validateDates(dto.travelDate, dto.returnDate, dto.validUntil);
-    const items = await this.resolveItems(identity, dto.items, travelPackage, dto.pax);
+    const { lead, travelPackage, departure } = await this.validateReferences(identity, dto);
+    const dates = this.validateDates(departure ? departure.startsAt.toISOString() : dto.travelDate, dto.returnDate, dto.validUntil);
+    const items = await this.resolveItems(identity, dto.items, travelPackage, departure, dto.pax);
     const subtotal = items.reduce((sum, item) => sum.add(item.totalPrice), new Prisma.Decimal(0));
 
     return this.prisma.$transaction(async (rawTx) => {
@@ -204,6 +220,7 @@ export class SalesService {
         customerId: dto.customerId,
         leadId: dto.leadId,
         packageId: dto.packageId,
+        departureId: dto.departureId,
         createdById: identity.userId,
         travelDate: dates.travelDate,
         returnDate: dates.returnDate,
@@ -218,7 +235,7 @@ export class SalesService {
       } });
       await tx.quotationItem.createMany({ data: items.map((item) => ({ ...item, tenantId: identity.tenantId, quotationId: quotation.id })) });
       await tx.quotationVersion.create({ data: { tenantId: identity.tenantId, quotationId: quotation.id, version: 1, createdById: identity.userId, snapshot: snapshotOf(quotation, items) } });
-      await tx.auditLog.create({ data: { tenantId: identity.tenantId, actorId: identity.userId, action: 'quotation.created', resourceType: 'Quotation', resourceId: quotation.id, requestId: identity.requestId, metadata: { quotationNumber, customerId: dto.customerId, leadId: dto.leadId ?? null, packageId: dto.packageId ?? null, totalAmount: subtotal.toNumber() } } });
+      await tx.auditLog.create({ data: { tenantId: identity.tenantId, actorId: identity.userId, action: 'quotation.created', resourceType: 'Quotation', resourceId: quotation.id, requestId: identity.requestId, metadata: { quotationNumber, customerId: dto.customerId, leadId: dto.leadId ?? null, packageId: dto.packageId ?? null, departureId: dto.departureId ?? null, totalAmount: subtotal.toNumber() } } });
       await tx.outboxEvent.create({ data: { tenantId: identity.tenantId, eventType: 'quotation.created', aggregateType: 'quotation', aggregateId: quotation.id, payload: { event_id: crypto.randomUUID(), event_type: 'quotation.created', tenant_id: identity.tenantId, actor_id: identity.userId, aggregate_type: 'quotation', aggregate_id: quotation.id, schema_version: 1 } } });
       if (lead && ['QUALIFIED', 'QUOTATION', 'NEGOTIATION'].includes(lead.status)) await rawTx.lead.update({ where: { id: lead.id }, data: { status: 'QUOTATION' } });
       return tx.quotation.findUniqueOrThrow({ where: { id: quotation.id }, include: quotationInclude });
@@ -232,23 +249,26 @@ export class SalesService {
       customerId: dto.customerId ?? current.customerId,
       leadId: dto.leadId ?? current.leadId ?? undefined,
       packageId: dto.packageId ?? current.packageId ?? undefined,
+      departureId: dto.departureId ?? current.departureId ?? undefined,
     };
-    const { travelPackage } = await this.validateReferences(identity, merged);
+    const { travelPackage, departure } = await this.validateReferences(identity, merged);
     const dates = this.validateDates(
-      dto.travelDate ?? new Date(current.travelDate).toISOString(),
+      departure ? departure.startsAt.toISOString() : dto.travelDate ?? new Date(current.travelDate).toISOString(),
       dto.returnDate ?? (current.returnDate ? new Date(current.returnDate).toISOString() : undefined),
       dto.validUntil ?? new Date(current.validUntil).toISOString(),
     );
     const packageChanged = dto.packageId !== undefined && dto.packageId !== current.packageId;
+    const departureChanged = dto.departureId !== undefined && dto.departureId !== current.departureId;
     const paxChanged = dto.pax !== undefined && dto.pax !== current.pax;
     const repriceItems = quotationItemsRequireRepricing({
       itemsProvided: dto.items !== undefined,
       packageChanged,
       paxChanged,
       hasPackage: Boolean(merged.packageId),
+      departureChanged,
     });
     const items: ResolvedItem[] = repriceItems
-      ? await this.resolveItems(identity, dto.items, travelPackage, dto.pax ?? current.pax)
+      ? await this.resolveItems(identity, dto.items, travelPackage, departure, dto.pax ?? current.pax)
       : current.items.map((item: any, index: number) => ({ serviceProductId: item.serviceProductId ?? undefined, name: item.name, description: item.description ?? undefined, quantity: new Prisma.Decimal(item.quantity), unit: item.unit, unitPrice: new Prisma.Decimal(item.unitPrice), totalPrice: new Prisma.Decimal(item.totalPrice), sortOrder: index }));
     const subtotal = items.reduce((sum, item) => sum.add(item.totalPrice), new Prisma.Decimal(0));
     const version = current.version + 1;
@@ -259,6 +279,7 @@ export class SalesService {
         customerId: merged.customerId,
         leadId: merged.leadId,
         packageId: merged.packageId,
+        departureId: merged.departureId,
         version,
         travelDate: dates.travelDate,
         returnDate: dates.returnDate,
@@ -312,7 +333,7 @@ export class SalesService {
     return this.prisma.$transaction(async (rawTx) => {
       const tx = this.db(rawTx);
       const quotationNumber = await this.codes.nextQuotation(rawTx, identity.tenantId);
-      const copy = await tx.quotation.create({ data: { tenantId: identity.tenantId, quotationNumber, customerId: current.customerId, leadId: current.leadId, packageId: current.packageId, createdById: identity.userId, status: 'DRAFT', version: 1, travelDate: current.travelDate, returnDate: current.returnDate, pax: current.pax, destination: current.destination, packageName: current.packageName, subtotalAmount: current.subtotalAmount, totalAmount: current.totalAmount, currency: current.currency, validUntil, terms: current.terms, notes: current.notes } });
+      const copy = await tx.quotation.create({ data: { tenantId: identity.tenantId, quotationNumber, customerId: current.customerId, leadId: current.leadId, packageId: current.packageId, departureId: current.departureId, createdById: identity.userId, status: 'DRAFT', version: 1, travelDate: current.travelDate, returnDate: current.returnDate, pax: current.pax, destination: current.destination, packageName: current.packageName, subtotalAmount: current.subtotalAmount, totalAmount: current.totalAmount, currency: current.currency, validUntil, terms: current.terms, notes: current.notes } });
       await tx.quotationItem.createMany({ data: items.map((item) => ({ ...item, tenantId: identity.tenantId, quotationId: copy.id })) });
       await tx.quotationVersion.create({ data: { tenantId: identity.tenantId, quotationId: copy.id, version: 1, createdById: identity.userId, snapshot: snapshotOf(copy, items) } });
       await tx.auditLog.create({ data: { tenantId: identity.tenantId, actorId: identity.userId, action: 'quotation.duplicated', resourceType: 'Quotation', resourceId: copy.id, requestId: identity.requestId, metadata: { sourceQuotationId: id, quotationNumber } } });
@@ -327,6 +348,7 @@ export class SalesService {
 
     return this.prisma.$transaction(async (rawTx) => {
       const tx = this.db(rawTx);
+      if (current.departureId) await this.capacity.assertAvailable(rawTx, identity.tenantId, current.departureId, current.pax);
       const claimed = await tx.quotation.updateMany({
         where: { id, tenantId: identity.tenantId, status: 'ACCEPTED', version: current.version, booking: null },
         data: { status: 'CONVERTED', convertedAt: new Date() },
@@ -340,6 +362,7 @@ export class SalesService {
         customerId: current.customerId,
         leadId: current.leadId,
         packageId: current.packageId,
+        departureId: current.departureId,
         quotationId: current.id,
         source: 'QUOTATION',
         status: 'PENDING_PAYMENT',
@@ -373,6 +396,11 @@ export class SalesService {
         totalAmount: current.totalAmount,
         dueDate: dto.dueDate ? dateOnly(dto.dueDate, 'Jatuh tempo invoice') : undefined,
       } });
+      if (current.departureId) {
+        const reserved = await tx.booking.aggregate({ _sum: { pax: true }, where: { tenantId: identity.tenantId, departureId: current.departureId, status: { notIn: ['CANCELLED', 'REFUNDED'] } } });
+        const departure = await tx.packageDeparture.findFirstOrThrow({ where: { id: current.departureId, tenantId: identity.tenantId }, select: { maxPax: true } });
+        if (Number(reserved._sum.pax ?? 0) >= departure.maxPax) await tx.packageDeparture.update({ where: { id: current.departureId }, data: { status: 'FULL' } });
+      }
       await tx.auditLog.create({ data: { tenantId: identity.tenantId, actorId: identity.userId, action: 'quotation.converted', resourceType: 'Quotation', resourceId: id, requestId: identity.requestId, metadata: { bookingId: booking.id, bookingCode, invoiceId: invoice.id, invoiceNumber } } });
       await tx.outboxEvent.create({ data: { tenantId: identity.tenantId, eventType: 'quotation.converted', aggregateType: 'quotation', aggregateId: id, payload: { event_id: crypto.randomUUID(), event_type: 'quotation.converted', tenant_id: identity.tenantId, actor_id: identity.userId, aggregate_type: 'quotation', aggregate_id: id, booking_id: booking.id, schema_version: 1 } } });
       return tx.booking.findUniqueOrThrow({ where: { id: booking.id }, include: { customer: true, invoice: true, items: true, quotation: { select: { quotationNumber: true, version: true } } } });

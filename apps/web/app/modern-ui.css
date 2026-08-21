@@ -1,0 +1,57 @@
+/* Modern shared surface layer. Route behavior stays unchanged. */
+html{scroll-behavior:smooth;background:var(--app-background)}
+body{font-size:var(--font-size-base);letter-spacing:-.006em;background:radial-gradient(circle at 82% 0,rgba(33,103,217,.055),transparent 30rem),var(--app-background)}
+::selection{background:rgba(255,191,24,.42);color:var(--brand-navy-strong)}
+:where(h1,h2,h3){text-wrap:balance}:where(p,li,dd){text-wrap:pretty}
+:where(button,a,input,select,textarea){transition:border-color .16s ease,background-color .16s ease,color .16s ease,box-shadow .16s ease,transform .16s ease}
+:where(button,input,select,textarea){min-height:var(--control-height)}
+:where(input,select,textarea){width:100%;border:1px solid var(--border-default);border-radius:var(--radius-sm);background:var(--surface-primary);color:var(--text-primary);font:inherit;box-shadow:var(--shadow-xs)}
+:where(input,select,textarea):hover{border-color:var(--border-strong)}
+:where(input,select,textarea):focus{outline:0;border-color:var(--brand-navy-hover);box-shadow:var(--shadow-focus)}
+:where(input,textarea)::placeholder{color:var(--text-secondary)}
+:where(button,[role="button"]){border-radius:var(--radius-sm)}button:not(:disabled):active{transform:translateY(1px)}button:disabled{cursor:not-allowed;opacity:.56}
+
+/* Public experience */
+.websiteNav{min-height:78px;padding-inline:max(22px,calc((100vw - 1440px)/2));border-color:rgba(220,227,236,.85);background:rgba(255,255,255,.9);box-shadow:0 1px 0 rgba(6,26,56,.04);backdrop-filter:blur(18px) saturate(1.25)}
+.websiteBrand{gap:11px;letter-spacing:-.02em}.websiteBrand i{display:grid;width:36px;height:36px;place-items:center;border-radius:11px;background:var(--brand-navy-primary);color:var(--brand-yellow-primary);font-size:11px;font-style:normal;letter-spacing:.06em;box-shadow:inset 0 0 0 1px rgba(255,255,255,.12)}
+.websiteBrand img{display:block;max-width:176px;max-height:44px;object-fit:contain}
+.websiteLinks>a,.tripNavMenu>summary{position:relative;padding:10px 0;font-size:13px;font-weight:650}
+.websiteLinks>a::after,.tripNavMenu>summary::after{content:"";position:absolute;inset:auto 50% 3px;width:0;height:2px;border-radius:2px;background:var(--brand-yellow-primary);transition:inset .16s ease,width .16s ease}
+.websiteLinks>a:hover::after,.tripNavMenu>summary:hover::after{inset-inline:0;width:100%}
+.tripNavMenu>div,.accountMenu>div{top:calc(100% + 10px);border-color:rgba(198,209,223,.8);border-radius:18px;box-shadow:var(--shadow-menu)}
+.tripNavMenu>div a,.accountMenu>div a{border-radius:11px}.accountMenu>summary{border:0;box-shadow:0 7px 18px rgba(229,168,0,.2)}
+.publicHero,.publicPage,.publicAuth{isolation:isolate}.publicHero h1{letter-spacing:-.055em;line-height:.98}
+.publicButton,.publicHero a,.flashPanel>a{min-height:48px;border-radius:12px;font-weight:750}
+.publicTrips article,.compactTripGrid article,.popularTiles a,.promoPanel,.detailBooking,.publicAuthPanel form{border-radius:var(--radius-lg);box-shadow:0 14px 38px rgba(6,26,56,.06)}
+.publicTrips article:hover,.compactTripGrid article:hover,.popularTiles a:hover{transform:translateY(-3px);border-color:var(--border-strong);box-shadow:0 20px 48px rgba(6,26,56,.1)}
+.publicGlobalFooter{border-top:4px solid var(--brand-yellow-primary)}.floatingWhatsapp{min-height:52px;border:1px solid rgba(6,26,56,.1);border-radius:999px;font-weight:800}
+
+/* ERP shell */
+.erpShell{grid-template-columns:var(--sidebar-width) minmax(0,1fr)}
+.erpSidebar{padding:18px 13px 14px;background:linear-gradient(180deg,var(--brand-navy-primary),var(--brand-navy-strong));box-shadow:inset -1px 0 rgba(255,255,255,.08)}
+.erpBrand{display:flex;align-items:center;gap:11px;min-height:48px;margin:0 4px 22px;padding:6px;color:white;text-decoration:none}
+.erpBrand>span,.erpMobileBrand>span{display:grid;width:34px;height:34px;flex:0 0 34px;place-items:center;border:1px solid rgba(255,191,24,.45);border-radius:10px;background:rgba(255,191,24,.1);color:var(--brand-yellow-primary);font-size:10px;font-weight:850;letter-spacing:.08em}
+.erpBrand>strong{display:grid;font-size:14px;line-height:1.15;letter-spacing:-.01em}.erpBrand small{margin-top:3px;color:var(--sidebar-text);font-size:9px;font-weight:650;letter-spacing:.1em;text-transform:uppercase}.erpBrand img{max-width:190px;max-height:48px;object-fit:contain}
+.erpNavLabel{color:var(--sidebar-text)}.erpNav details{border-color:rgba(255,255,255,.065)}.erpNav summary{color:var(--sidebar-text)}
+.erpNav a{min-height:42px;border-left:0;border-radius:11px;color:var(--sidebar-text);font-size:13px}.erpNav a span{width:26px;flex-basis:26px;min-height:26px;border:1px solid rgba(255,255,255,.08);border-radius:8px;background:rgba(255,255,255,.045);font-size:10px;font-weight:800}
+.erpNav a:hover{background:rgba(255,255,255,.075)}.erpNav a.active{border-left:0;background:var(--brand-yellow-primary);color:var(--brand-navy-strong);box-shadow:0 8px 20px rgba(0,0,0,.14)}.erpNav a.active span{border-color:rgba(6,26,56,.12);background:rgba(255,255,255,.28)}
+.erpTenantPanel{border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.045)}
+.erpWorkspace{min-width:0}.erpTopbar{position:sticky;top:0;z-index:35;display:flex;align-items:center;justify-content:space-between;height:70px;padding:0 var(--page-space);border-bottom:1px solid rgba(220,227,236,.88);background:rgba(244,247,251,.88);backdrop-filter:blur(18px) saturate(1.25)}
+.erpTopbar>div:first-child{display:grid;gap:2px}.erpTopbar small{color:var(--text-secondary);font-size:10px;font-weight:750;letter-spacing:.1em;text-transform:uppercase}.erpTopbar strong{color:var(--brand-navy-strong);font-size:15px;letter-spacing:-.02em}
+.erpTopbarMeta{display:flex;align-items:center;gap:10px}.erpConnection,.erpRole{display:inline-flex;align-items:center;min-height:32px;padding:0 11px;border:1px solid var(--border-default);border-radius:999px;background:var(--surface-primary);color:var(--text-secondary);font-size:11px;font-weight:700;box-shadow:var(--shadow-xs)}
+.erpConnection::before{content:"";width:7px;height:7px;margin-right:7px;border-radius:50%;background:var(--text-secondary);box-shadow:0 0 0 3px rgba(102,112,133,.15)}.erpConnection.authenticated::before{background:var(--status-success);box-shadow:0 0 0 3px rgba(20,118,71,.14)}.erpConnection.error::before{background:var(--status-error)}.erpRole{color:var(--brand-navy-primary)}.erpMain{min-height:calc(100vh - 70px)}
+
+/* Shared product surfaces */
+:where(.modulePage,.reportPage,.vendorPage,.contentStudio,.akPage,.brandSettings,.productAdmin,.taskWorkspace){width:min(100%,var(--content-max-wide));margin-inline:auto;padding:clamp(18px,2.6vw,36px)!important}
+:where(.moduleHeading,.reportHero,.vendorHero,.contentStudioHero,.akHero,.brandSettings>header,.productAdmin>header){align-items:flex-end;padding:0 0 22px;border-bottom:1px solid var(--border-default)}
+:where(.moduleHeading h1,.reportHero h1,.vendorHero h1,.contentStudioHero h1,.akHero h1,.brandSettings>header h1,.productAdmin>header h1){font-size:var(--font-size-title);font-weight:680;letter-spacing:-.045em}
+:where(.moduleHeading p,.reportHero p,.vendorHero p,.contentStudioHero p,.akHero p,.productAdmin>header p){color:var(--brand-navy-hover);font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
+:where(.panel,.moduleForm,.reportFilters,.dataTable,.bookingSummary>article,.taskToolbar,.taskParticipants,.bookingPassengers,.leadInbox,.customerSearch,.followUpWorkspace>article,.createPanel,.packageCreate,.packageBuilder,.projectCard,.projectStats>article,.crmStats>article,.vendorStats>article,.reportStats>article,.workspaceCards article,.posReceipt,.ownerMetrics>article){border:1px solid rgba(220,227,236,.9);border-radius:var(--radius-lg);background:var(--surface-raised);box-shadow:0 8px 28px rgba(6,26,56,.045)}
+:where(.panel,.moduleForm,.reportFilters,.dataTable,.createPanel,.packageCreate,.packageBuilder){padding:clamp(16px,2vw,24px)}
+:where(.kpis,.ownerMetrics,.projectStats,.crmStats,.vendorStats,.reportStats)>article{position:relative;overflow:hidden}:where(.kpis,.ownerMetrics,.projectStats,.crmStats,.vendorStats,.reportStats)>article::before{content:"";position:absolute;inset:0 auto 0 0;width:3px;background:var(--brand-yellow-primary)}
+.tableHead{color:var(--text-secondary);font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}.tableRow{border-color:var(--border-default)}.tableRow:hover{background:var(--surface-subtle)}
+.badge,:where([class*="Status"],[class*="statusBadge"]){font-size:11px;font-weight:750;letter-spacing:.02em}.empty,.stateBox{border:1px dashed var(--border-strong);border-radius:var(--radius-lg);background:linear-gradient(145deg,var(--surface-primary),var(--surface-subtle))}.moduleNotice{border-radius:var(--radius-md)}
+
+@media(max-width:900px){.erpTopbar{top:var(--mobile-header-height);height:56px;padding-inline:16px}.erpTopbarMeta .erpRole{display:none}.erpMain{min-height:calc(100vh - 116px)}.erpMobileBrand{display:flex;align-items:center;gap:8px}.erpMobileBrand>span{width:30px;height:30px;flex-basis:30px}:where(.modulePage,.reportPage,.vendorPage,.contentStudio,.akPage,.brandSettings,.productAdmin,.taskWorkspace){padding:20px 16px!important}}
+@media(max-width:640px){.websiteNav{min-height:66px}.websiteBrand i{width:32px;height:32px}.websiteBrand span{font-size:12px}.erpConnection{padding-inline:9px;font-size:10px}:where(.moduleHeading,.reportHero,.vendorHero,.contentStudioHero,.akHero,.brandSettings>header,.productAdmin>header){align-items:stretch}:where(.moduleHeading h1,.reportHero h1,.vendorHero h1,.contentStudioHero h1,.akHero h1,.brandSettings>header h1,.productAdmin>header h1){font-size:27px}:where(button,a,input,select,textarea){touch-action:manipulation}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}:where(button,a,input,select,textarea){transition:none}.publicTrips article:hover,.compactTripGrid article:hover,.popularTiles a:hover{transform:none}}

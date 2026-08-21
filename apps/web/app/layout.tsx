@@ -17,6 +17,8 @@ import './reports/report-center.css';
 import './vendors/vendors.css';
 import './branding-contact.css';
 import './crm-trip-improvements.css';
+import './modern-ui.css';
+import './public-modern.css';
 import type { Metadata } from 'next';
 import { AppShell } from '../components/app-shell';
 export const metadata: Metadata = {metadataBase:new URL(process.env.NEXT_PUBLIC_SITE_URL??'https://batamtravelling.com'),title:{default:'Batam Travelling | Paket Wisata Batam, Singapore & Malaysia',template:'%s | Batam Travelling'},description:'Paket wisata dari Batam ke Singapore, Malaysia, dan Kepulauan Riau. Open trip, private trip, ferry, hotel, transportasi, dan tour guide.',applicationName:'Batam Travelling',keywords:['travel Batam','paket wisata Batam','open trip Singapore dari Batam','private trip Batam','tour Singapore'],authors:[{name:'Batam Travelling'}],creator:'Batam Travelling',publisher:'Batam Travelling',alternates:{canonical:'/'},openGraph:{type:'website',locale:'id_ID',siteName:'Batam Travelling',title:'Batam Travelling | Perjalanan Terencana dari Batam',description:'Open trip, private trip, dan paket perjalanan lengkap dari Batam.'},twitter:{card:'summary_large_image',title:'Batam Travelling',description:'Paket wisata dan Open Trip terencana dari Batam.'},robots:{index:true,follow:true}};

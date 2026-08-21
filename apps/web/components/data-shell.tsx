@@ -44,27 +44,27 @@ export function LeadDetailClient({ leadId }: { leadId: string }) {
   }, [leadId]);
 
   if (loading) return <p>Memuat detail lead...</p>;
-  if (error) return <p style={{ color: '#b91c1c' }}>{error}</p>;
+  if (error) return <p style={{ color: 'var(--status-error)' }}>{error}</p>;
   if (!lead) return <p>Lead tidak ditemukan.</p>;
 
   return (
     <div style={{ display: 'grid', gap: '12px' }}>
-      <div style={{ border: '1px solid #e2e8f0', borderRadius: '12px', padding: '16px' }}>
+      <div style={{ border: '1px solid var(--border-default)', borderRadius: '12px', padding: '16px' }}>
         <strong>Lead Code:</strong> {lead.leadCode}
       </div>
-      <div style={{ border: '1px solid #e2e8f0', borderRadius: '12px', padding: '16px' }}>
+      <div style={{ border: '1px solid var(--border-default)', borderRadius: '12px', padding: '16px' }}>
         <strong>Customer:</strong> {lead.customer?.fullName ?? '—'}
       </div>
-      <div style={{ border: '1px solid #e2e8f0', borderRadius: '12px', padding: '16px' }}>
+      <div style={{ border: '1px solid var(--border-default)', borderRadius: '12px', padding: '16px' }}>
         <strong>Destination:</strong> {lead.destination ?? '—'}
       </div>
-      <div style={{ border: '1px solid #e2e8f0', borderRadius: '12px', padding: '16px' }}>
+      <div style={{ border: '1px solid var(--border-default)', borderRadius: '12px', padding: '16px' }}>
         <strong>Status:</strong> {lead.status ?? 'NEW'}
       </div>
-      <div style={{ border: '1px solid #e2e8f0', borderRadius: '12px', padding: '16px' }}>
+      <div style={{ border: '1px solid var(--border-default)', borderRadius: '12px', padding: '16px' }}>
         <strong>Requirement:</strong> {lead.requirement ?? '—'}
       </div>
-      <div style={{ border: '1px solid #e2e8f0', borderRadius: '12px', padding: '16px' }}>
+      <div style={{ border: '1px solid var(--border-default)', borderRadius: '12px', padding: '16px' }}>
         <strong>Estimated Value:</strong> Rp {Number(lead.estimatedValue ?? 0).toLocaleString('id-ID')}
       </div>
     </div>

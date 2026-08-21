@@ -10,6 +10,8 @@
 - Tenant-owned entities use `tenantId`.
 - Business sequences are modeled in the database.
 - Idempotency records are modeled in the database.
+- Tenant payment policy menyimpan enforcement Four Eyes; absence policy diperlakukan sebagai secure default (`requireSeparateVerifier=true`).
+- Quotation dapat menunjuk departure kanonik tanpa mengubah quotation lama yang bersifat private/flexible.
 - Audit log and outbox event tables are present.
 
 ## Rules that must remain true
