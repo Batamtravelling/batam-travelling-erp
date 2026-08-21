@@ -1,6 +1,6 @@
 import { PackageServiceLevel, PassengerType } from '@prisma/client';
 import { describe, expect, it } from 'vitest';
-import { assertPaymentCollectible, assertSeparatePaymentVerifier, bookingStatusAfterVerifiedPayment, canonicalizePackagePassengers } from './transactions.module.js';
+import { assertPaymentCollectible, assertSeparatePaymentVerifier, bookingStatusAfterVerifiedPayment, canonicalizePackagePassengers, canVerifyPayment } from './transactions.module.js';
 
 describe('canonical booking passengers', () => {
   it('overrides client-controlled package, service level, and price', () => {
@@ -55,6 +55,9 @@ describe('payment alignment across booking and finance', () => {
   });
 
   it('enforces Four Eyes only when the tenant policy requires it', () => {
+    expect(canVerifyPayment(true, 'user-a', 'user-a')).toBe(false);
+    expect(canVerifyPayment(true, 'user-a', 'user-b')).toBe(true);
+    expect(canVerifyPayment(false, 'user-a', 'user-a')).toBe(true);
     expect(() => assertSeparatePaymentVerifier(true, 'user-a', 'user-a')).toThrow('Four Eyes');
     expect(() => assertSeparatePaymentVerifier(true, 'user-a', 'user-b')).not.toThrow();
     expect(() => assertSeparatePaymentVerifier(false, 'user-a', 'user-a')).not.toThrow();

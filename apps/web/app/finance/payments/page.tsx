@@ -4,7 +4,7 @@ import { FormEvent, useEffect, useRef, useState } from 'react';
 import { apiGet, apiPatch, apiPost, apiUpload } from '../../../lib/api';
 
 type InvoiceRow = { id: string; invoiceNumber: string; issuedAt: string; status: string; totalAmount: number; paidAmount: number; customer: { fullName: string }; booking: { bookingCode: string; packageName: string } };
-type P = { id: string; paymentNumber: string; receiptNumber?: string; amount: number; method: string; status: string; reference?: string; receivedAt: string; verifiedAt?: string; customer: { fullName: string }; invoice: { invoiceNumber: string }; verifiedBy?: { name: string }; proofs: { id: string; originalName: string; mimeType: string; size: number; createdAt: string }[] };
+type P = { id: string; paymentNumber: string; receiptNumber?: string; amount: number; method: string; status: string; reference?: string; receivedAt: string; verifiedAt?: string; canVerify: boolean; customer: { fullName: string }; invoice: { invoiceNumber: string }; receivedBy?: { name: string }; verifiedBy?: { name: string }; proofs: { id: string; originalName: string; mimeType: string; size: number; createdAt: string }[] };
 type Brand = { documentLogoUrl?: string; contactEmail?: string; whatsappNumber?: string; contactAddress?: string };
 type Meta = { page: number; pageSize: number; total: number; totalPages: number };
 type PageResult<T> = { items: T[]; meta: Meta };
@@ -120,6 +120,16 @@ export default function Page() {
     }
   }
 
+  async function verifyPayment(paymentId: string, status: 'VERIFIED' | 'REJECTED') {
+    try {
+      setM('');
+      await apiPatch(`/payments/${paymentId}/verify`, { status });
+      await load();
+    } catch (error) {
+      setM((error as Error).message);
+    }
+  }
+
   const print = (x: P) => { setReceipt(x); setTimeout(() => window.print(), 50); };
   const exportInvoices = () => {
     csv(`invoice-filtered-${invoiceMeta.page}.csv`, invoices.map((x) => ({
@@ -188,7 +198,7 @@ export default function Page() {
 
       <section className="dataTable financeTable">
         <div className="tableRow tableHead"><span>Payment</span><span>Invoice / Customer</span><span>Nilai</span><span>Status / Dokumen</span></div>
-        {items.map((x) => <div className="tableRow" key={x.id}><span><b>{x.paymentNumber}</b><small>{x.receiptNumber || new Date(x.receivedAt).toLocaleString('id-ID')}</small></span><span>{x.invoice.invoiceNumber}<small>{x.customer.fullName} · {x.method}</small>{x.proofs?.map((proof) => <button type="button" key={proof.id} onClick={() => void openProof(x.id, proof.id)}>Lihat {proof.originalName}</button>)}</span><span>{money(Number(x.amount))}</span><span>{x.status === 'PENDING' ? <><form onSubmit={(event) => void uploadProof(event, x.id)}><input name="file" type="file" accept="image/png,image/jpeg,image/webp,application/pdf" required/><button type="submit">Upload bukti</button></form><span style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}><button type="button" onClick={async () => { await apiPatch(`/payments/${x.id}/verify`, { status: 'VERIFIED' }); await load(); }}>Verifikasi</button><button type="button" onClick={async () => { await apiPatch(`/payments/${x.id}/verify`, { status: 'REJECTED' }); await load(); }}>Tolak</button></span></> : <><b>{x.status}</b>{x.status === 'VERIFIED' && <button type="button" className="receiptButton" onClick={() => print(x)}>Print Bukti</button>}</>}</span></div>)}
+        {items.map((x) => <div className="tableRow" key={x.id}><span><b>{x.paymentNumber}</b><small>{x.receiptNumber || new Date(x.receivedAt).toLocaleString('id-ID')}</small></span><span>{x.invoice.invoiceNumber}<small>{x.customer.fullName} · {x.method}{x.receivedBy?.name ? ` · dicatat ${x.receivedBy.name}` : ''}</small>{x.proofs?.map((proof) => <button type="button" key={proof.id} onClick={() => void openProof(x.id, proof.id)}>Lihat {proof.originalName}</button>)}</span><span>{money(Number(x.amount))}</span><span>{x.status === 'PENDING' ? <><form onSubmit={(event) => void uploadProof(event, x.id)}><input name="file" type="file" accept="image/png,image/jpeg,image/webp,application/pdf" required/><button type="submit">Upload bukti</button></form>{x.canVerify ? <span style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}><button type="button" onClick={() => void verifyPayment(x.id, 'VERIFIED')}>Verifikasi</button><button type="button" onClick={() => void verifyPayment(x.id, 'REJECTED')}>Tolak</button></span> : <small>Four Eyes aktif · menunggu verifikasi pengguna lain</small>}</> : <><b>{x.status}</b>{x.status === 'VERIFIED' && <button type="button" className="receiptButton" onClick={() => print(x)}>Print Bukti</button>}</>}</span></div>)}
       </section>
 
       <div className="paginationBar">

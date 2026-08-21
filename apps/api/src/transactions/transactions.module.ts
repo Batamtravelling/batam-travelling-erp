@@ -51,8 +51,10 @@ export function assertPaymentCollectible(invoiceStatus:string,bookingStatus:stri
 }
 
 export function assertSeparatePaymentVerifier(required:boolean,receivedById:string|null,verifierId:string){
-  if(required&&receivedById===verifierId)throw new ForbiddenException('Four Eyes aktif: pencatat payment tidak boleh memverifikasi payment yang sama');
+  if(!canVerifyPayment(required,receivedById,verifierId))throw new ForbiddenException('Four Eyes aktif: pencatat payment tidak boleh memverifikasi payment yang sama');
 }
+
+export function canVerifyPayment(required:boolean,receivedById:string|null,verifierId:string){return !required||receivedById!==verifierId}
 @Injectable() class TransactionsService {
   constructor(@Inject(PrismaService) private readonly prisma:PrismaService,@Inject(BookingCodeService) private readonly codes:BookingCodeService,@Inject(DepartureCapacityService) private readonly capacity:DepartureCapacityService){}
   async listBookings(i:RequestIdentity, query: { page?: number; pageSize?: number; search?: string; status?: string } = {}) {
@@ -193,11 +195,13 @@ export function assertSeparatePaymentVerifier(required:boolean,receivedById:stri
         ],
       } : {}),
     };
-    const [total, items] = await Promise.all([
+    const [total, items, policy] = await Promise.all([
       this.prisma.payment.count({ where }),
       this.prisma.payment.findMany({ where, include: { customer: { select: { fullName: true } }, invoice: { select: { invoiceNumber: true } }, receivedBy: { select: { name: true } }, verifiedBy: { select: { name: true } }, proofs: { select: { id: true, originalName: true, mimeType: true, size: true, createdAt: true }, orderBy: { createdAt: 'desc' } } }, orderBy: { receivedAt: 'desc' }, skip: (page - 1) * pageSize, take: pageSize } as any),
+      this.prisma.tenantPaymentPolicy.findUnique({ where: { tenantId: i.tenantId }, select: { requireSeparateVerifier: true } }),
     ]);
-    return { items, meta: { page, pageSize, total, totalPages: Math.max(1, Math.ceil(total / pageSize)) } };
+    const requireSeparateVerifier=policy?.requireSeparateVerifier??true;
+    return { items:items.map((payment:any)=>({...payment,canVerify:canVerifyPayment(requireSeparateVerifier,payment.receivedById,i.userId)})), meta: { page, pageSize, total, totalPages: Math.max(1, Math.ceil(total / pageSize)) } };
   }
   async createPayment(i:RequestIdentity,d:CreatePaymentDto,key:string){
     if(!key||key.length<16||key.length>128)throw new BadRequestException('Idempotency-Key wajib diisi (16-128 karakter)');
