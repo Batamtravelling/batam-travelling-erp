@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-21T08:54:08.933Z",
+  "generatedAt": "2026-08-21T10:08:10.158Z",
   "routeCount": 45,
   "routes": [
     {
@@ -739,7 +739,7 @@
         "/payments",
         "/payments/${paymentId}/proof",
         "/payments/${paymentId}/proofs/${proofId}/url",
-        "/payments/${x.id}/verify"
+        "/payments/${paymentId}/verify"
       ],
       "desktopStatus": "pending automated visual audit",
       "mobileStatus": "pending automated visual audit",

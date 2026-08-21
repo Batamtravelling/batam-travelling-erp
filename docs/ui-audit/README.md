@@ -4,8 +4,8 @@ Generated mechanically from frontend source.
 
 - Routes: 45
 - Stylesheets: 21
-- Unique color/gradient expressions: 99
-- Legacy/review-required expressions: 84
+- Unique color/gradient expressions: 79
+- Legacy/review-required expressions: 72
 
 Artifacts:
 

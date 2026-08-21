@@ -251,32 +251,6 @@ export function PublicHome() {
               Batam · Singapore · Malaysia · Kepulauan Riau
             </small>
           </div>
-          <aside className="publicHeroVisual">
-            <div
-              className="heroScene"
-              style={
-                brand.heroImageUrl
-                  ? {
-                      backgroundImage: `linear-gradient(155deg,var(--status-info) 0 34%,var(--status-info) 34% 56%,var(--brand-navy-strong) 56% 75%,var(--brand-yellow-primary) 75%), url(${brand.heroImageUrl})`,
-                      backgroundSize: "cover",
-                      backgroundPosition: "center",
-                    }
-                  : undefined
-              }
-            >
-              <span>{brand.heroBadge || "BERANGKAT DARI BATAM"}</span>
-              <b>Jelajahi lebih banyak, urus lebih sedikit.</b>
-              <i>
-                {brand.featureText ||
-                  "Pilihan perjalanan yang jelas, dukungan tim lokal, dan proses pemesanan yang terasa ringan."}
-              </i>
-            </div>
-            <article>
-              <span>Dukungan tim lokal</span>
-              <b>Siap membantu</b>
-              <small>Jadwal dan rincian perjalanan transparan</small>
-            </article>
-          </aside>
         </section>
       )}
 
