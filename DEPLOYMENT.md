@@ -1,27 +1,38 @@
 # DEPLOYMENT
 
 **Status:** deployment guardrail summary
-**Tanggal audit:** 12 Agustus 2026
+**Tanggal audit:** 21 Agustus 2026
 
 ## Current deployment posture
 
-- Production deployment is not approved by this audit.
+- Baseline provider conflict is resolved in favor of Vercel + Supabase.
+- Production deployment is still not approved until the release evidence below is complete.
 - Staging and VPS changes require explicit owner approval.
 - Database migration on active environments is prohibited without explicit approval.
 
 ## Current architecture baseline
 
-- The approved baseline document currently states AWS RDS, ECS Fargate, S3, CloudFront, Cognito, Redis, and Jakarta region.
-- The handoff document notes a conflict between that baseline and earlier Supabase/Hostinger discussion.
-- This conflict must be reconciled before any infrastructure move.
+- Vercel hosts the Next.js application and NestJS HTTP API function.
+- Supabase provides isolated PostgreSQL, Auth, and Storage resources for each environment.
+- Managed Redis provides distributed rate limiting; the provider is operational configuration, not business source of truth.
+- `DATABASE_URL` is the Supabase transaction pooler connection for Vercel runtime.
+- `DIRECT_URL` is the Supabase direct/session connection used only by migration and administration commands.
+- The superseded AWS baseline is not an active deployment target.
 
 ## Safe order of work
 
-1. Finalize business decisions that block workflows.
-2. Verify code, tests, and CI evidence.
-3. Reconcile infrastructure baseline.
-4. Prepare migration and rollback plan.
-5. Only then consider staging or production deployment with approval.
+1. Provision isolated Supabase and Redis resources for Preview/Staging.
+2. Configure environment-scoped Vercel variables without copying production secrets into Preview.
+3. Verify production environment keys with `pnpm verify:production-env`.
+4. Apply reviewed Prisma migrations through `DIRECT_URL` outside the request lifecycle.
+5. Run lint, tests, build, Supabase advisors, smoke tests, and backup/restore rehearsal.
+6. Promote the tested Vercel artifact only after explicit owner approval.
+
+## Rollback boundary
+
+- Application rollback: re-point production to the previous known-good Vercel deployment.
+- Database rollback: prefer backward-compatible migrations and a forward fix; restore only from verified backup with explicit approval.
+- Storage/Auth changes require their own recovery evidence and are not rolled back by a Vercel deployment rollback.
 
 ## Documents to keep separate
 

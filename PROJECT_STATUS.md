@@ -18,10 +18,11 @@
 - Prisma schema menunjukkan tenant-scoped data model dengan `tenantId` pada domain utama.
 - Booking, quotation, payment, invoice, trip, and assignment memiliki state tersendiri.
 - GitHub Actions CI tersedia di `.github/workflows/ci.yml`.
+- Baseline deployment aktif adalah Vercel untuk web/API dan Supabase untuk PostgreSQL/Auth/Storage; AWS baseline lama telah disupersede.
 
 ## Area yang belum boleh diasumsikan selesai
 
-- Supabase staging atau hosting production.
+- Supabase staging terisolasi dan Vercel Preview/Production yang telah dikonfigurasi.
 - Load test pada staging terisolasi.
 - Backup/restore rehearsal dengan hasil RTO/RPO.
 - Visual QA pada perangkat nyata.

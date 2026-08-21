@@ -6,21 +6,22 @@ Deployment is prohibited until every required item below is evidenced and approv
 
 - [ ] Supabase organization belongs to PT Batam Travel Indonesia / Kariadi, not a third party.
 - [ ] Owner and recovery email are controlled by the company.
-- [ ] MFA is enabled for GitHub, Supabase, hosting, and recovery email.
+- [ ] MFA is enabled for GitHub, Supabase, Vercel, Redis provider, and recovery email.
 - [ ] At least two named company administrators exist.
 - [ ] Secrets are stored only in the hosting secret manager.
 
 ## Database bootstrap (run only after approval)
 
 1. Take a Supabase backup or create an isolated staging project.
-2. Set `DATABASE_URL` to the Supabase session/direct connection.
-3. Run `pnpm --filter @batam/api exec prisma migrate deploy`.
-4. Set `ERP_OWNER_EMAIL` to exactly the email created in Supabase Auth.
-5. Run `NODE_ENV=production pnpm db:seed` once.
-6. Confirm `_prisma_migrations`, `tenants`, the owner user, roles, and permissions.
-7. Run Supabase security and performance advisors.
-8. Create a private `erp-private` Storage bucket and verify public access is disabled.
-9. Verify payment-proof signed URLs expire and cannot be opened anonymously.
+2. Set `DATABASE_URL` to the Supabase transaction pooler (port 6543, `pgbouncer=true`) for Vercel runtime.
+3. Set `DIRECT_URL` to the isolated environment's Supabase direct or session-pooler connection (port 5432) for migrations.
+4. Run `pnpm --filter @batam/api exec prisma migrate deploy` outside the Vercel request lifecycle.
+5. Set `ERP_OWNER_EMAIL` to exactly the email created in Supabase Auth.
+6. Run `NODE_ENV=production pnpm db:seed` once.
+7. Confirm `_prisma_migrations`, `tenants`, the owner user, roles, and permissions.
+8. Run Supabase security and performance advisors.
+9. Create a private `erp-private` Storage bucket and verify public access is disabled.
+10. Verify payment-proof signed URLs expire and cannot be opened anonymously.
 
 ## Release gates
 

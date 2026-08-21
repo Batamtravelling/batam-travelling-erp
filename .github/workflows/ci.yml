@@ -15,6 +15,7 @@ jobs:
     timeout-minutes: 20
     env:
       DATABASE_URL: postgresql://batam_erp:batam_erp@localhost:5432/batam_erp
+      DIRECT_URL: postgresql://batam_erp:batam_erp@localhost:5432/batam_erp
       NEXT_PUBLIC_API_URL: http://localhost:3001/api/v1
       RUN_DB_INTEGRATION: "true"
     services:
