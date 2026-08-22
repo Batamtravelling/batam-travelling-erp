@@ -27,6 +27,7 @@
 - Sistem memvalidasi customer, tanggal, participant, price, package/departure, tenant, dan capacity di backend.
 - Booking menyimpan price snapshot dan lineage transaksi.
 - Untuk Open Trip, capacity reservation/update harus atomik agar tidak terjadi overselling.
+- Quotation Open Trip menyimpan departure kanonik dan snapshot surcharge; kapasitas dikunci dan diperiksa ulang saat quotation dikonversi menjadi Booking.
 - Booking menjadi reference utama untuk Finance, Operations, Vendor, Documents, dan Reporting.
 
 ### 4. Invoice dan Payment
@@ -34,6 +35,7 @@
 - Invoice diterbitkan terhadap booking sesuai payment terms.
 - Customer/sales dapat mengunggah payment proof sebagai bukti, tetapi bukti belum berarti uang terverifikasi.
 - Finance memverifikasi atau menolak payment.
+- Retry pencatatan payment menggunakan idempotency key. Bila Four Eyes tenant aktif, pencatat payment dan verifier/rejector harus berbeda.
 - Hanya `VERIFIED` payment yang memperbarui paid/outstanding, menghasilkan receipt bila berlaku, dan diposting ke canonical financial ledger.
 - Koreksi pembayaran harus menggunakan refund/reversal yang menjaga histori; jangan menghapus transaksi terverifikasi.
 

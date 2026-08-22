@@ -47,10 +47,11 @@ async function upload(file: File) {
 
 export default function SettingsPage() {
   const [p, setP] = useState<Profile>(blank);
+  const [requireSeparateVerifier, setRequireSeparateVerifier] = useState(true);
   const [msg, setMsg] = useState('');
 
   useEffect(() => {
-    apiGet<Profile | null>('/asset-knowledge/profile').then((x) => x && setP(x)).catch((e) => setMsg((e as Error).message));
+    Promise.all([apiGet<Profile | null>('/asset-knowledge/profile'), apiGet<{ requireSeparateVerifier: boolean }>('/payments/policy')]).then(([profile, policy]) => { if (profile) setP(profile); setRequireSeparateVerifier(policy.requireSeparateVerifier); }).catch((e) => setMsg((e as Error).message));
   }, []);
 
   async function submit(e: FormEvent<HTMLFormElement>) {
@@ -69,6 +70,7 @@ export default function SettingsPage() {
       next[key] = String(f.get(key) || '');
     }
     await apiPatch('/asset-knowledge/profile', next);
+    await apiPatch('/payments/policy', { requireSeparateVerifier });
     setP(next);
     setMsg('Branding, kontak, dan sosial media berhasil disimpan. Muat ulang halaman untuk melihat perubahan.');
   }
@@ -81,6 +83,12 @@ export default function SettingsPage() {
         <p>Satu pengaturan untuk website, ERP, quotation, bukti pembayaran, WhatsApp, dan media sosial.</p>
       </header>
       <form onSubmit={submit}>
+        <section>
+          <h2>Kontrol Payment Finance</h2>
+          <div className="contactSettings">
+            <label className="full"><input type="checkbox" checked={requireSeparateVerifier} onChange={(event) => setRequireSeparateVerifier(event.target.checked)} /> Aktifkan Four Eyes: pencatat payment tidak boleh memverifikasi atau menolak payment yang sama.</label>
+          </div>
+        </section>
         <section>
           <h2>Konten halaman Index</h2>
           <div className="contactSettings">
@@ -97,7 +105,7 @@ export default function SettingsPage() {
             </label>
             <label className="full">
               Hero subtitle
-              <textarea name="heroSubtitle" defaultValue={p.heroSubtitle} placeholder="Semua kebutuhan perjalanan tersusun rapi dalam satu pengalaman yang mudah, cepat, dan nyaman." />
+              <textarea name="heroSubtitle" defaultValue={p.heroSubtitle} placeholder="Temukan paket, pilih jadwal, dan siapkan perjalanan Anda dengan informasi yang jelas dalam satu tempat." />
             </label>
             <label>
               Badge hero

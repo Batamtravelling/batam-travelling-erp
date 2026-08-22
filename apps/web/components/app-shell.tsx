@@ -5,29 +5,29 @@ import { useEffect, useRef, useState } from 'react';
 import { apiGet } from '../lib/api';
 import { demoProfile, publicDemoEnabled } from '../lib/public-demo-data';
 const navItems = [
-    { href: '/dashboard', label: 'Dashboard', icon: '📊' },
-    { href: '/crm/customers', label: 'CRM Customer', icon: '👥' },
-    { href: '/sales/quotations', label: 'Quotations', icon: '🧾' },
-    { href: '/bookings', label: 'Bookings', icon: '🛳️' },
+    { href: '/dashboard', label: 'Dashboard', icon: 'DB' },
+    { href: '/crm/customers', label: 'CRM Customer', icon: 'CR' },
+    { href: '/sales/quotations', label: 'Quotations', icon: 'QT' },
+    { href: '/bookings', label: 'Bookings', icon: 'BK' },
     { href: '/pos', label: 'POS / Kasir', icon: 'S' },
-    { href: '/packages', label: 'Paket Trip', icon: '🎒' },
+    { href: '/packages', label: 'Paket Trip', icon: 'PK' },
     { href: '/package-reviews', label: 'Review Paket', icon: 'R' },
     { href: '/service-products', label: 'Produk Layanan', icon: 'PL' },
     { href: '/operations/open-trips', label: 'Open Trip', icon: 'OT' },
-    { href: '/operations/trips', label: 'Trip & Assignment', icon: '🧭' },
+    { href: '/operations/trips', label: 'Trip & Assignment', icon: 'TR' },
     { href: '/projects', label: 'Proyek', icon: 'P' },
     { href: '/tasks', label: 'Tugas', icon: 'T' },
     { href: '/employees', label: 'Karyawan', icon: 'K' },
     { href: '/vendors', label: 'Vendor', icon: 'V' },
-    { href: '/finance/invoices', label: 'Finance & Invoice', icon: '💳' },
+    { href: '/finance/invoices', label: 'Finance & Invoice', icon: 'FI' },
     { href: '/finance/cashflow', label: 'Arus Kas & Biaya', icon: 'CF' },
-    { href: '/reports', label: 'Reports & Backup', icon: '📈' },
+    { href: '/reports', label: 'Reports & Backup', icon: 'RP' },
     { href: '/content', label: 'Content Studio', icon: 'C' },
     { href: '/promotion-management', label: 'Promotion Management', icon: 'P' },
     { href: '/media-library', label: 'Media Library', icon: 'M' },
     { href: '/asset-knowledge', label: 'Asset & Knowledge', icon: 'AK' },
     { href: '/archives', label: 'Arsip', icon: 'A' },
-    { href: '/settings', label: 'Settings', icon: '⚙️' },
+    { href: '/settings', label: 'Settings', icon: 'ST' },
 ];
 const navGroups = [
     { label: 'Utama', paths: ['/dashboard'] },
@@ -88,6 +88,7 @@ export function AppShell({ children }: {
         ? navItems.filter(item => !required[item.href] || access.permissions.includes(required[item.href]))
         : [];
     const groupedMenu = navGroups.map(group => ({ ...group, items: group.paths.map(path => menuItems.find(item => item.href === path)).filter((item): item is (typeof navItems)[number] => Boolean(item)) })).filter(group => group.items.length);
+    const currentNavItem = navItems.find(item => pathname?.startsWith(item.href));
     useEffect(() => { setDrawerOpen(false); setPublicMenuOpen(false); }, [pathname]);
     useEffect(() => { if (!drawerOpen)
         return; const previousOverflow = document.body.style.overflow; document.body.style.overflow = 'hidden'; const drawer = drawerRef.current; const focusable = () => Array.from(drawer?.querySelectorAll<HTMLElement>('a[href],button:not([disabled]),summary,[tabindex]:not([tabindex="-1"])') ?? []); focusable()[0]?.focus(); const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') {
@@ -135,8 +136,8 @@ export function AppShell({ children }: {
             string,
             string
         ]>;
-        const publicNavigation = <><Link href="/trips">Paket Trip</Link><Link href="/trips">Open Trip</Link><Link href="/promotions">Promo & Diskon</Link><Link href="/tickets">Tiket & Atraksi</Link><Link href="/transportation">Transportasi</Link><Link href="/articles">Blog & Panduan</Link><Link href="/#about">About</Link><Link href="/contact">Kontak</Link>{socials.map(([name, url]) => <a key={name} href={url} target="_blank" rel="noreferrer">{name}</a>)}<div className="websiteMobileAccount"><b>Akun</b><Link href="/account">Dashboard Akun</Link><Link href="/sign-in">Masuk</Link><Link href="/sign-up">Daftar Akun</Link><Link href="/erp-sign-in">Masuk ERP</Link><Link href="/my-trip">Cek Booking</Link></div></>;
-        return <><nav className="websiteNav"><Link href="/" className="websiteBrand" aria-label="Batam Travelling Home">{brand.websiteLogoUrl ? <img src={brand.websiteLogoUrl} alt="Batam Travelling"/> : <span>BATAM <b>TRAVELLING</b></span>}</Link><div className="websiteLinks"><details className="tripNavMenu"><summary>Paket Trip <span aria-hidden="true">v</span></summary><div><Link href="/trips"><b>Semua Paket</b><small>Wisata dan liburan pilihan</small></Link><Link href="/trips"><b>Open Trip</b><small>Jadwal keberangkatan terdekat</small></Link><Link href="/trips"><b>Private Trip</b><small>Perjalanan fleksibel untuk grup Anda</small></Link></div></details><Link href="/promotions">Promo & Diskon</Link><details className="tripNavMenu"><summary>Tiket & Layanan <span aria-hidden="true">v</span></summary><div><Link href="/tickets"><b>Tiket & Atraksi</b><small>Ferry, atraksi, dan aktivitas</small></Link><Link href="/transportation"><b>Transportasi</b><small>Transfer dan sewa kendaraan</small></Link></div></details><Link href="/articles">Blog & Panduan</Link><Link href="/#about">About</Link><Link href="/contact">Kontak</Link>{socials.map(([name, url]) => <a key={name} href={url} target="_blank" rel="noreferrer">{name}</a>)}</div><details className="accountMenu"><summary aria-label="Akun Saya" title="Akun Saya">Akun</summary><div><Link href="/account">Dashboard Akun</Link><Link href="/sign-in">Masuk</Link><Link href="/sign-up">Daftar Akun</Link><Link href="/erp-sign-in">Masuk ERP</Link><Link href="/my-trip">Cek Booking</Link></div></details><button ref={publicMenuButtonRef} className="websiteMenuButton" type="button" aria-label="Buka navigasi website" aria-expanded={publicMenuOpen} aria-controls="website-mobile-navigation" onClick={() => setPublicMenuOpen(true)}>Menu</button></nav>{publicMenuOpen && <button className="websiteMenuOverlay" type="button" aria-label="Tutup navigasi website" onClick={() => setPublicMenuOpen(false)}/>}<aside ref={publicDrawerRef} id="website-mobile-navigation" className={`websiteMobileMenu${publicMenuOpen ? ' open' : ''}`} aria-label="Navigasi website"><div className="websiteMobileMenuHeader"><b>Menu</b><button type="button" aria-label="Tutup navigasi website" onClick={() => { setPublicMenuOpen(false); publicMenuButtonRef.current?.focus(); }}>Tutup</button></div><nav>{publicNavigation}</nav></aside>{children}<footer className="publicGlobalFooter"><div><section><b>BATAM TRAVELLING</b><p>Perjalanan terencana dari Batam untuk keluarga, grup, dan perusahaan.</p><small>Website publik tidak membuka data internal ERP.</small></section><nav aria-label="Jelajahi"><b>Jelajahi</b><Link href="/trips">Paket Trip</Link><Link href="/promotions">Promo</Link><Link href="/articles">Artikel</Link></nav><nav aria-label="Bantuan"><b>Bantuan</b><Link href="/contact">Kontak</Link><Link href="/terms">Syarat & Kebijakan</Link><Link href="/my-trip">Portal Perjalanan</Link></nav></div></footer>{wa && <a className="floatingWhatsapp" href={waHref} target="_blank" rel="noreferrer" aria-label="Chat WhatsApp" onClick={() => { try {
+        const publicNavigation = <><Link href="/trips">Paket Trip</Link><Link href="/trips">Open Trip</Link><Link href="/promotions">Promo & Diskon</Link><Link href="/tickets">Tiket & Atraksi</Link><Link href="/transportation">Transportasi</Link><Link href="/articles">Blog & Panduan</Link><Link href="/#about">Tentang Kami</Link><Link href="/contact">Kontak</Link>{socials.map(([name, url]) => <a key={name} href={url} target="_blank" rel="noreferrer">{name}</a>)}<div className="websiteMobileAccount"><b>Akun Pelanggan</b><Link href="/account">Perjalanan Saya</Link><Link href="/sign-in">Masuk</Link><Link href="/sign-up">Daftar Akun</Link><Link href="/my-trip">Cek Booking</Link></div></>;
+        return <><nav className="websiteNav"><Link href="/" className="websiteBrand" aria-label="Batam Travelling Home">{brand.websiteLogoUrl ? <img src={brand.websiteLogoUrl} alt="Batam Travelling"/> : <span>BATAM <b>TRAVELLING</b></span>}</Link><div className="websiteLinks"><details className="tripNavMenu"><summary>Paket Trip <span aria-hidden="true">v</span></summary><div><Link href="/trips"><b>Semua Paket</b><small>Wisata dan liburan pilihan</small></Link><Link href="/trips"><b>Open Trip</b><small>Jadwal keberangkatan terdekat</small></Link><Link href="/trips"><b>Private Trip</b><small>Perjalanan fleksibel untuk grup Anda</small></Link></div></details><Link href="/promotions">Promo & Diskon</Link><details className="tripNavMenu"><summary>Tiket & Layanan <span aria-hidden="true">v</span></summary><div><Link href="/tickets"><b>Tiket & Atraksi</b><small>Ferry, atraksi, dan aktivitas</small></Link><Link href="/transportation"><b>Transportasi</b><small>Transfer dan sewa kendaraan</small></Link></div></details><Link href="/articles">Blog & Panduan</Link><Link href="/#about">Tentang Kami</Link><Link href="/contact">Kontak</Link>{socials.map(([name, url]) => <a key={name} href={url} target="_blank" rel="noreferrer">{name}</a>)}</div><details className="accountMenu"><summary aria-label="Akun Saya" title="Akun Saya">Akun</summary><div><Link href="/account">Perjalanan Saya</Link><Link href="/sign-in">Masuk</Link><Link href="/sign-up">Daftar Akun</Link><Link href="/my-trip">Cek Booking</Link></div></details><button ref={publicMenuButtonRef} className="websiteMenuButton" type="button" aria-label="Buka navigasi website" aria-expanded={publicMenuOpen} aria-controls="website-mobile-navigation" onClick={() => setPublicMenuOpen(true)}>Menu</button></nav>{publicMenuOpen && <button className="websiteMenuOverlay" type="button" aria-label="Tutup navigasi website" onClick={() => setPublicMenuOpen(false)}/>}<aside ref={publicDrawerRef} id="website-mobile-navigation" className={`websiteMobileMenu${publicMenuOpen ? ' open' : ''}`} aria-label="Navigasi website"><div className="websiteMobileMenuHeader"><b>Menu</b><button type="button" aria-label="Tutup navigasi website" onClick={() => { setPublicMenuOpen(false); publicMenuButtonRef.current?.focus(); }}>Tutup</button></div><nav>{publicNavigation}</nav></aside>{children}<footer className="publicGlobalFooter"><div><section><b>BATAM TRAVELLING</b><p>Perjalanan terencana dari Batam untuk keluarga, grup, dan perusahaan.</p><small>Informasi perjalanan yang jelas, aman, dan mudah diakses kapan saja.</small></section><nav aria-label="Jelajahi"><b>Jelajahi</b><Link href="/trips">Paket Trip</Link><Link href="/promotions">Promo</Link><Link href="/articles">Artikel</Link></nav><nav aria-label="Bantuan"><b>Bantuan</b><Link href="/contact">Kontak</Link><Link href="/terms">Syarat & Kebijakan</Link><Link href="/my-trip">Perjalanan Saya</Link></nav></div></footer>{wa && <a className="floatingWhatsapp" href={waHref} target="_blank" rel="noreferrer" aria-label="Chat WhatsApp" onClick={() => { try {
             localStorage.setItem('bt_whatsapp_rotation', String(nextIndex));
         }
         catch { } }}>WA <span>{nextWa === wa ? 'Chat WhatsApp' : 'Nomor berganti'}</span></a>}</>;
@@ -150,12 +151,12 @@ export function AppShell({ children }: {
     return (<div className="erpShell">
       <header className="erpMobileHeader">
         <button ref={menuButtonRef} className="erpMenuButton" type="button" aria-label="Buka navigasi ERP" aria-expanded={drawerOpen} aria-controls="erp-navigation" onClick={() => setDrawerOpen(true)}><span aria-hidden="true">☰</span></button>
-        <Link href="/dashboard" className="erpMobileBrand">BATAM TRAVELLING</Link>
+        <Link href="/dashboard" className="erpMobileBrand"><span aria-hidden="true">BT</span> BATAM TRAVELLING</Link>
       </header>
       {drawerOpen && <button className="erpDrawerOverlay" type="button" aria-label="Tutup navigasi" onClick={() => setDrawerOpen(false)}/>}
       <aside ref={drawerRef} id="erp-navigation" className={`erpSidebar${drawerOpen ? ' open' : ''}`} aria-label="Sidebar ERP">
         <button className="erpDrawerClose" type="button" aria-label="Tutup navigasi ERP" onClick={() => { setDrawerOpen(false); menuButtonRef.current?.focus(); }}>×</button>
-        <Link href="/dashboard" className="erpBrand">{brand.erpLogoUrl ? <img src={brand.erpLogoUrl} alt="Batam Travelling ERP"/> : 'BATAM TRAVELLING'}</Link>
+        <Link href="/dashboard" className="erpBrand">{brand.erpLogoUrl ? <img src={brand.erpLogoUrl} alt="Batam Travelling ERP"/> : <><span aria-hidden="true">BT</span><strong>Batam Travelling<small>Operations Suite</small></strong></>}</Link>
         <div className="erpNavLabel">Modul ERP</div>
         <div className="erpNavigation">{navigation}</div>
         <div className="erpSidebarFooter">
@@ -169,6 +170,12 @@ export function AppShell({ children }: {
           </div>
         </div>
       </aside>
-      <div className="erpMain">{children}</div>
+      <div className="erpWorkspace">
+        <header className="erpTopbar">
+          <div><small>Workspace</small><strong>{currentNavItem?.label ?? 'Operations Suite'}</strong></div>
+          <div className="erpTopbarMeta"><span className={`erpConnection ${accessState}`}>{accessState === 'authenticated' ? 'Terhubung' : accessState === 'loading' ? 'Memeriksa sesi' : 'Akses terbatas'}</span><span className="erpRole">{access.role || 'Guest'}</span></div>
+        </header>
+        <div className="erpMain">{children}</div>
+      </div>
     </div>);
 }

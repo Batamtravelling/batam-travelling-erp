@@ -61,7 +61,6 @@ type Departure = {
 };
 type Pack = {
   id: string;
-  packageCode?: string;
   name: string;
   destination?: string;
   durationDays: number;
@@ -83,8 +82,6 @@ type Pack = {
   kind?: string;
 };
 type OrderResult = {
-  customerCode: string;
-  leadCode: string;
   bookingCode: string;
   invoiceNumber: string;
   totalAmount: string;
@@ -103,6 +100,8 @@ const lines = (v?: string) =>
     ?.split(/\r?\n|\s[·•]\s/)
     .map((x) => x.trim())
     .filter(Boolean) || [];
+const legacyHeroSubtitle = "Semua kebutuhan perjalanan tersusun rapi dalam satu pengalaman yang mudah, cepat, dan nyaman untuk pelanggan.";
+const modernHeroSubtitle = "Temukan paket, pilih jadwal, dan siapkan perjalanan Anda dengan informasi yang jelas dalam satu tempat.";
 
 export function PublicHome() {
   const [packs, setPacks] = useState<Pack[]>([]);
@@ -208,8 +207,8 @@ export function PublicHome() {
     <main className="publicSite">
       {activeSections.has("hero") && (
         <section className="publicHero">
-          <div>
-            <p>YOUR JOURNEY, BEAUTIFULLY PLANNED</p>
+          <div className="publicHeroContent">
+            <p>LIBURAN MUDAH DARI BATAM</p>
             <h1>
               {heroLines.map((line, i) => (
                 <span key={i}>
@@ -219,10 +218,11 @@ export function PublicHome() {
               ))}
             </h1>
             <span>
-              {brand.heroSubtitle ||
-                "Semua kebutuhan perjalanan tersusun rapi dalam satu pengalaman yang mudah, cepat, dan nyaman untuk pelanggan."}
+              {brand.heroSubtitle && brand.heroSubtitle.trim() !== legacyHeroSubtitle
+                ? brand.heroSubtitle
+                : modernHeroSubtitle}
             </span>
-            <div>
+            <div className="publicHeroActions">
               <a href="#open-trips">
                 {brand.heroCtaPrimary || "Lihat Open Trip"}
               </a>
@@ -230,40 +230,27 @@ export function PublicHome() {
                 {brand.heroCtaSecondary || "Cara Booking"}
               </Link>
             </div>
-            <small>
-              Berbasis di Batam · Singapore · Malaysia · Kepulauan Riau
+            <div className="publicTripFinder" aria-label="Cari perjalanan">
+              <Link href="/trips">
+                <small>Destinasi</small>
+                <strong>Batam dan sekitarnya</strong>
+              </Link>
+              <a href="#open-trips">
+                <small>Keberangkatan</small>
+                <strong>Pilih jadwal</strong>
+              </a>
+              <Link href="/trips">
+                <small>Peserta</small>
+                <strong>Atur jumlah tamu</strong>
+              </Link>
+              <Link className="publicTripFinderButton" href="/trips">
+                Cari trip
+              </Link>
+            </div>
+            <small className="publicHeroCoverage">
+              Batam · Singapore · Malaysia · Kepulauan Riau
             </small>
           </div>
-          <aside>
-            <div
-              className="heroScene"
-              style={
-                brand.heroImageUrl
-                  ? {
-                      backgroundImage: `linear-gradient(155deg,#1174df 0 34%,#0b4e98 34% 56%,#071d3a 56% 75%,#ffd524 75%), url(${brand.heroImageUrl})`,
-                      backgroundSize: "cover",
-                      backgroundPosition: "center",
-                    }
-                  : undefined
-              }
-            >
-              <span>{brand.heroBadge || "BERANGKAT DARI BATAM"}</span>
-              <b>
-                Perjalanan modern
-                <br />
-                yang terasa effortless
-              </b>
-              <i>
-                {brand.featureText ||
-                  "Booking lebih cepat, koordinasi lebih rapi, dan pengalaman pelanggan lebih nyaman"}
-              </i>
-            </div>
-            <article>
-              <span>Trip terencana</span>
-              <b>100%</b>
-              <small>Tim lokal & itinerary transparan</small>
-            </article>
-          </aside>
         </section>
       )}
 
@@ -314,7 +301,7 @@ export function PublicHome() {
                   style={
                     p.gallery[0]
                       ? {
-                          backgroundImage: `linear-gradient(#001b3f55,#001b3faa),url(${p.gallery[0].imageUrl})`,
+                          backgroundImage: `linear-gradient(rgba(6,26,56,.33),rgba(6,26,56,.67)),url(${p.gallery[0].imageUrl})`,
                           backgroundSize: "cover",
                           backgroundPosition: "center",
                         }
@@ -542,7 +529,7 @@ export function PublicHome() {
                   )}
                   <div>
                     <span>
-                      {selected.packageCode} · {selected.kind}
+                      {selected.departures.length ? "OPEN TRIP" : selected.kind || "PRIVATE TRIP"}
                     </span>
                     <h2>{selected.name}</h2>
                     <p>{selected.publicDescription || selected.description}</p>

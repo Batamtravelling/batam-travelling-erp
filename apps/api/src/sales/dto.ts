@@ -51,6 +51,7 @@ export class CreateQuotationDto {
   @IsUUID() customerId!: string;
   @IsOptional() @IsUUID() leadId?: string;
   @IsOptional() @IsUUID() packageId?: string;
+  @IsOptional() @IsUUID() departureId?: string;
   @IsDateString() travelDate!: string;
   @IsOptional() @IsDateString() returnDate?: string;
   @Type(() => Number) @IsInt() @Min(1) @Max(100000) pax!: number;

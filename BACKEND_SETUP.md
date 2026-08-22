@@ -22,7 +22,7 @@ pnpm db:seed
 pnpm dev
 ```
 
-The seed command prints a tenant ID and user ID. In development, protected requests must send them as `x-tenant-id` and `x-dev-user-id`. These headers are explicitly rejected in production; production requires Cognito JWT validation and environment configuration before release.
+The seed command prints a tenant ID and user ID. In development, protected requests must send them as `x-tenant-id` and `x-dev-user-id`. These headers are explicitly rejected in production; production requires Supabase Auth JWT validation, server-resolved tenant membership, and environment configuration before release.
 
 ## Current API scope
 

@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-08-13T12:02:48.279Z",
-  "routeCount": 44,
+  "generatedAt": "2026-08-21T10:08:10.158Z",
+  "routeCount": 45,
   "routes": [
     {
       "url": "/:route*",
@@ -25,7 +25,9 @@
         "./reports/report-center.css",
         "./vendors/vendors.css",
         "./branding-contact.css",
-        "./crm-trip-improvements.css"
+        "./crm-trip-improvements.css",
+        "./modern-ui.css",
+        "./public-modern.css"
       ],
       "globalComponents": [
         "RootLayout",
@@ -63,7 +65,9 @@
         "./reports/report-center.css",
         "./vendors/vendors.css",
         "./branding-contact.css",
-        "./crm-trip-improvements.css"
+        "./crm-trip-improvements.css",
+        "./modern-ui.css",
+        "./public-modern.css"
       ],
       "globalComponents": [
         "RootLayout",
@@ -101,7 +105,9 @@
         "./reports/report-center.css",
         "./vendors/vendors.css",
         "./branding-contact.css",
-        "./crm-trip-improvements.css"
+        "./crm-trip-improvements.css",
+        "./modern-ui.css",
+        "./public-modern.css"
       ],
       "globalComponents": [
         "RootLayout",
@@ -139,7 +145,9 @@
         "./reports/report-center.css",
         "./vendors/vendors.css",
         "./branding-contact.css",
-        "./crm-trip-improvements.css"
+        "./crm-trip-improvements.css",
+        "./modern-ui.css",
+        "./public-modern.css"
       ],
       "globalComponents": [
         "RootLayout",
@@ -177,7 +185,9 @@
         "./reports/report-center.css",
         "./vendors/vendors.css",
         "./branding-contact.css",
-        "./crm-trip-improvements.css"
+        "./crm-trip-improvements.css",
+        "./modern-ui.css",
+        "./public-modern.css"
       ],
       "globalComponents": [
         "RootLayout",
@@ -215,7 +225,9 @@
         "./reports/report-center.css",
         "./vendors/vendors.css",
         "./branding-contact.css",
-        "./crm-trip-improvements.css"
+        "./crm-trip-improvements.css",
+        "./modern-ui.css",
+        "./public-modern.css"
       ],
       "globalComponents": [
         "RootLayout",
@@ -253,7 +265,9 @@
         "./reports/report-center.css",
         "./vendors/vendors.css",
         "./branding-contact.css",
-        "./crm-trip-improvements.css"
+        "./crm-trip-improvements.css",
+        "./modern-ui.css",
+        "./public-modern.css"
       ],
       "globalComponents": [
         "RootLayout",
@@ -294,7 +308,9 @@
         "./reports/report-center.css",
         "./vendors/vendors.css",
         "./branding-contact.css",
-        "./crm-trip-improvements.css"
+        "./crm-trip-improvements.css",
+        "./modern-ui.css",
+        "./public-modern.css"
       ],
       "globalComponents": [
         "RootLayout",
@@ -332,7 +348,9 @@
         "./reports/report-center.css",
         "./vendors/vendors.css",
         "./branding-contact.css",
-        "./crm-trip-improvements.css"
+        "./crm-trip-improvements.css",
+        "./modern-ui.css",
+        "./public-modern.css"
       ],
       "globalComponents": [
         "RootLayout",
@@ -370,7 +388,9 @@
         "./reports/report-center.css",
         "./vendors/vendors.css",
         "./branding-contact.css",
-        "./crm-trip-improvements.css"
+        "./crm-trip-improvements.css",
+        "./modern-ui.css",
+        "./public-modern.css"
       ],
       "globalComponents": [
         "RootLayout",
@@ -416,7 +436,9 @@
         "./reports/report-center.css",
         "./vendors/vendors.css",
         "./branding-contact.css",
-        "./crm-trip-improvements.css"
+        "./crm-trip-improvements.css",
+        "./modern-ui.css",
+        "./public-modern.css"
       ],
       "globalComponents": [
         "RootLayout",
@@ -454,7 +476,9 @@
         "./reports/report-center.css",
         "./vendors/vendors.css",
         "./branding-contact.css",
-        "./crm-trip-improvements.css"
+        "./crm-trip-improvements.css",
+        "./modern-ui.css",
+        "./public-modern.css"
       ],
       "globalComponents": [
         "RootLayout",
@@ -492,7 +516,9 @@
         "./reports/report-center.css",
         "./vendors/vendors.css",
         "./branding-contact.css",
-        "./crm-trip-improvements.css"
+        "./crm-trip-improvements.css",
+        "./modern-ui.css",
+        "./public-modern.css"
       ],
       "globalComponents": [
         "RootLayout",
@@ -533,7 +559,9 @@
         "./reports/report-center.css",
         "./vendors/vendors.css",
         "./branding-contact.css",
-        "./crm-trip-improvements.css"
+        "./crm-trip-improvements.css",
+        "./modern-ui.css",
+        "./public-modern.css"
       ],
       "globalComponents": [
         "RootLayout",
@@ -571,7 +599,9 @@
         "./reports/report-center.css",
         "./vendors/vendors.css",
         "./branding-contact.css",
-        "./crm-trip-improvements.css"
+        "./crm-trip-improvements.css",
+        "./modern-ui.css",
+        "./public-modern.css"
       ],
       "globalComponents": [
         "RootLayout",
@@ -611,7 +641,9 @@
         "./reports/report-center.css",
         "./vendors/vendors.css",
         "./branding-contact.css",
-        "./crm-trip-improvements.css"
+        "./crm-trip-improvements.css",
+        "./modern-ui.css",
+        "./public-modern.css"
       ],
       "globalComponents": [
         "RootLayout",
@@ -651,7 +683,9 @@
         "./reports/report-center.css",
         "./vendors/vendors.css",
         "./branding-contact.css",
-        "./crm-trip-improvements.css"
+        "./crm-trip-improvements.css",
+        "./modern-ui.css",
+        "./public-modern.css"
       ],
       "globalComponents": [
         "RootLayout",
@@ -689,7 +723,9 @@
         "./reports/report-center.css",
         "./vendors/vendors.css",
         "./branding-contact.css",
-        "./crm-trip-improvements.css"
+        "./crm-trip-improvements.css",
+        "./modern-ui.css",
+        "./public-modern.css"
       ],
       "globalComponents": [
         "RootLayout",
@@ -703,7 +739,7 @@
         "/payments",
         "/payments/${paymentId}/proof",
         "/payments/${paymentId}/proofs/${proofId}/url",
-        "/payments/${x.id}/verify"
+        "/payments/${paymentId}/verify"
       ],
       "desktopStatus": "pending automated visual audit",
       "mobileStatus": "pending automated visual audit",
@@ -733,7 +769,9 @@
         "./reports/report-center.css",
         "./vendors/vendors.css",
         "./branding-contact.css",
-        "./crm-trip-improvements.css"
+        "./crm-trip-improvements.css",
+        "./modern-ui.css",
+        "./public-modern.css"
       ],
       "globalComponents": [
         "RootLayout",
@@ -771,7 +809,9 @@
         "./reports/report-center.css",
         "./vendors/vendors.css",
         "./branding-contact.css",
-        "./crm-trip-improvements.css"
+        "./crm-trip-improvements.css",
+        "./modern-ui.css",
+        "./public-modern.css"
       ],
       "globalComponents": [
         "RootLayout",
@@ -781,8 +821,10 @@
       "category": "customer portal",
       "routeStatus": "implemented/verification required",
       "apiDependencies": [
-        "/public/company-profile",
-        "/public/booking-access"
+        "/customer-auth/session",
+        "/customer-auth/bookings",
+        "/customer-auth/claim-booking",
+        "/customer-auth/logout"
       ],
       "desktopStatus": "pending automated visual audit",
       "mobileStatus": "pending automated visual audit",
@@ -813,6 +855,8 @@
         "./vendors/vendors.css",
         "./branding-contact.css",
         "./crm-trip-improvements.css",
+        "./modern-ui.css",
+        "./public-modern.css",
         "./open-trips.css"
       ],
       "globalComponents": [
@@ -851,7 +895,9 @@
         "./reports/report-center.css",
         "./vendors/vendors.css",
         "./branding-contact.css",
-        "./crm-trip-improvements.css"
+        "./crm-trip-improvements.css",
+        "./modern-ui.css",
+        "./public-modern.css"
       ],
       "globalComponents": [
         "RootLayout",
@@ -893,7 +939,9 @@
         "./reports/report-center.css",
         "./vendors/vendors.css",
         "./branding-contact.css",
-        "./crm-trip-improvements.css"
+        "./crm-trip-improvements.css",
+        "./modern-ui.css",
+        "./public-modern.css"
       ],
       "globalComponents": [
         "RootLayout",
@@ -931,7 +979,9 @@
         "./reports/report-center.css",
         "./vendors/vendors.css",
         "./branding-contact.css",
-        "./crm-trip-improvements.css"
+        "./crm-trip-improvements.css",
+        "./modern-ui.css",
+        "./public-modern.css"
       ],
       "globalComponents": [
         "RootLayout",
@@ -972,7 +1022,9 @@
         "./reports/report-center.css",
         "./vendors/vendors.css",
         "./branding-contact.css",
-        "./crm-trip-improvements.css"
+        "./crm-trip-improvements.css",
+        "./modern-ui.css",
+        "./public-modern.css"
       ],
       "globalComponents": [
         "RootLayout",
@@ -1013,7 +1065,9 @@
         "./reports/report-center.css",
         "./vendors/vendors.css",
         "./branding-contact.css",
-        "./crm-trip-improvements.css"
+        "./crm-trip-improvements.css",
+        "./modern-ui.css",
+        "./public-modern.css"
       ],
       "globalComponents": [
         "RootLayout",
@@ -1051,7 +1105,9 @@
         "./reports/report-center.css",
         "./vendors/vendors.css",
         "./branding-contact.css",
-        "./crm-trip-improvements.css"
+        "./crm-trip-improvements.css",
+        "./modern-ui.css",
+        "./public-modern.css"
       ],
       "globalComponents": [
         "RootLayout",
@@ -1061,8 +1117,7 @@
       "category": "pos",
       "routeStatus": "implemented/verification required",
       "apiDependencies": [
-        "/bookings",
-        "/payments"
+        "/pos/transactions"
       ],
       "desktopStatus": "pending automated visual audit",
       "mobileStatus": "pending automated visual audit",
@@ -1092,7 +1147,9 @@
         "./reports/report-center.css",
         "./vendors/vendors.css",
         "./branding-contact.css",
-        "./crm-trip-improvements.css"
+        "./crm-trip-improvements.css",
+        "./modern-ui.css",
+        "./public-modern.css"
       ],
       "globalComponents": [
         "RootLayout",
@@ -1100,6 +1157,46 @@
       ],
       "role": "Project permission",
       "category": "projects",
+      "routeStatus": "placeholder",
+      "apiDependencies": [],
+      "desktopStatus": "pending automated visual audit",
+      "mobileStatus": "pending automated visual audit",
+      "visualStatus": "pending",
+      "screenshotStatus": "pending"
+    },
+    {
+      "url": "/promotion-management",
+      "file": "apps/web/app/promotion-management/page.tsx",
+      "layout": "apps/web/app/layout.tsx + AppShell",
+      "stylesheets": [
+        "./styles.css",
+        "./design-tokens.css",
+        "./work.css",
+        "./project-planner.css",
+        "./crm-pipeline.css",
+        "./sales/quotations/quotation-print.css",
+        "./public-site.css",
+        "./public-shell.css",
+        "./public-pages.css",
+        "./public-commerce.css",
+        "./my-trip/portal.css",
+        "./operations/trips/trips.css",
+        "./operations/open-trips/open-trips.css",
+        "./website-enhancements.css",
+        "./asset-knowledge/asset-knowledge.css",
+        "./reports/report-center.css",
+        "./vendors/vendors.css",
+        "./branding-contact.css",
+        "./crm-trip-improvements.css",
+        "./modern-ui.css",
+        "./public-modern.css"
+      ],
+      "globalComponents": [
+        "RootLayout",
+        "AppShell"
+      ],
+      "role": "Authenticated",
+      "category": "promotion-management",
       "routeStatus": "placeholder",
       "apiDependencies": [],
       "desktopStatus": "pending automated visual audit",
@@ -1130,7 +1227,9 @@
         "./reports/report-center.css",
         "./vendors/vendors.css",
         "./branding-contact.css",
-        "./crm-trip-improvements.css"
+        "./crm-trip-improvements.css",
+        "./modern-ui.css",
+        "./public-modern.css"
       ],
       "globalComponents": [
         "RootLayout",
@@ -1168,7 +1267,9 @@
         "./reports/report-center.css",
         "./vendors/vendors.css",
         "./branding-contact.css",
-        "./crm-trip-improvements.css"
+        "./crm-trip-improvements.css",
+        "./modern-ui.css",
+        "./public-modern.css"
       ],
       "globalComponents": [
         "RootLayout",
@@ -1208,7 +1309,9 @@
         "./reports/report-center.css",
         "./vendors/vendors.css",
         "./branding-contact.css",
-        "./crm-trip-improvements.css"
+        "./crm-trip-improvements.css",
+        "./modern-ui.css",
+        "./public-modern.css"
       ],
       "globalComponents": [
         "RootLayout",
@@ -1246,7 +1349,9 @@
         "./reports/report-center.css",
         "./vendors/vendors.css",
         "./branding-contact.css",
-        "./crm-trip-improvements.css"
+        "./crm-trip-improvements.css",
+        "./modern-ui.css",
+        "./public-modern.css"
       ],
       "globalComponents": [
         "RootLayout",
@@ -1284,7 +1389,9 @@
         "./reports/report-center.css",
         "./vendors/vendors.css",
         "./branding-contact.css",
-        "./crm-trip-improvements.css"
+        "./crm-trip-improvements.css",
+        "./modern-ui.css",
+        "./public-modern.css"
       ],
       "globalComponents": [
         "RootLayout",
@@ -1322,7 +1429,9 @@
         "./reports/report-center.css",
         "./vendors/vendors.css",
         "./branding-contact.css",
-        "./crm-trip-improvements.css"
+        "./crm-trip-improvements.css",
+        "./modern-ui.css",
+        "./public-modern.css"
       ],
       "globalComponents": [
         "RootLayout",
@@ -1333,7 +1442,8 @@
       "routeStatus": "implemented/verification required",
       "apiDependencies": [
         "/media/upload",
-        "/asset-knowledge/profile"
+        "/asset-knowledge/profile",
+        "/payments/policy"
       ],
       "desktopStatus": "pending automated visual audit",
       "mobileStatus": "pending automated visual audit",
@@ -1363,7 +1473,9 @@
         "./reports/report-center.css",
         "./vendors/vendors.css",
         "./branding-contact.css",
-        "./crm-trip-improvements.css"
+        "./crm-trip-improvements.css",
+        "./modern-ui.css",
+        "./public-modern.css"
       ],
       "globalComponents": [
         "RootLayout",
@@ -1401,7 +1513,9 @@
         "./reports/report-center.css",
         "./vendors/vendors.css",
         "./branding-contact.css",
-        "./crm-trip-improvements.css"
+        "./crm-trip-improvements.css",
+        "./modern-ui.css",
+        "./public-modern.css"
       ],
       "globalComponents": [
         "RootLayout",
@@ -1439,7 +1553,9 @@
         "./reports/report-center.css",
         "./vendors/vendors.css",
         "./branding-contact.css",
-        "./crm-trip-improvements.css"
+        "./crm-trip-improvements.css",
+        "./modern-ui.css",
+        "./public-modern.css"
       ],
       "globalComponents": [
         "RootLayout",
@@ -1449,6 +1565,7 @@
       "category": "tasks",
       "routeStatus": "implemented/verification required",
       "apiDependencies": [
+        "/auth/me",
         "/tasks",
         "/tasks/${id}",
         "/tasks/${selectedTask}/comments",
@@ -1482,7 +1599,9 @@
         "./reports/report-center.css",
         "./vendors/vendors.css",
         "./branding-contact.css",
-        "./crm-trip-improvements.css"
+        "./crm-trip-improvements.css",
+        "./modern-ui.css",
+        "./public-modern.css"
       ],
       "globalComponents": [
         "RootLayout",
@@ -1520,7 +1639,9 @@
         "./reports/report-center.css",
         "./vendors/vendors.css",
         "./branding-contact.css",
-        "./crm-trip-improvements.css"
+        "./crm-trip-improvements.css",
+        "./modern-ui.css",
+        "./public-modern.css"
       ],
       "globalComponents": [
         "RootLayout",
@@ -1558,7 +1679,9 @@
         "./reports/report-center.css",
         "./vendors/vendors.css",
         "./branding-contact.css",
-        "./crm-trip-improvements.css"
+        "./crm-trip-improvements.css",
+        "./modern-ui.css",
+        "./public-modern.css"
       ],
       "globalComponents": [
         "RootLayout",
@@ -1596,7 +1719,9 @@
         "./reports/report-center.css",
         "./vendors/vendors.css",
         "./branding-contact.css",
-        "./crm-trip-improvements.css"
+        "./crm-trip-improvements.css",
+        "./modern-ui.css",
+        "./public-modern.css"
       ],
       "globalComponents": [
         "RootLayout",
@@ -1634,7 +1759,9 @@
         "./reports/report-center.css",
         "./vendors/vendors.css",
         "./branding-contact.css",
-        "./crm-trip-improvements.css"
+        "./crm-trip-improvements.css",
+        "./modern-ui.css",
+        "./public-modern.css"
       ],
       "globalComponents": [
         "RootLayout",
@@ -1672,7 +1799,9 @@
         "./reports/report-center.css",
         "./vendors/vendors.css",
         "./branding-contact.css",
-        "./crm-trip-improvements.css"
+        "./crm-trip-improvements.css",
+        "./modern-ui.css",
+        "./public-modern.css"
       ],
       "globalComponents": [
         "RootLayout",
@@ -1710,7 +1839,9 @@
         "./reports/report-center.css",
         "./vendors/vendors.css",
         "./branding-contact.css",
-        "./crm-trip-improvements.css"
+        "./crm-trip-improvements.css",
+        "./modern-ui.css",
+        "./public-modern.css"
       ],
       "globalComponents": [
         "RootLayout",

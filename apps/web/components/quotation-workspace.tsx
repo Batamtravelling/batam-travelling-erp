@@ -4,7 +4,8 @@ import { FormEvent, useEffect, useState } from 'react';
 import { apiGet, apiPost } from '../lib/api';
 
 type Customer = { id: string; fullName: string; customerCode: string };
-type Package = { id: string; name: string; status: string; approvalStatus: string; destination?: string; adultPrice?: string; prices?: { sellingPrice: string }[] };
+type Departure = { id: string; startsAt: string; status: string; remainingPax: number; surchargeLabel?: string; surchargeAmount: string | number; surchargeBasis: 'PER_PAX' | 'PER_BOOKING' };
+type Package = { id: string; name: string; status: string; approvalStatus: string; destination?: string; adultPrice?: string; prices?: { sellingPrice: string }[]; departures?: Departure[] };
 type Quotation = {
   id: string;
   quotationNumber: string;
@@ -17,6 +18,7 @@ type Quotation = {
   validUntil: string;
   customer: Customer;
   package?: { name: string };
+  departure?: { id: string; startsAt: string; status: string };
 };
 type PageResult<T> = { items: T[]; meta: { page: number; pageSize: number; total: number; totalPages: number } };
 
@@ -27,6 +29,7 @@ export function QuotationWorkspace() {
   const [rows, setRows] = useState<Quotation[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [packages, setPackages] = useState<Package[]>([]);
+  const [selectedPackageId, setSelectedPackageId] = useState('');
   const [meta, setMeta] = useState({ page: 1, pageSize: 12, total: 0, totalPages: 1 });
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
@@ -71,6 +74,7 @@ export function QuotationWorkspace() {
       await apiPost('/quotations', {
         customerId: data.get('customerId'),
         packageId: packageId || undefined,
+        departureId: data.get('departureId') || undefined,
         travelDate: data.get('travelDate'),
         returnDate: data.get('returnDate') || undefined,
         pax: Number(data.get('pax')),
@@ -81,6 +85,7 @@ export function QuotationWorkspace() {
         items: customName ? [{ name: customName, quantity: 1, unit: 'booking', unitPrice: customPrice }] : undefined,
       });
       form.reset();
+      setSelectedPackageId('');
       setPage(1);
       await load();
       setMessage('Quotation berhasil dibuat dan snapshot versi 1 tersimpan.');
@@ -111,7 +116,10 @@ export function QuotationWorkspace() {
           <select name="customerId" required><option value="">Pilih customer</option>{customers.map((customer) => <option key={customer.id} value={customer.id}>{customer.customerCode} · {customer.fullName}</option>)}</select>
         </label>
         <label>Paket aktif
-          <select name="packageId"><option value="">Custom trip / layanan</option>{packages.map((item) => <option key={item.id} value={item.id}>{item.name} · {money(item.adultPrice ?? item.prices?.[0]?.sellingPrice ?? 0)}</option>)}</select>
+          <select name="packageId" value={selectedPackageId} onChange={(event) => setSelectedPackageId(event.target.value)}><option value="">Custom trip / layanan</option>{packages.map((item) => <option key={item.id} value={item.id}>{item.name} · {money(item.adultPrice ?? item.prices?.[0]?.sellingPrice ?? 0)}</option>)}</select>
+        </label>
+        <label>Jadwal Open Trip
+          <select name="departureId" disabled={!selectedPackageId}><option value="">Private / tanggal fleksibel</option>{packages.find((item) => item.id === selectedPackageId)?.departures?.map((departure) => <option key={departure.id} value={departure.id} disabled={!['OPEN', 'SCHEDULED'].includes(departure.status) || departure.remainingPax <= 0}>{localDate(departure.startsAt)} · {departure.remainingPax} kursi · {departure.status}</option>)}</select>
         </label>
         <label>Tanggal perjalanan<input name="travelDate" type="date" required /></label>
         <label>Tanggal kembali<input name="returnDate" type="date" /></label>
@@ -142,7 +150,7 @@ export function QuotationWorkspace() {
             {rows.map((row) => <tr key={row.id}>
               <td><b>{row.quotationNumber}</b><small>Versi {row.version}</small></td>
               <td>{row.customer.fullName}</td>
-              <td>{row.package?.name ?? row.destination ?? 'Custom trip'}<small>{localDate(row.travelDate)} · {row.pax} pax</small></td>
+              <td>{row.package?.name ?? row.destination ?? 'Custom trip'}<small>{localDate(row.travelDate)} · {row.pax} pax{row.departure ? ` · ${row.departure.status}` : ''}</small></td>
               <td>{money(row.totalAmount)}<small>Berlaku {localDate(row.validUntil)}</small></td>
               <td><span className="statusBadge">{row.status}</span></td>
               <td><div className="rowActions">

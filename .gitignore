@@ -9,3 +9,7 @@ dist/
 coverage/
 .turbo/
 *.log
+
+# Local visual regression evidence (not deployable application assets)
+public-after/
+ui-audit-shots/

@@ -176,7 +176,6 @@ export class PublicService {
       },
       select: {
         id: true,
-        packageCode: true,
         name: true,
         category: true,
         kind: true,
@@ -327,7 +326,6 @@ export class PublicService {
           where: { tenantId: t.id, active: true },
           select: {
             id: true,
-            productCode: true,
             name: true,
             category: true,
             description: true,
@@ -598,8 +596,6 @@ export class PublicService {
           },
         }),
         response = {
-          customerCode: c.customerCode,
-          leadCode: lead.leadCode,
           bookingCode: b.bookingCode,
           invoiceNumber: inv.invoiceNumber,
           totalAmount: b.totalAmount,
@@ -708,8 +704,6 @@ export class PublicService {
           },
         }),
         response = {
-          customerCode: c.customerCode,
-          leadCode: lead.leadCode,
           bookingCode: b.bookingCode,
           invoiceNumber: inv.invoiceNumber,
           totalAmount: b.totalAmount,

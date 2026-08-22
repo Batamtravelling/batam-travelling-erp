@@ -21,9 +21,19 @@
 - **Alasan:** menutup risiko self-approval, refund bernilai besar tanpa oversight, duplicate execution, dan ledger outflow sebelum approval lengkap.
 - **Dampak implementasi:** workflow request/manager approval/owner approval/rejection/execution terpisah; tenant policy default Rp5.000.000; permission refund terpisah; execution idempotent; approval, bukti, reference, executor, dan audit lineage wajib disimpan.
 
+## Infrastructure decision — Vercel + Supabase v2.0
+
+- **Tanggal keputusan:** 21 Agustus 2026.
+- Vercel menjalankan Next.js dan NestJS HTTP API.
+- Supabase menyediakan PostgreSQL, Auth, dan Storage.
+- Runtime Prisma di Vercel memakai Supavisor transaction pooler melalui `DATABASE_URL`.
+- Migration Prisma memakai koneksi direct/session terpisah melalui `DIRECT_URL`.
+- Preview dan Production wajib memakai Supabase serta Redis yang terisolasi.
+- AWS baseline 9 Agustus 2026 disupersede; AWS tetap menjadi opsi migrasi masa depan melalui ADR baru jika kebutuhan terukur membenarkannya.
+
 ## Decisions that appear approved in docs
 
-- AWS-based production baseline in `docs/32_TECHNOLOGY_AND_ARCHITECTURE_DECISIONS.md`.
+- Vercel + Supabase production baseline in `docs/32_TECHNOLOGY_AND_ARCHITECTURE_DECISIONS.md`.
 - Release gate items 1-16 in `docs/IMPLEMENTATION_STATUS_1_16.md`.
 - MVP sequence in `docs/33_MVP_RELEASE_PLAN_AND_PRODUCT_BACKLOG.md`.
 
@@ -33,7 +43,7 @@
 - Invoice void/replacement policy.
 - Payment reversal policy.
 - Reminder and alert ownership.
-- Staging and production infrastructure reconciliation if the team reconsiders the AWS baseline.
+- Redis provider, external error-monitoring provider, production region alignment, and operational owners.
 
 ## Merge candidates
 

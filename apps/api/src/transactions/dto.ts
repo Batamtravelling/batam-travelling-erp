@@ -66,3 +66,7 @@ export class CreatePosTransactionDto {
 export class VerifyPaymentDto {
   @IsEnum(PaymentStatus) status!: PaymentStatus;
 }
+
+export class UpdatePaymentPolicyDto {
+  @IsBoolean() requireSeparateVerifier!: boolean;
+}

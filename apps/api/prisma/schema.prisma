@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 enum CustomerType {
@@ -456,6 +457,7 @@ model Tenant {
   paymentProofs         PaymentProof[]
   paymentRefunds        PaymentRefund[]
   refundPolicy          TenantRefundPolicy?
+  paymentPolicy         TenantPaymentPolicy?
   trips                 Trip[]
   assignments           TripAssignment[]
   businessSequences     BusinessSequence[]
@@ -691,6 +693,7 @@ model PackageDeparture {
   package         TravelPackage         @relation(fields: [packageId], references: [id], onDelete: Cascade)
   project         Project?              @relation(fields: [projectId], references: [id], onDelete: SetNull)
   bookings        Booking[]
+  quotations      Quotation[]
   assignments     DepartureAssignment[]
   tasks           Task[]
   reminders       EmployeeReminder[]
@@ -1590,6 +1593,17 @@ model TenantRefundPolicy {
   @@map("tenant_refund_policies")
 }
 
+model TenantPaymentPolicy {
+  id                      String   @id @default(uuid()) @db.Uuid
+  tenantId                String   @unique @map("tenant_id") @db.Uuid
+  requireSeparateVerifier Boolean  @default(true) @map("require_separate_verifier")
+  createdAt               DateTime @default(now()) @map("created_at")
+  updatedAt               DateTime @default(now()) @updatedAt @map("updated_at")
+  tenant                  Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("tenant_payment_policies")
+}
+
 model PaymentProof {
   id           String   @id @default(uuid()) @db.Uuid
   tenantId     String   @map("tenant_id") @db.Uuid
@@ -1653,6 +1667,7 @@ model Quotation {
   customerId       String                     @map("customer_id") @db.Uuid
   leadId           String?                    @map("lead_id") @db.Uuid
   packageId        String?                    @map("package_id") @db.Uuid
+  departureId      String?                    @map("departure_id") @db.Uuid
   createdById      String                     @map("created_by_id") @db.Uuid
   sentById         String?                    @map("sent_by_id") @db.Uuid
   acceptedById     String?                    @map("accepted_by_id") @db.Uuid
@@ -1681,6 +1696,7 @@ model Quotation {
   customer         Customer                   @relation(fields: [customerId], references: [id], onDelete: Restrict)
   lead             Lead?                      @relation(fields: [leadId], references: [id], onDelete: SetNull)
   package          TravelPackage?             @relation(fields: [packageId], references: [id], onDelete: SetNull)
+  departure        PackageDeparture?          @relation(fields: [departureId], references: [id], onDelete: SetNull)
   createdBy        User                       @relation("QuotationCreator", fields: [createdById], references: [id], onDelete: Restrict)
   sentBy           User?                      @relation("QuotationSender", fields: [sentById], references: [id], onDelete: SetNull)
   acceptedBy       User?                      @relation("QuotationAcceptor", fields: [acceptedById], references: [id], onDelete: SetNull)
@@ -1692,6 +1708,7 @@ model Quotation {
   @@index([tenantId, status, createdAt])
   @@index([tenantId, customerId, createdAt])
   @@index([tenantId, leadId])
+  @@index([tenantId, departureId])
   @@map("quotations")
 }
 

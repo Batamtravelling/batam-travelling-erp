@@ -65,14 +65,14 @@ export default function PackagesPage() {
   };
 
   return (
-    <main style={{ minHeight: '100vh', padding: '32px', background: '#f8fafc' }}>
+    <main style={{ minHeight: '100vh', padding: '32px', background: 'var(--surface-subtle)' }}>
       <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'grid', gap: '18px' }}>
         <div style={{ background: 'white', borderRadius: '24px', padding: '24px', boxShadow: '0 16px 36px rgba(15, 23, 42, 0.08)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', flexWrap: 'wrap', marginBottom: '18px' }}>
             <div>
-              <p style={{ margin: 0, textTransform: 'uppercase', letterSpacing: '0.2em', fontSize: '12px', color: '#64748b' }}>Packages</p>
+              <p style={{ margin: 0, textTransform: 'uppercase', letterSpacing: '0.2em', fontSize: '12px', color: 'var(--text-secondary)' }}>Packages</p>
               <h1 style={{ margin: '6px 0', fontSize: '28px' }}>Travel packages</h1>
-              <p style={{ margin: 0, color: '#64748b' }}>Kelola paket travel, harga, dan destinasi promosi.</p>
+              <p style={{ margin: 0, color: 'var(--text-secondary)' }}>Kelola paket travel, harga, dan destinasi promosi.</p>
             </div>
           </div>
 
@@ -87,12 +87,12 @@ export default function PackagesPage() {
               <option value="ACTIVE">Active</option>
               <option value="ARCHIVED">Archived</option>
             </select>
-            <button type="submit" style={{ border: 0, borderRadius: '10px', background: '#0f766e', color: 'white', fontWeight: 700, padding: '12px 14px', cursor: 'pointer' }}>Tambah paket</button>
+            <button type="submit" style={{ border: 0, borderRadius: '10px', background: 'var(--brand-navy-primary)', color: 'white', fontWeight: 700, padding: '12px 14px', cursor: 'pointer' }}>Tambah paket</button>
           </form>
         </div>
 
         <div style={{ background: 'white', borderRadius: '24px', padding: '24px', boxShadow: '0 16px 36px rgba(15, 23, 42, 0.08)' }}>
-          <p style={{ margin: 0, textTransform:'uppercase',letterSpacing:'.18em',fontSize:12,color:'#64748b' }}>Jadwal & Surcharge</p><h2>Atur biaya berdasarkan tanggal keberangkatan</h2><p style={{color:'#64748b'}}>Surcharge tidak mengubah harga dasar paket dan hanya diterapkan pada jadwal ini.</p>
+          <p style={{ margin: 0, textTransform:'uppercase',letterSpacing:'.18em',fontSize:12,color:'var(--text-secondary)' }}>Jadwal & Surcharge</p><h2>Atur biaya berdasarkan tanggal keberangkatan</h2><p style={{color:'var(--text-secondary)'}}>Surcharge tidak mengubah harga dasar paket dan hanya diterapkan pada jadwal ini.</p>
           <form onSubmit={createSchedule} style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(180px,1fr))',gap:10}}>
             <select required value={schedule.packageId} onChange={e=>setSchedule({...schedule,packageId:e.target.value})} style={inputStyle}><option value="">Pilih paket</option>{packages.map(p=><option value={p.id} key={p.id}>{p.packageCode} · {p.name}</option>)}</select>
             <label>Tanggal berangkat<input required type="datetime-local" value={schedule.startsAt} onChange={e=>setSchedule({...schedule,startsAt:e.target.value})} style={inputStyle}/></label>
@@ -103,7 +103,7 @@ export default function PackagesPage() {
             <input value={schedule.surchargeLabel} onChange={e=>setSchedule({...schedule,surchargeLabel:e.target.value})} placeholder="Nama surcharge (contoh: High Season)" style={inputStyle}/>
             <input type="number" min="0" value={schedule.surchargeAmount} onChange={e=>setSchedule({...schedule,surchargeAmount:e.target.value})} placeholder="Biaya surcharge" style={inputStyle}/>
             <select value={schedule.surchargeBasis} onChange={e=>setSchedule({...schedule,surchargeBasis:e.target.value})} style={inputStyle}><option value="PER_PAX">Per peserta</option><option value="PER_BOOKING">Per booking</option></select>
-            <button type="submit" style={{border:0,borderRadius:10,background:'#0d5fba',color:'#fff',fontWeight:700,padding:'12px 14px'}}>Simpan jadwal</button>
+            <button type="submit" style={{border:0,borderRadius:10,background:'var(--status-info)',color:'var(--surface-primary)',fontWeight:700,padding:'12px 14px'}}>Simpan jadwal</button>
           </form>
         </div>
 
@@ -111,16 +111,16 @@ export default function PackagesPage() {
           {message && <p className="moduleNotice">{message}</p>}
           {loading ? <div>Memuat paket...</div> : (
             <div style={{ display: 'grid', gap: '12px' }}>
-              {packages.length === 0 ? <div style={{ color: '#64748b' }}>Belum ada paket.</div> : packages.map((pkg) => (
-                <div key={pkg.id} style={{ border: '1px solid #e2e8f0', borderRadius: '14px', padding: '14px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+              {packages.length === 0 ? <div style={{ color: 'var(--text-secondary)' }}>Belum ada paket.</div> : packages.map((pkg) => (
+                <div key={pkg.id} style={{ border: '1px solid var(--border-default)', borderRadius: '14px', padding: '14px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
                   <div>
                     <div style={{ fontWeight: 700 }}>{pkg.name}</div>
-                    <div style={{ color: '#64748b', fontSize: '14px', marginTop: '4px' }}>{pkg.packageCode} • {pkg.destination} • {pkg.durationDays} hari</div>
-                    {pkg.departures?.map(d=><small key={d.id} style={{display:'block',marginTop:6,color:'#475569'}}>{new Date(d.startsAt).toLocaleString('id-ID')} · {d.maxPax} pax{Number(d.surchargeAmount)>0?` · ${d.surchargeLabel||'Surcharge'} Rp ${Number(d.surchargeAmount).toLocaleString('id-ID')} ${d.surchargeBasis==='PER_PAX'?'/ pax':'/ booking'}`:''}</small>)}
+                    <div style={{ color: 'var(--text-secondary)', fontSize: '14px', marginTop: '4px' }}>{pkg.packageCode} • {pkg.destination} • {pkg.durationDays} hari</div>
+                    {pkg.departures?.map(d=><small key={d.id} style={{display:'block',marginTop:6,color:'var(--text-secondary)'}}>{new Date(d.startsAt).toLocaleString('id-ID')} · {d.maxPax} pax{Number(d.surchargeAmount)>0?` · ${d.surchargeLabel||'Surcharge'} Rp ${Number(d.surchargeAmount).toLocaleString('id-ID')} ${d.surchargeBasis==='PER_PAX'?'/ pax':'/ booking'}`:''}</small>)}
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <div style={{ fontWeight: 700 }}>Rp {Number(pkg.prices?.[0]?.sellingPrice ?? pkg.adultPrice ?? 0).toLocaleString('id-ID')}</div>
-                    <span style={{ padding: '6px 10px', borderRadius: '999px', background: pkg.status === 'ACTIVE' ? '#dcfce7' : pkg.status === 'ARCHIVED' ? '#fee2e2' : '#e0f2fe', color: pkg.status === 'ACTIVE' ? '#166534' : pkg.status === 'ARCHIVED' ? '#991b1b' : '#075985', fontWeight: 700 }}>{pkg.status}</span><Link href={`/packages/${pkg.id}/print`} target="_blank">Print Paket</Link>
+                    <span style={{ padding: '6px 10px', borderRadius: '999px', background: pkg.status === 'ACTIVE' ? 'var(--status-success-surface)' : pkg.status === 'ARCHIVED' ? 'var(--status-error-surface)' : 'var(--status-info-surface)', color: pkg.status === 'ACTIVE' ? 'var(--status-success)' : pkg.status === 'ARCHIVED' ? 'var(--status-error)' : 'var(--status-info)', fontWeight: 700 }}>{pkg.status}</span><Link href={`/packages/${pkg.id}/print`} target="_blank">Print Paket</Link>
                   </div>
                 </div>
               ))}
@@ -133,7 +133,7 @@ export default function PackagesPage() {
 }
 
 const inputStyle: React.CSSProperties = {
-  border: '1px solid #cbd5e1',
+  border: '1px solid var(--border-default)',
   borderRadius: '10px',
   padding: '10px 12px',
   fontSize: '14px',

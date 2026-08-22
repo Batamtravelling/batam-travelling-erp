@@ -82,11 +82,11 @@ export function WebsiteHighlights({
   return (
     <>
       <section className="announcementBar">
-        <b>📣 PENGUMUMAN</b>
+        <b>JELAJAHI DARI BATAM</b>
         <span>
-          Booking Open Trip dibuat lebih cepat, jelas, dan rapi untuk pelanggan.
+          Jadwal pilihan, harga transparan, dan bantuan tim lokal untuk perjalanan yang lebih tenang.
         </span>
-        <Link href="/sign-up">Daftar akun →</Link>
+        <Link href="/trips">Temukan trip →</Link>
       </section>
 
       <section className="dealZone" id="flash-sale">
@@ -120,8 +120,7 @@ export function WebsiteHighlights({
           <span className="dealEyebrow">PROMO KHUSUS</span>
           <h3>Trip lebih hemat, tetap nyaman</h3>
           <p>
-            Paket, jadwal, dan promo berasal langsung dari sistem yang selalu
-            diperbarui.
+            Lihat pilihan paket, jadwal keberangkatan, dan penawaran terbaru dalam satu tempat.
           </p>
           <Link href="/promotions">Semua promo →</Link>
         </div>

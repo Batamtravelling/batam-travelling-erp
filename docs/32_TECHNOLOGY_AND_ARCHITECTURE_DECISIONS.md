@@ -1,6 +1,6 @@
 # Technology and Architecture Decisions
 
-> **Current status: APPROVED BASELINE — 2026-08-09.** The decision register below is retained as historical intake; its TBD values are superseded by the approved decisions in this section.
+> **Current status: APPROVED BASELINE v2 — 2026-08-21.** Vercel + Supabase supersedes the AWS provider baseline dated 2026-08-09. The earlier AWS selection is retained in Git history as an exit/scaling option, not an active deployment target.
 
 ## Approved decisions
 
@@ -8,12 +8,12 @@
 |---|---|
 | ADR-001 | TypeScript on current Active LTS Node.js; NestJS with the Fastify adapter |
 | ADR-002 | TypeScript, React, and Next.js App Router |
-| ADR-003 | PostgreSQL on Amazon RDS; Prisma ORM with reviewed SQL migrations |
-| ADR-004 | Amazon ElastiCache Redis; BullMQ workers; transactional outbox |
-| ADR-005 | Amazon S3 private buckets; CloudFront; short-lived signed URLs |
-| ADR-006 | AWS Jakarta (ap-southeast-3); ECS Fargate; Route 53; CloudFront |
-| ADR-007 | Amazon Cognito; TOTP MFA for privileged staff; API-side JWT validation |
-| ADR-008 | OpenTelemetry; CloudWatch; X-Ray; Sentry with PII scrubbing |
+| ADR-003 | Supabase PostgreSQL; Prisma ORM; Supavisor transaction pooler for Vercel runtime; direct/session connection for migrations |
+| ADR-004 | Managed Redis for distributed rate limits and future bounded background work; transactional database remains authoritative |
+| ADR-005 | Supabase Storage: public marketing bucket plus private business-document bucket with short-lived signed URLs |
+| ADR-006 | Vercel for Next.js and NestJS Functions; isolated Preview and Production environments |
+| ADR-007 | Supabase Auth for identity; PostgreSQL membership/RBAC remains authoritative; API-side JWT validation |
+| ADR-008 | Vercel runtime logs/observability plus structured request IDs; external error monitoring requires a separately approved provider |
 
 ### ADR-001 — Backend
 
@@ -25,34 +25,34 @@ Use Next.js App Router, React, and TypeScript. The public website and authentica
 
 ### ADR-003 — Data
 
-PostgreSQL is the authoritative transactional database. Production uses Amazon RDS PostgreSQL and local development uses Docker PostgreSQL of the same supported major version. Prisma is the default ORM; reviewed SQL is permitted for performance-critical queries and safe migrations. Tenant tables require tenant_id, ownership/audit fields, and tenant-aware indexes. All migrations are versioned in Git and applied only through CI/CD.
+PostgreSQL is the authoritative transactional database. Staging and production use separate Supabase projects; local development uses Docker PostgreSQL of the same supported major version. Prisma is the default ORM. Vercel runtime traffic uses the Supabase transaction pooler through `DATABASE_URL`; migrations use a separate direct or session-pooler connection through `DIRECT_URL`. Tenant tables require tenant_id, ownership/audit fields, and tenant-aware indexes. All migrations are versioned in Git and executed as an explicit release step outside the Vercel request lifecycle.
 
 ### ADR-004 — Cache, queues, and scheduled work
 
-Use Redis and BullMQ for asynchronous jobs, retries, delayed tasks, rate limits, and short-lived caching. Deploy API, worker, and scheduler independently on ECS. State changes use a transactional outbox: commit domain data and an outbox record in one PostgreSQL transaction, publish through a worker, and make consumers idempotent by event ID. Financial and booking states must never depend solely on cache or queue state.
+Use a managed Redis instance for distributed API rate limits and short-lived non-authoritative state. Configure a different Redis instance or namespace per environment. Background workers, queues, and schedules are not implied by Vercel Functions; introduce them only through a future ADR with bounded retries and operational ownership. State changes continue to use PostgreSQL transactions and the outbox pattern. Financial and booking states must never depend solely on Redis or a queue.
 
 ### ADR-005 — Files and delivery
 
-Use Amazon S3. Private files require server-side authorization and short-lived signed URLs; public marketing media is delivered through CloudFront. The application generates object keys, never user filenames. Scan uploads and process images before they are available. Enable object versioning for critical buckets and lifecycle retention rules. Customer documents, payment evidence, secrets, and internal files are never public.
+Use Supabase Storage. Public marketing media uses the dedicated public media bucket. Payment evidence, customer documents, archives, and internal files use private buckets with server-side authorization and short-lived signed URLs. The application generates tenant-scoped object keys and never trusts user filenames. Bucket policies, retention, malware-scanning requirements, backup/export, and restore evidence remain release gates. Database backups do not by themselves back up Storage objects.
 
 ### ADR-006 — Deployment and networking
 
-Deploy production in AWS Asia Pacific (Jakarta), ap-southeast-3, for the Indonesian launch market. Use ECS Fargate for web, API, worker, and scheduler; RDS PostgreSQL; ElastiCache Redis; S3; CloudFront; Route 53; ACM; IAM; KMS; and Secrets Manager. Use private application/data subnets behind a public load balancer, least-privilege security groups, Terraform infrastructure as code, and separate accounts/secrets for development, staging, and production. Production design uses at least two Availability Zones where supported.
+Deploy the Next.js web application and NestJS HTTP API on Vercel from the repository root. The framework preset is Next.js and the build output is `apps/web/.next`; `api/index.ts` is the NestJS Vercel Function entry point. Vercel Preview must use isolated Supabase and Redis resources and must never connect to production data. Production promotion uses the same validated artifact after migration, smoke, security, and owner approval. Long-running workers or schedules require a separate runtime decision and must not be hidden inside request handlers.
 
 ### ADR-007 — Identity and access
 
-Use Amazon Cognito for staff and customer identity. Require TOTP MFA for privileged staff before production. Cognito establishes identity; PostgreSQL establishes tenant membership, RBAC, approval limits, and resource ownership. The API validates JWTs and resolves tenant context on every request. Frontend checks never replace server-side authorization.
+Use Supabase Auth for staff identity and approved customer authentication adapters. Require MFA for privileged staff before production when the selected Supabase plan and application flow support the approved assurance level. Supabase establishes identity; PostgreSQL establishes tenant membership, RBAC, approval limits, and resource ownership. The API validates access tokens and resolves tenant context on every request. Supabase `user_metadata` and frontend checks never establish authorization.
 
 ### ADR-008 — Observability
 
-Instrument web, API, workers, and integrations with OpenTelemetry from the first sprint. Send structured logs, metrics, and alarms to CloudWatch; export distributed traces to X-Ray; and use Sentry for exceptions with PII scrubbing. Every request has a request ID and outbound integrations propagate a correlation ID. Alert ownership and escalation must be completed in Document 41 before staging deployment.
+Emit structured logs and request IDs from web/API code and use Vercel deployment/runtime logs for the initial runtime view. Enable Vercel observability appropriate to the selected plan and configure an approved external error-monitoring destination with PII scrubbing before production. Supabase database/Auth/Storage signals and Redis health require separate dashboards and alerts. Alert ownership and escalation must be completed in Document 41 before production.
 
 ## Immediate build actions
 
 1. Initialise the pnpm workspace, Git protections, and CI under Document 42.
-2. Create apps/web, apps/api, apps/worker, packages/contracts, packages/config, and infrastructure/terraform.
+2. Maintain apps/web, apps/api, packages/contracts, and provider adapters; add worker infrastructure only after a worker-runtime ADR.
 3. Create OpenAPI schemas and contract tests under Document 35.
-4. Provision development and staging through Terraform before external-provider setup.
+4. Provision isolated Supabase projects, Redis resources, and Vercel environments before migration or external-provider setup.
 5. Populate provider ownership, accounts, and secret-variable names in Document 37.
 6. Complete Documents 39–41 before production release.
 
@@ -74,7 +74,7 @@ Instrument web, API, workers, and integrations with OpenTelemetry from the first
 ## Architecture baseline
 
 - Start as a modular monolith; split services only at a measured domain or operational boundary.
-- Deploy web/API, workers, and schedulers as separate processes.
+- Deploy web/API on Vercel; deploy workers or schedulers separately only after their runtime ADR is approved.
 - Enforce tenant context in API, service, query, cache, storage, queue, search, and audit layers.
 - Access external providers through adapters; external providers do not define internal business states.
 - Use database transactions plus an outbox/event pattern for state changes that emit events.

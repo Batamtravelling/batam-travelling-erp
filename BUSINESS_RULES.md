@@ -47,6 +47,8 @@
 - Upload payment proof tidak berarti pembayaran telah diterima.
 - Payment lifecycle minimum: `PENDING_VERIFICATION -> VERIFIED/REJECTED`.
 - Hanya payment `VERIFIED` yang boleh memengaruhi paid amount, outstanding balance, receipt, dan canonical financial ledger.
+- Pembuatan payment manual wajib menggunakan idempotency key agar retry/double-submit tidak membuat payment ganda.
+- Four Eyes payment aktif secara default per tenant: user yang mencatat payment tidak boleh memverifikasi atau menolak payment yang sama. Perubahan policy hanya melalui permission pengaturan dan wajib diaudit.
 - Outstanding dihitung dari kewajiban invoice dikurangi payment terverifikasi dan adjustment sah; angka ini tidak boleh diketik manual sebagai sumber kebenaran.
 - Satu invoice dapat dibayar melalui beberapa payment.
 - Arsitektur Finance tidak boleh mengasumsikan Payment dan Invoice selalu one-to-one; satu transfer dapat dialokasikan ke beberapa invoice bila business flow membutuhkannya.
@@ -100,6 +102,7 @@
 - Satu payment dapat dialokasikan ke satu atau beberapa invoice bila diperlukan.
 - Total allocation tidak boleh melebihi available payment amount.
 - Paid dan outstanding invoice dihitung dari allocation/payment yang sah, bukan field manual.
+- `BUSINESS DECISION REQUIRED`: tentukan bagaimana refund dari satu payment yang dialokasikan ke beberapa invoice dibagi (explicit allocation, proportional, oldest-first, atau aturan lain) sebelum multi-invoice allocation diaktifkan.
 
 ### Refund
 

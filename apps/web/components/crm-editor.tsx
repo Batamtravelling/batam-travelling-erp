@@ -165,7 +165,7 @@ export function CrmEditor({ kind, open, record, onClose, onSaved }: CrmEditorPro
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <div>
             <h3 style={{ margin: 0 }}>{record?.id ? 'Edit' : 'Tambah'} {kind === 'customers' ? 'Customer' : 'Lead'}</h3>
-            <p style={{ margin: '4px 0 0', color: '#64748b' }}>
+            <p style={{ margin: '4px 0 0', color: 'var(--text-secondary)' }}>
               {kind === 'customers' ? 'Kelola data pelanggan untuk CRM.' : 'Kelola inquiry dan hubungkan ke customer yang ada.'}
             </p>
           </div>
@@ -174,7 +174,7 @@ export function CrmEditor({ kind, open, record, onClose, onSaved }: CrmEditorPro
           </button>
         </div>
 
-        {error ? <p style={{ color: '#b91c1c', marginBottom: '12px' }}>{error}</p> : null}
+        {error ? <p style={{ color: 'var(--status-error)', marginBottom: '12px' }}>{error}</p> : null}
 
         <form onSubmit={submit} style={{ display: 'grid', gap: '12px' }}>
           {kind === 'customers' ? (
@@ -253,14 +253,14 @@ export function CrmEditor({ kind, open, record, onClose, onSaved }: CrmEditorPro
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '8px' }}>
             {record?.id ? (
-              <button type="button" disabled={busy} onClick={async () => { setBusy(true); setError(''); try { await apiDelete(`/${kind}/${record.id}`); onSaved(); onClose(); } catch (err) { setError(err instanceof Error ? err.message : 'Tidak dapat menghapus data'); } finally { setBusy(false); } }} style={{ border: '1px solid #ef4444', background: 'white', color: '#ef4444', borderRadius: '10px', padding: '10px 14px', cursor: 'pointer' }}>
+              <button type="button" disabled={busy} onClick={async () => { setBusy(true); setError(''); try { await apiDelete(`/${kind}/${record.id}`); onSaved(); onClose(); } catch (err) { setError(err instanceof Error ? err.message : 'Tidak dapat menghapus data'); } finally { setBusy(false); } }} style={{ border: '1px solid var(--status-error)', background: 'white', color: 'var(--status-error)', borderRadius: '10px', padding: '10px 14px', cursor: 'pointer' }}>
                 {busy ? 'Menghapus...' : 'Hapus'}
               </button>
             ) : null}
-            <button type="button" onClick={onClose} style={{ border: '1px solid #cbd5e1', background: 'white', borderRadius: '10px', padding: '10px 14px', cursor: 'pointer' }}>
+            <button type="button" onClick={onClose} style={{ border: '1px solid var(--border-default)', background: 'white', borderRadius: '10px', padding: '10px 14px', cursor: 'pointer' }}>
               Batal
             </button>
-            <button type="submit" disabled={busy} style={{ border: 'none', background: '#0f766e', color: 'white', borderRadius: '10px', padding: '10px 14px', cursor: 'pointer' }}>
+            <button type="submit" disabled={busy} style={{ border: 'none', background: 'var(--brand-navy-primary)', color: 'white', borderRadius: '10px', padding: '10px 14px', cursor: 'pointer' }}>
               {busy ? 'Menyimpan...' : 'Simpan'}
             </button>
           </div>
@@ -271,7 +271,7 @@ export function CrmEditor({ kind, open, record, onClose, onSaved }: CrmEditorPro
 }
 
 const inputStyle: React.CSSProperties = {
-  border: '1px solid #cbd5e1',
+  border: '1px solid var(--border-default)',
   borderRadius: '10px',
   padding: '10px 12px',
   fontSize: '14px',
